@@ -1,0 +1,84 @@
+# Application Docker image Dockerfile. 
+# Build an image from it with ./build.sh
+
+FROM nvidia/cudagl:10.0-devel-ubuntu16.04
+
+LABEL description="Fast AEye TypeR Docker Image"
+LABEL maintainer="Dustin Fast <dustin.fast@outlook.com>"
+
+ENV CUDA_HOME=/usr/local/cuda
+ENV CUDA_ROOT=$CUDA_HOME
+ENV CUDA_TOOLKIT_ROOT_DIR=$CUDA_HOME
+ENV PATH=$PATH:$CUDA_ROOT/bin:$HOME/bin
+ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CUDA_ROOT/lib64:/usr/local/cuda/extras/CUPTI/lib64/
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN echo "Updating apt-get..." && \
+    apt-get update
+
+RUN echo "Installing apt-utils..." && \
+    apt-get install -y --no-install-recommends \
+    apt-utils
+
+RUN echo "Updating apt-get..." && \
+    apt-get update
+    
+RUN echo "Installing Python 3.6..." && \
+    apt-get install -y software-properties-common && \
+    add-apt-repository -y ppa:deadsnakes/ppa && \
+    apt-get update
+
+RUN apt-get install -y \
+    python3-pip \
+    python3.6-dev \
+    python3.6 \
+    python3-setuptools && \
+    python3.6 -m pip install --upgrade pip
+
+RUN echo "Installing 3rd party Python 3.6 libraries..." && \
+    python3.6 -m pip install \
+        keras==2.3.1 \
+        tensorflow-gpu==2.0.0 \
+        tensorboardX \
+        numpy \
+        jupyter \
+        pandas \
+        pandas_profiling \
+        sklearn \
+        pyyaml \
+        matplotlib \
+        seaborn \
+        sqlalchemy \
+        tqdm \
+        flake8 \
+        autopep8
+
+RUN echo "Updating apt-get..." && \
+    apt-get update
+
+RUN echo "Installing 3rd party linux applications..." && \
+    apt-get install -y --no-install-recommends \
+    wget \
+    bzip2 \
+    vim \
+    iotop \
+    htop \
+    openssh-server \
+    git \
+    libxtst6 \
+    libasound2 \
+    libcudnn7=7.6.4.38-1+cuda10.1  \
+    libcudnn7-dev=7.6.4.38-1+cuda10.1 \
+    libnvinfer6=6.0.1-1+cuda10.1 \
+    libnvinfer-dev=6.0.1-1+cuda10.1 \
+    libnvinfer-plugin6=6.0.1-1+cuda10.1
+
+# Copy in custom .bashrc
+COPY dependencies/.bashrc /root/.bashrc
+
+# Create local codebase mount point and make it the working dir
+RUN mkdir -p /opt/app/src
+WORKDIR /opt/app/src
+
+# Make python3.6 the default python version
+RUN ln -s -f /usr/bin/python3.6 /usr/bin/python
