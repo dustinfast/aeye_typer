@@ -30,3 +30,12 @@
 *.exe
 *.out
 *.app
+
+# Python
+*.pyc
+*Untitled*.ipynb
+*.ipynb_checkpoints/*
+
+# Misc
+.vscode/
+temp*
