@@ -9,7 +9,7 @@
 #include <ctype.h>
 #include <string.h>
 
-#include "x_hook.h"
+#include "x11_hook.h"
 
 using namespace std;
 
