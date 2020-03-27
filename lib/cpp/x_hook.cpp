@@ -81,16 +81,18 @@ static void handle_events(Display *dpy) {
     while(1) {
         XNextEvent(dpy, &Event);
 
-        if ((Event.type == key_press_type) || (Event.type == key_rel_type)) {
-            int loop;
+        // Handle key down events
+        if (Event.type == key_press_type) {
             XDeviceKeyEvent *key = (XDeviceKeyEvent *) &Event;
 
-            printf("Key %s %d ", (Event.type == key_rel_type) ? "release" : "press  ",
-            key->keycode);
+            printf("Key down %d @ %lums\n", key->keycode, key->time);
+        }
 
-            for(loop=0; loop<key->axes_count; loop++)
-                printf("a[%d]=%d ", key->first_axis + loop, key->axis_data[loop]);
-            printf("\n");
+        // Handle key up events
+        if (Event.type == key_rel_type) {
+            XDeviceKeyEvent *key = (XDeviceKeyEvent *) &Event;
+
+            printf("Key up %d @ %lums\n", key->keycode, key->time);
         }
     }
 }
