@@ -67,6 +67,8 @@ RUN echo "Installing 3rd party linux applications..." && \
     git \
     libxi-dev \
     xinput \
+    xdotool \
+    libxdo-dev \
     libxtst6 \
     libasound2 \
     libcudnn7=7.6.4.38-1+cuda10.1  \
