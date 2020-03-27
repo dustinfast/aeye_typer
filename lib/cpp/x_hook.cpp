@@ -17,17 +17,11 @@ int xi_opcode;
 
 #define INVALID_EVENT_TYPE -1
 
-static int motion_type = INVALID_EVENT_TYPE;
-static int btn_press_type = INVALID_EVENT_TYPE;
-static int btn_rel_type = INVALID_EVENT_TYPE;
 static int key_press_type = INVALID_EVENT_TYPE;
 static int key_rel_type = INVALID_EVENT_TYPE;
-static int proximity_in_type = INVALID_EVENT_TYPE;
-static int proximity_out_type = INVALID_EVENT_TYPE;
 
-static int register_events(
-    Display *dpy, XDeviceInfo *info, char *dev_name, Bool handle_proximity) {
-    int n = 0;    /* number of events registered */
+static int register_events(Display *dpy, XDeviceInfo *info, char *dev_name) {
+    int n = 0;    // number of events registered
     XEventClass events[7];
     int i;
     XDevice *device;
@@ -40,7 +34,7 @@ static int register_events(
     device = XOpenDevice(dpy, info->id);
 
     if (!device) {
-        printf("unable to open device '%s'\n", dev_name);
+        printf("ERROR: Failed to open device '%s'\n", dev_name);
         return 0;
     }
 
@@ -53,26 +47,24 @@ static int register_events(
                     break;
 
                 case ButtonClass:
-                    DeviceButtonPress(device, btn_press_type, events[n]); n++;
-                    DeviceButtonRelease(device, btn_rel_type, events[n]); n++;
+                    // Do not handle mouse btn events
+                    // DeviceButtonPress(device, btn_press_type, events[n]); n++;
+                    // DeviceButtonRelease(device, btn_rel_type, events[n]); n++;
                     break;
 
                 case ValuatorClass:
-                    DeviceMotionNotify(device, motion_type, events[n]); n++;
-                    if (handle_proximity) {
-                        ProximityIn(device, proximity_in_type, events[n]); n++;
-                        ProximityOut(device, proximity_out_type, events[n]); n++;
-                    }
+                    // Do not handle mouse motion events
+                    // DeviceMotionNotify(device, motion_type, events[n]); n++;
                     break;
 
                 default:
-                    printf("WARN: Unknown input class.\n");
-                break;
+                    printf("WARN: Encountered unknown input class.\n");
+                    break;
             }
         }
 
         if (XSelectExtensionEvent(dpy, root_win, events, n)) {
-            printf("WARN: Failed selecting extended events.\n");
+            printf("WARN: Could not select extended events.\n");
             return 0;
         }
     }
@@ -80,8 +72,8 @@ static int register_events(
 }
 
 
-// Prints events to stdout
-static void print_events(Display *dpy) {
+// Handles device events
+static void handle_events(Display *dpy) {
     XEvent Event;
 
     setvbuf(stdout, NULL, _IOLBF, 0);
@@ -89,29 +81,8 @@ static void print_events(Display *dpy) {
     while(1) {
         XNextEvent(dpy, &Event);
 
-        if (Event.type == motion_type) {
+        if ((Event.type == key_press_type) || (Event.type == key_rel_type)) {
             int loop;
-            XDeviceMotionEvent *motion = (XDeviceMotionEvent *) &Event;
-
-            printf("Motion ");
-
-            for(loop=0; loop<motion->axes_count; loop++)
-                printf("a[%d]=%d ", motion->first_axis + loop, motion->axis_data[loop]);
-            printf("\n");
-
-        } else if ((Event.type == btn_press_type) || (Event.type == btn_rel_type)) {
-            int    loop;
-            XDeviceButtonEvent *button = (XDeviceButtonEvent *) &Event;
-
-            printf("Button %s %d ", (Event.type == btn_rel_type) ? "release" : "press  ",
-            button->button);
-
-            for(loop=0; loop<button->axes_count; loop++)
-                printf("a[%d]=%d ", button->first_axis + loop, button->axis_data[loop]);
-            printf("\n");
-
-        } else if ((Event.type == key_press_type) || (Event.type == key_rel_type)) {
-            int    loop;
             XDeviceKeyEvent *key = (XDeviceKeyEvent *) &Event;
 
             printf("Key %s %d ", (Event.type == key_rel_type) ? "release" : "press  ",
@@ -120,21 +91,6 @@ static void print_events(Display *dpy) {
             for(loop=0; loop<key->axes_count; loop++)
                 printf("a[%d]=%d ", key->first_axis + loop, key->axis_data[loop]);
             printf("\n");
-
-        } else if ((Event.type == proximity_out_type) || (Event.type == proximity_in_type)) {
-            int    loop;
-            XProximityNotifyEvent *prox = (XProximityNotifyEvent *) &Event;
-
-            printf("Proximity %s ", (Event.type == proximity_in_type) ? "in " : "out");
-
-            for(loop=0; loop<prox->axes_count; loop++)
-                printf("a[%d]=%d ", prox->first_axis + loop, prox->axis_data[loop]);
-            printf("\n");
-
-        }
-
-        else {
-            printf("WARN: Unhandled event type '%d'\n", Event.type);
         }
     }
 }
@@ -205,21 +161,19 @@ XDeviceInfo* get_device_info(Display *display, char *name, Bool only_extended)
 int hook_device(Display *display, char *deviceId) {
     XDeviceInfo *info;
 
-    Bool handle_proximity = True;
-
     info = get_device_info(display, deviceId, True);
 
     if(!info) {
-        printf("unable to find device '%s'\n", deviceId);
+        printf("Unable to find device '%s'\n", deviceId);
         exit(1);
     }
 
     else {
-        if(register_events(display, info, deviceId, handle_proximity)) {
-            print_events(display);  // Device hook func
+        if(register_events(display, info, deviceId)) {
+            handle_events(display);  // Device event handler
         }
         else {
-            fprintf(stderr, "no event registered...\n");
+            fprintf(stderr, "No handled events for this device.\n");
             exit(1);
         }
     }
