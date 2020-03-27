@@ -19,6 +19,8 @@ int xi_opcode;
 
 static int key_press_type = INVALID_EVENT_TYPE;
 static int key_rel_type = INVALID_EVENT_TYPE;
+static int btn_press_type = INVALID_EVENT_TYPE;
+static int btn_rel_type = INVALID_EVENT_TYPE;
 
 static int register_events(Display *dpy, XDeviceInfo *info, char *dev_name) {
     int n = 0;    // number of events registered
@@ -47,9 +49,8 @@ static int register_events(Display *dpy, XDeviceInfo *info, char *dev_name) {
                     break;
 
                 case ButtonClass:
-                    // Do not handle mouse btn events
-                    // DeviceButtonPress(device, btn_press_type, events[n]); n++;
-                    // DeviceButtonRelease(device, btn_rel_type, events[n]); n++;
+                    DeviceButtonPress(device, btn_press_type, events[n]); n++;
+                    DeviceButtonRelease(device, btn_rel_type, events[n]); n++;
                     break;
 
                 case ValuatorClass:
@@ -81,18 +82,32 @@ static void handle_events(Display *dpy) {
     while(1) {
         XNextEvent(dpy, &Event);
 
-        // Handle key down events
+        // Key down events
         if (Event.type == key_press_type) {
             XDeviceKeyEvent *key = (XDeviceKeyEvent *) &Event;
 
             printf("Key down %d @ %lums\n", key->keycode, key->time);
         }
 
-        // Handle key up events
-        if (Event.type == key_rel_type) {
+        // Key up events
+        else if (Event.type == key_rel_type) {
             XDeviceKeyEvent *key = (XDeviceKeyEvent *) &Event;
 
             printf("Key up %d @ %lums\n", key->keycode, key->time);
+        }
+
+        // Mouse btn down events
+        else if (Event.type == btn_press_type) {
+            XDeviceButtonEvent *button = (XDeviceButtonEvent *) &Event;
+
+            printf("button press %d @ %lums\n", button->button, button->time);
+        }
+
+        // Mouse btn up events
+        else if (Event.type == btn_rel_type) {
+            XDeviceButtonEvent *button = (XDeviceButtonEvent *) &Event;
+
+            printf("button release %d @ %lums\n", button->button, button->time);
         }
     }
 }
