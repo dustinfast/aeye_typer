@@ -65,13 +65,16 @@ RUN echo "Installing 3rd party linux applications..." && \
     htop \
     openssh-server \
     git \
+    libxi-dev \
+    xinput \
     libxtst6 \
     libasound2 \
     libcudnn7=7.6.4.38-1+cuda10.1  \
     libcudnn7-dev=7.6.4.38-1+cuda10.1 \
     libnvinfer6=6.0.1-1+cuda10.1 \
     libnvinfer-dev=6.0.1-1+cuda10.1 \
-    libnvinfer-plugin6=6.0.1-1+cuda10.1
+    libnvinfer-plugin6=6.0.1-1+cuda10.1\
+    apt-file && apt-file update
 
 # Copy in custom .bashrc
 COPY dependencies/.bashrc /root/.bashrc
