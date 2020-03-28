@@ -1,8 +1,9 @@
-// Adapted from https://webhamster.ru/site/page/index/articles/comp/367
+// Adapted from https://webhamster.ru/site/page/index/articles/comp/367 by
+// Dustin Fast, 2020
 
 #include <cstdio>
 #include <cstdlib>
-#include <string.h>
+#include <cstring>
 #include <iostream>
 
 #include <X11/Xlib.h>
@@ -13,14 +14,27 @@ using namespace std;
 #define INVALID_EVENT_TYPE -1
 
 
+// Function declarations
+static int register_events(Display *display, XDeviceInfo *info, char *dev_name);
+static XDeviceInfo* device_info(Display *display, char *name, Bool only_extended);
+static XDeviceInfo* list_available_devices(Display *display);
+static int hook_devices(Display *display, char **device_ids, int device_count, void (event_watcher(Display*)));
+static int xinput_version(Display *display);
+static Display* get_display(_Xconst char* display_name);
+
+// Static global vars
 static int key_press_type = INVALID_EVENT_TYPE;
 static int key_rel_type = INVALID_EVENT_TYPE;
 static int btn_press_type = INVALID_EVENT_TYPE;
 static int btn_rel_type = INVALID_EVENT_TYPE;
 
 
+///////////////////////////////////////////////////////////////////////////////
+// Function defs
+
+// Registers for key and/or btn presses on the given device
 static int register_events(Display *display, XDeviceInfo *info, char *dev_name) {
-    int n = 0;    // number of events registered
+    int n = 0;  // number of events registered
     XEventClass events[7];
     int i;
     XDevice *device;
@@ -52,7 +66,6 @@ static int register_events(Display *display, XDeviceInfo *info, char *dev_name) 
 
                 case ValuatorClass:
                     // Do not handle mouse motion events
-                    // DeviceMotionNotify(device, motion_type, events[n]); n++;
                     break;
 
                 default:
@@ -71,11 +84,10 @@ static int register_events(Display *display, XDeviceInfo *info, char *dev_name) 
 
 
 // Returns the requested device's info
-static XDeviceInfo* get_device_info(Display *display, char *name, Bool only_extended)
-{
+static XDeviceInfo* device_info(Display *display, char *name, Bool only_extended) {
     XDeviceInfo *devices;
     XDeviceInfo *found;
-    int loop, num_devices;
+    int i, num_devices;
     int len = strlen(name);
     Bool is_id = True;
     XID id = (XID)-1;
@@ -83,29 +95,25 @@ static XDeviceInfo* get_device_info(Display *display, char *name, Bool only_exte
     devices = XListInputDevices(display, &num_devices);
     found = NULL;
 
-    for(loop=0; loop<len; loop++) {
-        if (!isdigit(name[loop])) {
+    for(i = 0; i < len; i++) {
+        if (!isdigit(name[i])) {
             is_id = False;
             break;
         }
     }
 
-    if (is_id) {
+    if (is_id)
         id = atoi(name);
-    }
 
-    for(loop=0; loop<num_devices; loop++) {
-        if ((!only_extended || (devices[loop].use >= IsXExtensionDevice)) &&
-        ((!is_id && strcmp(devices[loop].name, name) == 0) ||
-        (is_id && devices[loop].id == id))) {
+    for(i = 0; i < num_devices; i++) {
+        if ((!only_extended || (devices[i].use >= IsXExtensionDevice)) &&
+        ((!is_id && strcmp(devices[i].name, name) == 0) ||
+        (is_id && devices[i].id == id))) {
             if (found) {
-                fprintf(stderr,
-                        "Warning: Multiple devices named '%s'.\n"
-                        "To ensure the correct one is selected, use "
-                        "the device ID instead.\n\n", name);
+                fprintf(stderr, "ERROR: Multiple devices named '%s'.\n", name);
                 return NULL;
             } else {
-            found = &devices[loop];
+            found = &devices[i];
             }
         }
     }
@@ -114,25 +122,65 @@ static XDeviceInfo* get_device_info(Display *display, char *name, Bool only_exte
 }
 
 
-// Starts the hook for the given device on the specified display
-int hook_device(Display *display, char *deviceId, void (ev_handler(Display*))) {
-    XDeviceInfo *info = get_device_info(display, deviceId, True);
+// Prints a list of available devices on the given display to stdout.
+// Pass NULL to use the default display.
+static XDeviceInfo* list_available_devices(Display *display) {
+    XDeviceInfo *devices;
+    int num_devices;
 
-    if(!info) {
-        printf("ERROR: Unable to find device '%s'\n", deviceId);
-    }
-    else {
-        if(register_events(display, info, deviceId))
-            ev_handler(display);  // Device event handler... Blocks
-        else
-            fprintf(stderr, "ERROR: No handled events for this device.\n");
+    if (display == NULL)
+        display = get_display(NULL);
+
+    devices = XListInputDevices(display, &num_devices);
+
+    for(int i = 0; i < num_devices; i++) 
+        printf("%lu: %s\n", devices[i].id, devices[i].name);
+}
+
+
+// Starts the hook for the given device on the specified display, where
+// event_watcher is your (possibly blocking) event handler implementing XNextEvent.
+static int hook_devices(Display *display,
+                char **device_ids,
+                int device_count,
+                void (event_watcher(Display*))) {
+
+    int num_registered = 0;
+    
+    // Register for each given device's events
+    for (int i = 0; i < device_count; i++) {
+        char dev_id[3];
+        sprintf(dev_id, "%s", device_ids[i]);
+
+        XDeviceInfo *info = device_info(display, dev_id, True);
+
+        if(!info) {
+            printf("ERROR: Failed to find device '%s'\n", dev_id);
+        }
+        else {
+            if(register_events(display, info, dev_id)) {
+                num_registered++;
+                printf("INFO: Registered device %s - %s\n", dev_id, info->name);
+            }
+            else {
+                fprintf(
+                    stderr, 
+                    "ERROR: No handled events for device '%s'\n",
+                    dev_id
+                );
+            }
+        }
     }
 
+    // Call device event handler - probably blocks, depending on implementation
+    if (num_registered)
+        event_watcher(display);
+    
     return 0;
 }
 
 
-// Returns the xinput version
+// Returns the xinput version.
 static int xinput_version(Display *display) {
     XExtensionVersion    *version;
     static int vers = -1;
@@ -151,9 +199,8 @@ static int xinput_version(Display *display) {
 }
 
 
-// Returns the requested display -- pass NULL for default display
-static Display* get_display(_Xconst char* display_name)
-{
+// Returns the requested display -- pass NULL for default display.
+static Display* get_display(_Xconst char* display_name) {
     Display *display;
     int opcode, event, error;
 

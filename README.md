@@ -43,7 +43,7 @@ $ xinput
     ↳ Dell Keyboard                 id=12   [slave  keyboard (3)] # Keyboard
 ```
 
-Then update `DEVICE_ID_MOUSE` and `DEVICE_ID_KEYBOARD` in _config.yaml with the appropriate IDs. E.g.
+Then update `DEVICE_ID_MOUSE` and `DEVICE_ID_KEYBOARD` in file `_config.yaml`. For example:  
 
 ```yaml
 DEVICE_ID_MOUSE: 11
