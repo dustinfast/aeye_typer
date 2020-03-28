@@ -16,7 +16,7 @@ using namespace std;
 
 
 // Function declarations
-static int hook_device(Display *display, char *device_id, void (event_watcher(Display*)));
+static int set_device_hook(Display *display, char *device_id, void (event_watcher(Display*)));
 static XDeviceInfo* device_info(Display *display, char *name, Bool only_extended);
 static int register_events(Display *display, XDeviceInfo *info, char *dev_name);
 static XDeviceInfo* list_available_devices(Display *display);
@@ -140,7 +140,7 @@ static XDeviceInfo* list_available_devices(Display *display) {
 
 // Starts the hook for the given device on the specified display, where
 // event_watcher is your event listener implementing XNextEvent.
-static int hook_device(Display *display,
+static int set_device_hook(Display *display,
                          char *device_id,
                          void (event_watcher(Display*))) {
 

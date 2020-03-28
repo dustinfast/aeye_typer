@@ -4,19 +4,98 @@
 #include <cstdlib>
 #include <iostream>
 
-#include <sqlite3.h>
-
 #include "app.h"
 #include "x11_hook.h"
 
 using namespace std;
 
 
+class LogKeys {
+    int num_hooks;
+    Display *display;
+    map<string, string> config;
+
+    public:
+        LogKeys(map<string, string>);
+        void hook_device(char *device_id);
+        int log_start();
+        void log_stop();
+        void event_logger(Display*);
+};
+
+// Constructor
+LogKeys::LogKeys(map<string, string> app_config) {
+    num_hooks = 0;
+    config = app_config;
+    display = get_display(NULL);
+
+    if (display == NULL) 
+        printf("ERROR: X11 Display not found.\n");
+}
+
+// Inits the x11 global hook for the given device & increments the hook counter
+void LogKeys::hook_device(char *device_id) {
+
+    XDeviceInfo *info = device_info(display, device_id, True);
+
+    if(!info) {
+        printf("ERROR: Failed to find device '%s'\n", device_id);
+    }
+    else {
+        if(register_events(display, info, device_id)) {
+            printf("INFO: Registered device %s - %s\n", device_id, info->name);
+            num_hooks++;
+        }
+        else {
+            fprintf(
+                stderr, "ERROR: No handled events for device '%s'\n",device_id);
+        }
+    }
+}
+
+// Registers for mouse and keyboard event and starts the logger
+int LogKeys::log_start() {
+    // Ensure valid display set
+    if (display == NULL) {
+        printf("ERROR: X11 Display not set.\n");
+        return 0;
+    }
+
+    // Define helper container
+    int max_id_len = max(
+        config["DEVICE_ID_MOUSE"].size(), 
+        config["DEVICE_ID_KEYBOARD"].size()
+    );
+    char device_id[max_id_len];
+
+    // Set hooks
+    num_hooks = 0;
+    sprintf(device_id, "%s", config["DEVICE_ID_MOUSE"].c_str());
+    hook_device(device_id);
+    sprintf(device_id, "%s", config["DEVICE_ID_KEYBOARD"].c_str());
+    hook_device(device_id);
+
+    // Start logging iff at least one hook registered
+    if (num_hooks) {
+        event_logger(display);  // Blocks indefinately
+    }
+    else {
+        cout << "ERROR: No devices registered.";
+        return 0;
+    }
+}
+
+//Stops the logging process
+void LogKeys::log_stop() {
+    // TODO: Unset hooks
+    XSync(display, False);
+    XCloseDisplay(display);
+}
 
 // Logs keyboard and mouse button up/down events
-void handle_events(Display *dpy) {
+void LogKeys::event_logger(Display *dpy) {
     XEvent Event;
-
+    
     setvbuf(stdout, NULL, _IOLBF, 0);
 
     while(1) {
@@ -36,14 +115,14 @@ void handle_events(Display *dpy) {
 
         // Mouse btn down events
         else if (Event.type == btn_press_type) {
-            XDeviceButtonEvent *button = (XDeviceButtonEvent *) &Event;
-            printf("button press %d @ %lums\n", button->button, button->time);
+            XDeviceButtonEvent *btn = (XDeviceButtonEvent *) &Event;
+            printf("Button press %d @ %lums\n", btn->button, btn->time);
         }
 
         // Mouse btn up events
         else if (Event.type == btn_rel_type) {
-            XDeviceButtonEvent *button = (XDeviceButtonEvent *) &Event;
-            printf("button release %d @ %lums\n", button->button, button->time);
+            XDeviceButtonEvent *btn = (XDeviceButtonEvent *) &Event;
+            printf("Button release %d @ %lums\n", btn->button, btn->time);
         }
     }
 }
@@ -51,37 +130,9 @@ void handle_events(Display *dpy) {
 
 int main(int argc, char **argv)
 {
-    int num_hooks = 0;
     map<string, string> config = get_app_config();
-    int max_id_len = max(
-        config["DEVICE_ID_MOUSE"].size(), 
-        config["DEVICE_ID_KEYBOARD"].size()
-    );
-    char device_id[max_id_len];
-    
-    // Get default X11 display
-    Display *display = get_display(NULL);
-
-    if (display == NULL) {
-        printf("ERROR: X11 Display not found.\n");
-        exit(1);
-    }
-
-    // Register for mouse and keybd events
-    sprintf(device_id, "%s", config["DEVICE_ID_MOUSE"].c_str());
-    num_hooks += hook_device(display, device_id, handle_events);
-    sprintf(device_id, "%s", config["DEVICE_ID_KEYBOARD"].c_str());
-    num_hooks += hook_device(display, device_id, handle_events);
-
-    // Start logging iff at least one hook registered
-    if (num_hooks)
-        handle_events(display);  // Blocks indefinately
-    else
-        cout << "ERROR: No devices registered.";
-
-    // Cleanup
-    XSync(display, False);
-    XCloseDisplay(display);
+    LogKeys logger = LogKeys(config);
+    logger.log_start();
 
     return 0;
 }
