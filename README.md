@@ -58,3 +58,4 @@ Next, run `./setup.sh`, then start the application with `./fast_aeye_typer.py`
 
 ## TODO
 
+Mouse clicks not registered by vscode
