@@ -53,6 +53,11 @@ int main(int argc, char **argv)
 {
     int num_hooks = 0;
     map<string, string> config = get_app_config();
+    int max_id_len = max(
+        config["DEVICE_ID_MOUSE"].size(), 
+        config["DEVICE_ID_KEYBOARD"].size()
+    );
+    char device_id[max_id_len];
     
     // Get default X11 display
     Display *display = get_display(NULL);
@@ -63,17 +68,12 @@ int main(int argc, char **argv)
     }
 
     // Register for mouse and keybd events
-    int max_id_len = max(
-        config["DEVICE_ID_MOUSE"].size(), config["DEVICE_ID_KEYBOARD"].size());
-    char device_id[max_id_len];
-    
     sprintf(device_id, "%s", config["DEVICE_ID_MOUSE"].c_str());
     num_hooks += hook_device(display, device_id, handle_events);
-
     sprintf(device_id, "%s", config["DEVICE_ID_KEYBOARD"].c_str());
     num_hooks += hook_device(display, device_id, handle_events);
 
-    // Start logging
+    // Start logging iff at least one hook registered
     if (num_hooks)
         handle_events(display);  // Blocks indefinately
     else
