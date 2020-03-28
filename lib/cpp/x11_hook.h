@@ -1,3 +1,4 @@
+// X11 Device hooking library.
 // Adapted from https://webhamster.ru/site/page/index/articles/comp/367 by
 // Dustin Fast, 2020
 
@@ -6,8 +7,8 @@
 #include <cstring>
 #include <iostream>
 
-#include <X11/Xlib.h>
 #include <X11/extensions/XInput.h>
+#include <X11/Xlib.h>
 
 using namespace std;
 
@@ -15,12 +16,12 @@ using namespace std;
 
 
 // Function declarations
-static int register_events(Display *display, XDeviceInfo *info, char *dev_name);
-static XDeviceInfo* device_info(Display *display, char *name, Bool only_extended);
-static XDeviceInfo* list_available_devices(Display *display);
 static int hook_devices(Display *display, char **device_ids, int device_count, void (event_watcher(Display*)));
-static int xinput_version(Display *display);
+static XDeviceInfo* device_info(Display *display, char *name, Bool only_extended);
+static int register_events(Display *display, XDeviceInfo *info, char *dev_name);
+static XDeviceInfo* list_available_devices(Display *display);
 static Display* get_display(_Xconst char* display_name);
+static int xinput_version(Display *display);
 
 // Static global vars
 static int key_press_type = INVALID_EVENT_TYPE;
@@ -34,9 +35,8 @@ static int btn_rel_type = INVALID_EVENT_TYPE;
 
 // Registers for key and/or btn presses on the given device
 static int register_events(Display *display, XDeviceInfo *info, char *dev_name) {
-    int n = 0;  // number of events registered
+    int n, i = 0;
     XEventClass events[7];
-    int i;
     XDevice *device;
     Window root_win;
     unsigned long screen;
