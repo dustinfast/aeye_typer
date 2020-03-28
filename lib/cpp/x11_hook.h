@@ -151,11 +151,11 @@ static int xinput_version(Display *display) {
 }
 
 
-// Returns the requested display. Use display_name = NULL for default display.
+// Returns the requested display -- pass NULL for default display
 static Display* get_display(_Xconst char* display_name)
 {
     Display *display;
-    int event, error, opcode;
+    int opcode, event, error;
 
     display = XOpenDisplay(display_name);
 
@@ -165,7 +165,8 @@ static Display* get_display(_Xconst char* display_name)
     }
 
     if(!XQueryExtension(display, "XInputExtension", &opcode, &event, &error)) {
-        printf("X Input extension not available.\n");
+        printf("X Input ext not available:\nOpcode %d\nEvent %d\nError %d",
+            opcode, event, error);
         return NULL;
     }
 
