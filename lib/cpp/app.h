@@ -33,9 +33,7 @@ sqlite3* get_sqlite_db(const char *path) {
     sqlite3 *db;
     char *zErrMsg = 0;
 
-    int res = sqlite3_open(path, &db);
-
-    if(res) {
+    if(sqlite3_open(path, &db)) {
         fprintf(stderr, "ERROR: Failed to open db %s\n", sqlite3_errmsg(db));
         return(0);
     }

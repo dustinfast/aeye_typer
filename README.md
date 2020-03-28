@@ -58,6 +58,10 @@ Next, run `./setup.sh`, then start the application with `./fast_aeye_typer.py`
 
 "Symbol" mode (e.g. 'if', 'else') versus "Key" mode (e.g. 'i', 'f', 'e', 'l', 's', 'e')
 
+Also capture voice, because speaking as you type a) involves more neurons, and b) NLP may be useful to use if brain scan not good enough
+
+
+
 ## TODO
 
 Mouse clicks not registered by vscode

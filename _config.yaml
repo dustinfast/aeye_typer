@@ -1,4 +1,5 @@
 APP_DATA_DIR: /opt/app/data
+APP_KEY_EVENTS_DB_PATH: /opt/app/data/key_events.sql
 
 DEVICE_ID_MOUSE: "11"
 DEVICE_ID_KEYBOARD: "12"

@@ -1,8 +1,6 @@
 // Handles keyboard and mouse button-press logging
 // Author: Dustin Fast, 2020
 
-#include <cstdlib>
-#include <iostream>
 
 #include "app.h"
 #include "x11_hook.h"
@@ -11,26 +9,37 @@ using namespace std;
 
 
 class LogKeys {
+    sqlite3 *db;
+    bool dry_run;
     int num_hooks;
     Display *display;
     map<string, string> config;
 
     public:
-        LogKeys(map<string, string>);
-        void hook_device(char *device_id);
+        LogKeys(map<string, string>, bool);
+        LogKeys(map<string, string> conf) : LogKeys(conf, False) {}
+        void hook_device(char*);
         int log_start();
         void log_stop();
         void event_logger(Display*);
 };
 
 // Constructor
-LogKeys::LogKeys(map<string, string> app_config) {
+LogKeys::LogKeys(map<string, string> app_config, bool is_dry_run) {
+    db = NULL;
     num_hooks = 0;
     config = app_config;
+    dry_run = is_dry_run;
     display = get_display(NULL);
 
     if (display == NULL) 
-        printf("ERROR: X11 Display not found.\n");
+        cout << "ERROR: X11 Display not found.\n";
+
+    // Open db for logging iff not dry run
+    if (!dry_run)
+        db = get_sqlite_db(config["APP_KEY_EVENTS_DB_PATH"].c_str());
+    else
+        cout << "INFO: Logging with is_dry_run = True.";
 }
 
 // Inits the x11 global hook for the given device & increments the hook counter
@@ -68,7 +77,7 @@ int LogKeys::log_start() {
     );
     char device_id[max_id_len];
 
-    // Set hooks
+    // Set device event hooks
     num_hooks = 0;
     sprintf(device_id, "%s", config["DEVICE_ID_MOUSE"].c_str());
     hook_device(device_id);
@@ -87,7 +96,7 @@ int LogKeys::log_start() {
 
 //Stops the logging process
 void LogKeys::log_stop() {
-    // TODO: Unset hooks
+    // TODO: Unset hooks and figure out async usage
     XSync(display, False);
     XCloseDisplay(display);
 }
