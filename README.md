@@ -16,14 +16,16 @@ Fast AEye TypeR is named after it's creator and with the word "typer" having the
 
 ## Usage
 
-First, build the docker image with
+### Setup
+
+First, clone the applications repo and build the docker image with
 
 ```bash
 cd docker
 ./build.sh
 ```
 
-Then run the docker container with `./run.sh LOCAL_CODEBASE`, where LOCAL_CODE_BASE is the path to the application's codebase on your local machine.  
+Then run the docker container with `./run.sh LOCAL_CODEBASE LOCAL_DATA`, where LOCAL_CODE_BASE and LOCAL_DATA are the paths to the application's codebase and data directory, respectively, on your local machine.  
 
 Once inside the container, get the device ID's of your mouse and keyboard using `xinput'. E.g.  
 
@@ -43,11 +45,11 @@ $ xinput
     ↳ Dell Keyboard                 id=12   [slave  keyboard (3)] # Keyboard
 ```
 
-Then update `DEVICE_ID_MOUSE` and `DEVICE_ID_KEYBOARD` in file `_config.yaml`. For example:  
+Then update `_config.yaml` with those IDs. For example:  
 
 ```yaml
-DEVICE_ID_MOUSE: 11
-DEVICE_ID_KEYBOARD: 12
+DEVICE_ID_MOUSE: "11"
+DEVICE_ID_KEYBOARD: "12"
 ```
 
 Next, run `./setup.sh`, then start the application with `./fast_aeye_typer.py`

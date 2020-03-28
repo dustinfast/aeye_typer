@@ -16,7 +16,7 @@ using namespace std;
 
 
 // Function declarations
-static int hook_devices(Display *display, char **device_ids, int device_count, void (event_watcher(Display*)));
+static int hook_device(Display *display, char *device_id, void (event_watcher(Display*)));
 static XDeviceInfo* device_info(Display *display, char *name, Bool only_extended);
 static int register_events(Display *display, XDeviceInfo *info, char *dev_name);
 static XDeviceInfo* list_available_devices(Display *display);
@@ -139,44 +139,28 @@ static XDeviceInfo* list_available_devices(Display *display) {
 
 
 // Starts the hook for the given device on the specified display, where
-// event_watcher is your (possibly blocking) event handler implementing XNextEvent.
-static int hook_devices(Display *display,
-                char **device_ids,
-                int device_count,
-                void (event_watcher(Display*))) {
+// event_watcher is your event listener implementing XNextEvent.
+static int hook_device(Display *display,
+                         char *device_id,
+                         void (event_watcher(Display*))) {
 
-    int num_registered = 0;
-    
-    // Register for each given device's events
-    for (int i = 0; i < device_count; i++) {
-        char dev_id[3];
-        sprintf(dev_id, "%s", device_ids[i]);
+    XDeviceInfo *info = device_info(display, device_id, True);
 
-        XDeviceInfo *info = device_info(display, dev_id, True);
-
-        if(!info) {
-            printf("ERROR: Failed to find device '%s'\n", dev_id);
+    if(!info) {
+        printf("ERROR: Failed to find device '%s'\n", device_id);
+        return 0;
+    }
+    else {
+        if(register_events(display, info, device_id)) {
+            printf("INFO: Registered device %s - %s\n", device_id, info->name);
+            return 1;
         }
         else {
-            if(register_events(display, info, dev_id)) {
-                num_registered++;
-                printf("INFO: Registered device %s - %s\n", dev_id, info->name);
-            }
-            else {
-                fprintf(
-                    stderr, 
-                    "ERROR: No handled events for device '%s'\n",
-                    dev_id
-                );
-            }
+            fprintf(
+                stderr, "ERROR: No handled events for device '%s'\n",device_id);
+            return 0;
         }
     }
-
-    // Call device event handler - probably blocks, depending on implementation
-    if (num_registered)
-        event_watcher(display);
-    
-    return 0;
 }
 
 

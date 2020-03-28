@@ -68,6 +68,7 @@ RUN echo "Installing 3rd party linux applications..." && \
     libxi-dev \
     xinput \
     xdotool \
+    libsqlite3-dev \
     libxdo-dev \
     libxtst6 \
     libasound2 \

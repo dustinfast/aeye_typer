@@ -1,0 +1,4 @@
+APP_DATA_DIR: /opt/app/data
+
+DEVICE_ID_MOUSE: "11"
+DEVICE_ID_KEYBOARD: "12"
