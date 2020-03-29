@@ -3,7 +3,7 @@
 
 FROM nvidia/cudagl:10.0-devel-ubuntu16.04
 
-LABEL description="Fast AEye TypeR Docker Image"
+LABEL description="fast_aeye_typer"
 LABEL maintainer="Dustin Fast <dustin.fast@outlook.com>"
 
 ENV CUDA_HOME=/usr/local/cuda
@@ -66,8 +66,11 @@ RUN echo "Installing 3rd party linux applications..." && \
     openssh-server \
     git \
     libxi-dev \
+    libcanberra-gtk-module \
+    avahi-daemon \
     xinput \
     xdotool \
+    libyaml-cpp-dev \
     libsqlite3-dev \
     libxdo-dev \
     libxtst6 \
@@ -79,12 +82,27 @@ RUN echo "Installing 3rd party linux applications..." && \
     libnvinfer-plugin6=6.0.1-1+cuda10.1\
     apt-file && apt-file update
 
+RUN echo "Setting up workspace..."
 # Copy in custom .bashrc
 COPY dependencies/.bashrc /root/.bashrc
-
 # Create local codebase mount point and make it the working dir
 RUN mkdir -p /opt/app/src
 WORKDIR /opt/app/src
-
 # Make python3.6 the default python version
 RUN ln -s -f /usr/bin/python3.6 /usr/bin/python
+
+RUN echo "Setting up psuedo-systemd..."
+ENV container docker
+RUN (cd /lib/systemd/system/sysinit.target.wants/; \
+    for i in ; \
+    do [ $i == systemd-tmpfiles-setup.service ] || rm -f $i; done)
+RUN rm -rf /lib/systemd/system/multi-user.target.wants/
+RUN rm -rf /etc/systemd/system/.wants/
+RUN rm -rf /lib/systemd/system/local-fs.target.wants/
+RUN rm -rf /lib/systemd/system/sockets.target.wants/udev
+RUN rm -rf /lib/systemd/system/sockets.target.wants/initctl
+RUN rm -rf /lib/systemd/system/basic.target.wants/
+RUN rm -rf /lib/systemd/system/anaconda.target.wants/*
+VOLUME [ “/sys/fs/cgroup” ]
+CMD ["/sbin/init"]
+

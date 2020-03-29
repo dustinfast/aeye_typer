@@ -10,10 +10,6 @@ This tool differs from existing solutions in that
 
 Author: Dustin Fast <dustin.fast@hotmail.com>
 
-## What's in a name?
-
-Fast AEye TypeR is named after it's creator and with the word "typer" having the last letter capitalized as a nod to his adventurous spirit embodied by his car -- a Honda Civic Type R.
-
 ## Usage
 
 ### Setup
@@ -57,7 +53,9 @@ DEVICE_ID_MOUSE: "11"
 DEVICE_ID_KEYBOARD: "12"
 ```
 
-Next, run `./setup.sh`. After setup completes you may wish to commit your changes to the docker container with ``docker commit ...`.
+Next, run `./setup.sh`, and calibrate the eye-tracker with `/opt/TobiiProEyeTrackerManager/TobiiProEyeTrackerManager`.  
+
+With these steps complete, you may wish to commit your changes to the docker container with ``docker commit ...`.
 
 ### Data Collection
 

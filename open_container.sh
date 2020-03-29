@@ -3,7 +3,7 @@
 # Runs and enters the docker container given by `app_name` with the app's local
 # codebase and data directories mounted, along with the user's local home
 # directory.
-# Note: Exiting the container does not kill it.  
+# On exiting the container, it is killed.
 
 app_name="fast_aeye_typer"  # Your docker image name
 
@@ -49,3 +49,6 @@ nvidia-docker run --rm -it -d \
   
   # Exec into the detached container
   docker exec -it $container_name bash
+
+  # Close the container on exit
+  docker kill $container_name
