@@ -11,7 +11,6 @@ using namespace std;
 
 #define DRY_RUN false
 #define WRITE_FREQUENCY 10
-#define NUMLOCK_KEYCODE 77
 
 #define EVENT_CODE_KEY_UP 68
 #define EVENT_CODE_KEY_DOWN 67
@@ -20,11 +19,13 @@ using namespace std;
 
 
 class LogKeys {
-    sqlite3 *db;
-    bool dry_run;
-    int num_hooks;
-    Display *display;
-    map<string, string> config;
+    sqlite3 *db;                                // DB where events are logged
+    bool    dry_run;                            // Denotes no actual log writes
+    int     num_hooks;                          // Num devices registered for
+    Display *display;                           // X11 display
+    map<string, string> config;                 // App config
+    vector<XDeviceKeyEvent*> keyb_events;       // Key events ready for log
+    vector<XDeviceButtonEvent*> mouse_events;   // Mouse events ready for log
 
     public:
         LogKeys(map<string, string>, bool);
@@ -114,7 +115,6 @@ void LogKeys::log_stop() {
 // Logs keyboard and mouse button up/down events
 void LogKeys::event_logger(Display *dpy) {
     XEvent Event;
-    bool num_lock = false;
     
     setvbuf(stdout, NULL, _IOLBF, 0);
 
@@ -133,6 +133,7 @@ void LogKeys::event_logger(Display *dpy) {
                 key->keycode,
                 key->time
             );
+            // keyb_events.push_back(key);
         }
         // Mouse btn updown events
         else if (Event.type == btn_down_type) {
@@ -146,9 +147,17 @@ void LogKeys::event_logger(Display *dpy) {
                 btn->y_root,
                 btn->time
             );
+            // mouse_events.push_back(btn);
         }
     }
 }
+
+// TODO: void LogKeys::write_to_keylog(vector<XDeviceKeyEvent*> events) {
+
+// }
+
+// TODO: void LogKeys::write_to_mouselog(vector<XDeviceButtonEvent*> events) {
+// }
 
 
 int main(int argc, char **argv)
