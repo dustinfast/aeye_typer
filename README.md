@@ -25,9 +25,14 @@ cd docker
 ./build.sh
 ```
 
-Then run the docker container with `./run.sh LOCAL_CODEBASE LOCAL_DATA`, where LOCAL_CODE_BASE and LOCAL_DATA are the paths to the application's codebase and data directory, respectively, on your local machine.  
+Then run/enter the docker container with
 
-Once inside the container, get the device ID's of your mouse and keyboard using `xinput'. E.g.  
+```bash
+cd ../
+./open_container.sh LOCAL_APP_DATA_DIRECTORY_PATH
+```  
+
+Once inside the container, get the device ID's of your mouse and keyboard with `xinput'. E.g.  
 
 ``` bash
 $ xinput
@@ -52,7 +57,7 @@ DEVICE_ID_MOUSE: "11"
 DEVICE_ID_KEYBOARD: "12"
 ```
 
-Next, run `./setup.sh`.
+Next, run `./setup.sh`. After setup completes you may wish to commit your changes to the docker container with ``docker commit ...`.
 
 ### Data Collection
 
@@ -76,5 +81,6 @@ Speaking as you type, because it involves more neurons.
 
 ## TODO
 
+* Add gaze logging on key AND mouse click
 * Fix: Mouse clicks not registered by vscode
 * Rename LogKeys to EventLogger
