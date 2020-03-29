@@ -53,7 +53,7 @@ DEVICE_ID_MOUSE: "11"
 DEVICE_ID_KEYBOARD: "12"
 ```
 
-Next, run `./setup.sh`, and calibrate the eye-tracker with `/opt/TobiiProEyeTrackerManager/TobiiProEyeTrackerManager`.  
+Next, run `./setup.sh`, and calibrate the eye-tracker with ...  
 
 With these steps complete, you may wish to commit your changes to the docker container with ``docker commit ...`.
 

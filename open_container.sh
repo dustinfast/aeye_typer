@@ -47,6 +47,9 @@ nvidia-docker run --rm -it -d \
 	--privileged \
   $app_name
   
+  # Give container time to boot
+  sleep 1
+
   # Exec into the detached container
   docker exec -it $container_name bash
 

@@ -88,6 +88,7 @@ COPY dependencies/.bashrc /root/.bashrc
 # Create local codebase mount point and make it the working dir
 RUN mkdir -p /opt/app/src
 WORKDIR /opt/app/src
+
 # Make python3.6 the default python version
 RUN ln -s -f /usr/bin/python3.6 /usr/bin/python
 
