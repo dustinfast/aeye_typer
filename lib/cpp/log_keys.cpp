@@ -4,6 +4,7 @@
 
 #include "app.h"
 #include "x11_hook.h"
+#include "sql_helpers.h"
 
 using namespace std;
 
@@ -17,7 +18,6 @@ class LogKeys {
 
     public:
         LogKeys(map<string, string>, bool);
-        LogKeys(map<string, string> conf) : LogKeys(conf, False) {}
         void hook_device(char*);
         int log_start();
         void log_stop();
@@ -25,7 +25,7 @@ class LogKeys {
 };
 
 // Constructor
-LogKeys::LogKeys(map<string, string> app_config, bool is_dry_run) {
+LogKeys::LogKeys(map<string, string> app_config, bool is_dry_run=false) {
     db = NULL;
     num_hooks = 0;
     config = app_config;
@@ -37,9 +37,11 @@ LogKeys::LogKeys(map<string, string> app_config, bool is_dry_run) {
 
     // Open db for logging iff not dry run
     if (!dry_run)
-        db = get_sqlite_db(config["APP_KEY_EVENTS_DB_PATH"].c_str());
+        db = sqlite_get_db(config["APP_KEY_EVENTS_DB_PATH"].c_str());
     else
         cout << "INFO: Logging with is_dry_run = True.";
+
+    test(db);
 }
 
 // Inits the x11 global hook for the given device & increments the hook counter
