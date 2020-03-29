@@ -11,6 +11,7 @@ using namespace std;
 
 #define DRY_RUN false
 #define WRITE_FREQUENCY 10
+#define NUMLOCK_KEYCODE 77
 
 #define EVENT_CODE_KEY_UP 68
 #define EVENT_CODE_KEY_DOWN 67
@@ -39,7 +40,7 @@ LogKeys::LogKeys(map<string, string> app_config, bool is_dry_run=false) {
     num_hooks = 0;
     config = app_config;
     dry_run = is_dry_run;
-    display = get_display(NULL);
+    display = get_display(config["DEVICE_ID_DISPLAY"].c_str());
 
     if (display == NULL) 
         cout << "ERROR: X11 Display not found.\n";
@@ -49,8 +50,6 @@ LogKeys::LogKeys(map<string, string> app_config, bool is_dry_run=false) {
         db = sqlite_get_db(config["APP_KEY_EVENTS_DB_PATH"].c_str());
     else
         cout << "INFO: Logging with is_dry_run = True.";
-
-    sqlite_create_logtables(db);
 }
 
 // Inits x11 global hooks for the given device & increments the hook counter
@@ -115,17 +114,20 @@ void LogKeys::log_stop() {
 // Logs keyboard and mouse button up/down events
 void LogKeys::event_logger(Display *dpy) {
     XEvent Event;
+    bool num_lock = false;
     
     setvbuf(stdout, NULL, _IOLBF, 0);
 
     while(1) {
         XNextEvent(dpy, &Event);
-
+        
         // Keyboard key up/down events
         if ((Event.type == key_down_type) || (Event.type == key_up_type)) {
             XDeviceKeyEvent *key = (XDeviceKeyEvent *) &Event;
 
-            // TODO: Numlock modifier
+            // Modify numpad keys as necessary
+            map_numpad_keys(&key->keycode, is_numlock(display));
+
             printf("Key %s %d @ %lums\n", (
                 Event.type == key_down_type) ? "down" : "up",
                 key->keycode,

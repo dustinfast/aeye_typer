@@ -138,6 +138,14 @@ static XDeviceInfo* list_available_devices(Display *display) {
 }
 
 
+bool is_numlock(Display* display) {
+    XKeyboardState x;
+    XGetKeyboardControl(display, &x);
+    
+    return (x.led_mask & 2) ? true : false;
+}
+
+
 // Starts the hook for the given device on the specified display, where
 // event_watcher is your event listener implementing XNextEvent.
 static int set_device_hook(Display *display,
