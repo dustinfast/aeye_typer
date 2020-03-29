@@ -83,7 +83,7 @@ void sqlite_create_logtables(sqlite3 *db, bool drop_existing=false) {
     tbl_cols.push_back("pkey INT PRIMARY KEY NOT NULL");
     tbl_cols.push_back("event_code INT NOT NULL");
     tbl_cols.push_back("key_id INT NOT NULL");
-    tbl_cols.push_back("date_time DATETIME NOT NULL");
+    tbl_cols.push_back("unix_time INT NOT NULL");
 
     sqlite_create_table(db, tbl_name, tbl_cols, drop_existing);
 
@@ -94,7 +94,7 @@ void sqlite_create_logtables(sqlite3 *db, bool drop_existing=false) {
     tbl_cols.push_back("pkey INT PRIMARY KEY NOT NULL");
     tbl_cols.push_back("event_code INT NOT NULL");
     tbl_cols.push_back("btn_id INT NOT NULL");
-    tbl_cols.push_back("date_time DATETIME NOT NULL");
+    tbl_cols.push_back("unix_time INT NOT NULL");
 
     sqlite_create_table(db, tbl_name, tbl_cols, drop_existing);
 }
