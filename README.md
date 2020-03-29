@@ -52,16 +52,29 @@ DEVICE_ID_MOUSE: "11"
 DEVICE_ID_KEYBOARD: "12"
 ```
 
-Next, run `./setup.sh`, then start the application with `./fast_aeye_typer.py`
+Next, run `./setup.sh`.
+
+### Data Collection
+
+Start data collection with `./log_event_data.out`. Keystrokes, mouse clicks, etc., are then logged to the SQLite databse given in `_config.yaml`.
+
+### Training
+
+Not Implemented
+
+### Inference
+
+Not Implemented
 
 ## Ideas
 
 "Symbol" mode (e.g. 'if', 'else') versus "Key" mode (e.g. 'i', 'f', 'e', 'l', 's', 'e')
 
-Also capture voice, because speaking as you type a) involves more neurons, and b) NLP may be useful to use if brain scan not good enough
+Speaking as you type, because it involves more neurons.
 
 
 
 ## TODO
 
 * Fix: Mouse clicks not registered by vscode
+* Rename LogKeys to EventLogger
