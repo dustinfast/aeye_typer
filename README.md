@@ -64,4 +64,4 @@ Also capture voice, because speaking as you type a) involves more neurons, and b
 
 ## TODO
 
-Mouse clicks not registered by vscode
+* Fix: Mouse clicks not registered by vscode

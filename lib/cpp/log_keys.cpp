@@ -10,6 +10,8 @@ using namespace std;
 
 
 #define DRY_RUN false
+#define WRITE_FREQUENCY 10
+
 #define EVENT_CODE_KEY_UP 68
 #define EVENT_CODE_KEY_DOWN 67
 #define EVENT_CODE_MOUSEBTN_UP 69
@@ -51,7 +53,7 @@ LogKeys::LogKeys(map<string, string> app_config, bool is_dry_run=false) {
     sqlite_create_logtables(db);
 }
 
-// Inits the x11 global hook for the given device & increments the hook counter
+// Inits x11 global hooks for the given device & increments the hook counter
 void LogKeys::hook_device(char *device_id) {
 
     XDeviceInfo *info = device_info(display, device_id, True);
@@ -71,7 +73,7 @@ void LogKeys::hook_device(char *device_id) {
     }
 }
 
-// Registers for mouse and keyboard event and starts the logger
+// Registers for mouse/keyboard event and starts the logger
 int LogKeys::log_start() {
     // Ensure valid display set
     if (display == NULL) {
@@ -105,7 +107,7 @@ int LogKeys::log_start() {
 
 //Stops the logging process
 void LogKeys::log_stop() {
-    // TODO: Unset hooks and figure out async usage
+    // TODO: Unset hooks and determine async usage
     XSync(display, False);
     XCloseDisplay(display);
 }
@@ -123,6 +125,7 @@ void LogKeys::event_logger(Display *dpy) {
         if ((Event.type == key_down_type) || (Event.type == key_up_type)) {
             XDeviceKeyEvent *key = (XDeviceKeyEvent *) &Event;
 
+            // TODO: Numlock modifier
             printf("Key %s %d @ %lums\n", (
                 Event.type == key_down_type) ? "down" : "up",
                 key->keycode,
@@ -134,9 +137,11 @@ void LogKeys::event_logger(Display *dpy) {
             XDeviceButtonEvent *btn = (XDeviceButtonEvent *) &Event;
             printf("Btn down %d @ %lums\n", btn->button, btn->time);
 
-            printf("Key %s %d @ %lums\n", (
+            printf("Key %s %d (%d/%d) @ %lums\n", (
                 Event.type == key_down_type) ? "down" : "up",
                 btn->button,
+                btn->x_root,
+                btn->y_root,
                 btn->time
             );
         }
