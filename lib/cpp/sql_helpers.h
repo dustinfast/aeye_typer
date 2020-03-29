@@ -26,6 +26,8 @@ static sqlite3* sqlite_get_db(const char *path) {
     }
 }
 
+
+// Executes the given sql query in the context of the specified DB.
 int sqlite_exec(sqlite3 *db, const char *sql_query) {
     char *zErrMsg = 0;
 
@@ -43,7 +45,8 @@ int sqlite_exec(sqlite3 *db, const char *sql_query) {
 // Creates a table having the given cols in the given sqlite database.
 // If exists_ok is true, the table is dropped if it exists before creation.
 // Each element in columns is that cols definition, ex: "NAME TYPE NOT NULL"
-int sqlite_create_table(sqlite3 *db, string name, vector<string> columns, bool exists_ok) {
+int sqlite_create_table(sqlite3 *db, string name, vector<string> columns, bool exists_ok=false) {
+    int i = 0;
     string str_query;
     
     // Attempt to drop existing table iff specified
@@ -55,27 +58,43 @@ int sqlite_create_table(sqlite3 *db, string name, vector<string> columns, bool e
     // Build the sql query CREATE statement
     str_query = "CREATE TABLE "  + name + "(";
 
-    // for (const auto &col : columns) 
-    //     str_query += col + ",";
+    for (i = 0; i < columns.size(); i++) {
+        str_query += columns[i];
+        
+        if (i < (columns.size() - 1))
+            str_query += ",";
+    }
 
-    // str_query.pop_back();
     str_query += ");";
 
-    if (!sqlite_exec(db, str_query.c_str()))
-        return 0;
-    
-    return 1;
+    // Create the table
+    return sqlite_exec(db, str_query.c_str());
 }
 
 
-void test(sqlite3 *db) {
-    string tbl_name = "key_events";
+void sqlite_create_logtables(sqlite3 *db, bool drop_existing=false) {
+    string tbl_name;
     vector<string> tbl_cols;
 
-    tbl_cols.push_back("pkey INT PRIMARY KEY NOT NULL");
-    tbl_cols.push_back("type_code INT NOT NULL");
-    tbl_cols.push_back("event_code INT NOT NULL");
-    tbl_cols.push_back("date_time INT NOT NULL");
+    // Create Keyboard events table
+    tbl_name = "KeyboardEvents";
+    tbl_cols.clear();
 
-    sqlite_create_table(db, tbl_name, tbl_cols, false);
+    tbl_cols.push_back("pkey INT PRIMARY KEY NOT NULL");
+    tbl_cols.push_back("event_code INT NOT NULL");
+    tbl_cols.push_back("key_id INT NOT NULL");
+    tbl_cols.push_back("date_time DATETIME NOT NULL");
+
+    sqlite_create_table(db, tbl_name, tbl_cols, drop_existing);
+
+    // Create Mouse events table
+    tbl_name = "MouseBtnEvents";
+    tbl_cols.clear();
+
+    tbl_cols.push_back("pkey INT PRIMARY KEY NOT NULL");
+    tbl_cols.push_back("event_code INT NOT NULL");
+    tbl_cols.push_back("btn_id INT NOT NULL");
+    tbl_cols.push_back("date_time DATETIME NOT NULL");
+
+    sqlite_create_table(db, tbl_name, tbl_cols, drop_existing);
 }

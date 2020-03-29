@@ -9,6 +9,13 @@
 using namespace std;
 
 
+#define DRY_RUN false
+#define EVENT_CODE_KEY_UP 68
+#define EVENT_CODE_KEY_DOWN 67
+#define EVENT_CODE_MOUSEBTN_UP 69
+#define EVENT_CODE_MOUSEBTN_DOWN 70
+
+
 class LogKeys {
     sqlite3 *db;
     bool dry_run;
@@ -41,7 +48,7 @@ LogKeys::LogKeys(map<string, string> app_config, bool is_dry_run=false) {
     else
         cout << "INFO: Logging with is_dry_run = True.";
 
-    test(db);
+    sqlite_create_logtables(db);
 }
 
 // Inits the x11 global hook for the given device & increments the hook counter
@@ -112,28 +119,26 @@ void LogKeys::event_logger(Display *dpy) {
     while(1) {
         XNextEvent(dpy, &Event);
 
-        // Key down events
-        if (Event.type == key_press_type) {
+        // Keyboard key up/down events
+        if ((Event.type == key_down_type) || (Event.type == key_up_type)) {
             XDeviceKeyEvent *key = (XDeviceKeyEvent *) &Event;
-            printf("Key down %d @ %lums\n", key->keycode, key->time);
-        }
 
-        // Key up events
-        else if (Event.type == key_rel_type) {
-            XDeviceKeyEvent *key = (XDeviceKeyEvent *) &Event;
-            printf("Key up %d @ %lums\n", key->keycode, key->time);
+            printf("Key %s %d @ %lums\n", (
+                Event.type == key_down_type) ? "down" : "up",
+                key->keycode,
+                key->time
+            );
         }
-
-        // Mouse btn down events
-        else if (Event.type == btn_press_type) {
+        // Mouse btn updown events
+        else if (Event.type == btn_down_type) {
             XDeviceButtonEvent *btn = (XDeviceButtonEvent *) &Event;
-            printf("Button press %d @ %lums\n", btn->button, btn->time);
-        }
+            printf("Btn down %d @ %lums\n", btn->button, btn->time);
 
-        // Mouse btn up events
-        else if (Event.type == btn_rel_type) {
-            XDeviceButtonEvent *btn = (XDeviceButtonEvent *) &Event;
-            printf("Button release %d @ %lums\n", btn->button, btn->time);
+            printf("Key %s %d @ %lums\n", (
+                Event.type == key_down_type) ? "down" : "up",
+                btn->button,
+                btn->time
+            );
         }
     }
 }

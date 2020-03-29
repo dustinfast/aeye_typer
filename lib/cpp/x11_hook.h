@@ -24,10 +24,10 @@ static Display* get_display(_Xconst char* display_name);
 static int xinput_version(Display *display);
 
 // Static global vars
-static int key_press_type = INVALID_EVENT_TYPE;
-static int key_rel_type = INVALID_EVENT_TYPE;
-static int btn_press_type = INVALID_EVENT_TYPE;
-static int btn_rel_type = INVALID_EVENT_TYPE;
+static int key_down_type = INVALID_EVENT_TYPE;
+static int key_up_type = INVALID_EVENT_TYPE;
+static int btn_down_type = INVALID_EVENT_TYPE;
+static int btn_up_type = INVALID_EVENT_TYPE;
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -55,13 +55,13 @@ static int register_events(Display *display, XDeviceInfo *info, char *dev_name) 
         for (ip = device->classes, i=0; i<info->num_classes; ip++, i++) {
             switch (ip->input_class) {
                 case KeyClass:
-                    DeviceKeyPress(device, key_press_type, events[n]); n++;
-                    DeviceKeyRelease(device, key_rel_type, events[n]); n++;
+                    DeviceKeyPress(device, key_down_type, events[n]); n++;
+                    DeviceKeyRelease(device, key_up_type, events[n]); n++;
                     break;
 
                 case ButtonClass:
-                    DeviceButtonPress(device, btn_press_type, events[n]); n++;
-                    DeviceButtonRelease(device, btn_rel_type, events[n]); n++;
+                    DeviceButtonPress(device, btn_down_type, events[n]); n++;
+                    DeviceButtonRelease(device, btn_up_type, events[n]); n++;
                     break;
 
                 case ValuatorClass:
