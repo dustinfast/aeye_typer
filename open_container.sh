@@ -31,7 +31,7 @@ local_ssh_dir="$local_home_dir/.ssh"
 xhost +local:docker
 
 # Start detached docker contnainer w/local directories mounted
-container_name="$app_name"_"$$"
+container_name="$app_name"_c
 
 nvidia-docker run --rm -it -d \
 	--name $container_name \

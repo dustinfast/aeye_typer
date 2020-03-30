@@ -55,7 +55,11 @@ DEVICE_ID_KEYBOARD: "12"
 
 Next, run `./setup.sh`, and calibrate the eye-tracker with ...  
 
-With these steps complete, you may wish to commit your changes to the docker container with ``docker commit ...`.
+Now, from outside the container, commit these changes to the docker container with ``docker commit fast_aeye_typer fast_aeye_typer:latest`.  
+
+Then from inside the container, restart it by typing `exit` and then `./open_container.sh`.  
+
+Very correct device installation with...
 
 ### Data Collection
 

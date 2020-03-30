@@ -47,9 +47,8 @@ dpkg -i tobii_config_0.1.6.111_amd64.deb
 echo "********************************************************************"
 echo "*** Extracting Stream Engine Client and T2T Dev Libs..."
 if [[ ! -e "${LIB_DIR}" ]]; then
-    mkdir -p ${LIB_DIR}/t2t
+    mkdir -p ${LIB_DIR}
     tar -xzvf stream_engine_linux_3.0.4.6031.tar.gz -C ${LIB_DIR}
-    # tar -xzvf t2t_64.tar.gz -C ${LIB_DIR}/t2t
 else
     echo "${LIB_DIR} already exist. Continue..."
 fi
@@ -60,9 +59,6 @@ cp ./tobii.conf /etc/ld.so.conf.d/
 
 mkdir /usr/include/tobii
 cp -R ${LIB_DIR}/include/tobii/* /usr/include/tobii
-
-# mkdir /opt/t2t_64
-# cp -R ${LIB_DIR}/t2t/* /opt/t2t_64
 
 rm -rf ${LIB_DIR}
 
