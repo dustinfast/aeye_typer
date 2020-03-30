@@ -53,13 +53,15 @@ DEVICE_ID_MOUSE: "11"
 DEVICE_ID_KEYBOARD: "12"
 ```
 
-Next, run `./setup.sh`, and calibrate the eye-tracker with ...  
+Next -
 
-Now, from outside the container, commit these changes to the docker container with ``docker commit fast_aeye_typer fast_aeye_typer:latest`.  
+1. Install the eye-tracker and compile binaries with `./setup.sh`.
 
-Then from inside the container, restart it by typing `exit` and then `./open_container.sh`.  
+2. From a local termoinal (outside the container) commit the install to the container with ``docker commit fast_aeye_typer fast_aeye_typer:latest`.  
 
-Very correct device installation with...
+3. Restart the container (this time from inside the container) with an `exit` followed by `./open_container.sh`.  
+
+4. Very your eye-tracker is correctly installed with `./tobii_cam_test.out`.
 
 ### Data Collection
 
