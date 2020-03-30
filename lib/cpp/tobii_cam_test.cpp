@@ -5,7 +5,7 @@
 #include <assert.h>
 #include <cstring>
 
-#include "stream_eng.h"
+#include "tobii_stream_eng.h"
 
 using namespace std;
 
