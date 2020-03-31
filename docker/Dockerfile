@@ -65,6 +65,8 @@ RUN echo "Installing 3rd party linux applications..." && \
     htop \
     openssh-server \
     git \
+    expect \
+    usbutils \
     libxi-dev \
     libcanberra-gtk-module \
     avahi-daemon \

@@ -20,12 +20,14 @@ then
   echo "WARN: Missing argument 1 (data folder)... Using $local_data_dir instead."
 fi
 
+local_ssh_dir="$local_home_dir/.ssh"
+
 echo "INFO: Mounting $local_data_dir at /opt/app/data."
 echo "INFO: Mounting $local_codebase_dir at /opt/app/src."
 echo "INFO: Mounting $local_home_dir at /opt/home."
 
-# Set .ssh dir
-local_ssh_dir="$local_home_dir/.ssh"
+echo "INFO: Disabling local Bluetooth for use in the container."
+sudo service bluetooth stop
 
 # Allow local x win connections for users in the docker group
 xhost +local:docker

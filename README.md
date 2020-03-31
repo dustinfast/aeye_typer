@@ -14,14 +14,14 @@ Author: Dustin Fast <dustin.fast@hotmail.com>
 
 ### Setup
 
-First, clone the applications repo and build the docker image with
+First, clone the applications repo and build the docker image with --
 
 ```bash
 cd docker
 ./build.sh
 ```
 
-Then run/enter the docker container with
+Then run/enter the docker container with (Note: Local Bluetooth will be disabled whle the container is running) --  
 
 ```bash
 cd ../
@@ -53,7 +53,7 @@ DEVICE_ID_MOUSE: "11"
 DEVICE_ID_KEYBOARD: "12"
 ```
 
-Next -
+#### Eye Tracker Installation
 
 1. Install the eye-tracker and compile binaries with `./setup.sh`.
 
@@ -62,6 +62,10 @@ Next -
 3. Restart the container (this time from inside the container) with an `exit` followed by `./open_container.sh`.  
 
 4. Very your eye-tracker is correctly installed with `./tobii_cam_test.out`.
+
+#### Emotiv EPOC+ Installation
+
+Set the Emotiv Epochs MAC address as `DEVICE_ID_EEG` in `_config.yaml`.
 
 ### Data Collection
 
