@@ -1,6 +1,6 @@
 #! /usr/bin/env bash
 
-rm log_event_data.out
+rm test_logger.out
 
 gcc ./lib/cpp/log_keys.cpp -lstdc++ \
     -lX11       \
@@ -8,6 +8,6 @@ gcc ./lib/cpp/log_keys.cpp -lstdc++ \
     -lXi        \
     -lyaml-cpp  \
     -lsqlite3   \
-    -o log_event_data.out
+    -o test_logger.out
 
-./log_event_data.out
+./test_logger.out

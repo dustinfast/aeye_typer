@@ -25,7 +25,7 @@ Then run/enter the docker container with (Note: Local Bluetooth will be disabled
 
 ```bash
 cd ../
-./open_container.sh LOCAL_APP_DATA_DIRECTORY_PATH
+./run_docker_cont.sh LOCAL_APP_DATA_DIRECTORY_PATH
 ```  
 
 Once inside the container, get the device ID's of your mouse and keyboard with `xinput'. E.g.  

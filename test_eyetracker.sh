@@ -1,9 +1,9 @@
 #! /usr/bin/env bash
 
-rm 4c_connect.out
+rm test_eyetracker.out
 
 gcc lib/cpp/4c_connect.cpp  \
-    -o 4c_connect.out       \
+    -o test_eyetracker.out       \
     -pthread /usr/lib/tobii/libtobii_stream_engine.so
 
-./4c_connect.out
+./test_eyetracker.out
