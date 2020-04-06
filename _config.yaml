@@ -5,6 +5,7 @@ APP_KEY_EVENTS_DB_PATH: /opt/app/data/key_events.sql
 
 # Device IDs
 DEVICE_ID_DISPLAY: ":0"
-DEVICE_ID_MOUSE: "11"
 DEVICE_ID_KEYBOARD: "12"
-DEVICE_ID_EEG: D0:1A:E7:BA:E3:BF            # TODO: Use in connect_to_eeg.sh
+DEVICE_ID_MOUSE: "11"
+DEVICE_ID_EEG_BOARD: 0
+DEVICE_ID_EEG: /dev/ttyUSB0
