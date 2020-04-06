@@ -58,18 +58,23 @@ RUN echo "Updating apt-get..." && \
 
 RUN echo "Installing 3rd party linux applications..." && \
     apt-get install -y --no-install-recommends \
+    vim \
+    git \
+    htop \
     wget \
     bzip2 \
-    vim \
+    unzip \
     iotop \
-    htop \
-    openssh-server \
-    git \
     expect \
     usbutils \
+    openssh-server \
+    libcanberra-gtk-module \
+    default-jre \
+    default-jdk \
     libxi-dev \
-    # libcanberra-gtk-module \
-    # avahi-daemon \
+    libxss-dev \
+    libgconf-2-4 \
+    libgtk-3-0 \
     xinput \
     xdotool \
     libxdo-dev \
@@ -85,14 +90,24 @@ RUN echo "Installing 3rd party linux applications..." && \
     apt-file && apt-file update
 
 RUN echo "Setting up workspace..."
-# Copy in custom .bashrc
-COPY dependencies/.bashrc /root/.bashrc
-# Create local codebase mount point and make it the working dir
-RUN mkdir -p /opt/app/src
-WORKDIR /opt/app/src
-
 # Make python3.6 the default python version
 RUN ln -s -f /usr/bin/python3.6 /usr/bin/python
+# Copy in custom .bashrc
+COPY dependencies/.bashrc /root/.bashrc
+# Create local codebase mount point
+RUN mkdir -p /opt/app/src
+
+RUN echo "Installing OpenBCI_Hub..."
+RUN mkdir -p /tmp/OpenBCI_Hub
+COPY dependencies/OpenBCIHub-v2.1.0-linux-64bit.zip /tmp/OpenBCI_Hub
+WORKDIR /tmp/OpenBCI_Hub
+RUN unzip OpenBCIHub-v2.1.0-linux-64bit.zip
+RUN mv OpenBCIHub-v2.1.0-linux-64bit /opt/OpenBCI_Hub
+RUN ls
+RUN rm -rf /tmp/OpenBCI_Hub
+
+RUN echo "Setting default working dir"
+WORKDIR /opt/app/src
 
 # RUN echo "Setting up psuedo-systemd..."
 # ENV container docker

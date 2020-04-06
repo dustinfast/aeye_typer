@@ -86,9 +86,6 @@ alias l='ls -CF'
 alias satus='git status'
 alias commit='git commit'
 
-# misc custom aliases
-alias unzip='tar -svzf'
-
 
 # Add an "alert" alias for long running commands.  Use like so:
 #   sleep 10; alert
