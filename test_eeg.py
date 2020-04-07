@@ -17,19 +17,15 @@ if __name__ == "__main__":
 
     sample_rate = eeg.sample_rate
     eeg_channels = eeg.eeg_channels
-    tstamp_channel = eeg.timestamp_channel
+    tstamp_channel = eeg.time_channel
 
     # Start data stream
     print(f'Gathering {DATA_GATHER_TIME} seconds worth of data w/ ' +
           f'sample rate = {sample_rate}')
     
-    data = eeg.stream(DATA_GATHER_TIME)
+    data = eeg.stream_wait(DATA_GATHER_TIME)
 
     if data is not None:
-        # Strip data down to timestamp and eeg channels only
-        print(f'Shape = {data.shape}') 
-        data = data[[tstamp_channel] + eeg_channels, :]
-
         # Write to stdout
         print('Received data:')
         print(data)
