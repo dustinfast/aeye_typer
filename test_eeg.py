@@ -15,18 +15,16 @@ if __name__ == "__main__":
     # Init the board
     eeg = EEGBrainflow(False)
 
-    sample_rate = eeg.sample_rate
-    eeg_channels = eeg.eeg_channels
-    tstamp_channel = eeg.time_channel
-
     # Start data stream
     print(f'Gathering {DATA_GATHER_TIME} seconds worth of data w/ ' +
-          f'sample rate = {sample_rate}')
+          f'sample rate = {eeg.sample_rate}')
     
     data = eeg.stream_wait(DATA_GATHER_TIME)
 
+    # Write result to stdout
     if data is not None:
-        # Write to stdout
         print('Received data:')
         print(data)
         print(f'Shape = {data.shape}')  # shape = [channels x data_points]
+    else:
+        print('No data received')

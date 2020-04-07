@@ -1,7 +1,10 @@
 
 # File / Directory Paths
 APP_DATA_DIR: /opt/app/data
-APP_KEY_EVENTS_DB_PATH: /opt/app/data/key_events.sql
+APP_KEY_EVENTS_DB_PATH: /opt/app/data/xinput/key_events.sql
+APP_EEG_EVENTS_CSV_DIR: /opt/app/data/eeg/raw_csv
+APP_EEG_EVENTS_DB_PATH: /opt/app/data/eeg/eeg_events.sql
+
 
 # Device IDs
 DEVICE_ID_DISPLAY: ":0"
