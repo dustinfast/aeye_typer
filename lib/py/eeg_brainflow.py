@@ -1,5 +1,5 @@
-""" A module for interating with the application's OpenBCI Cyton board 
-    via the Brainflow API.
+""" A module for interacting with the application's EEG board via the
+    Brainflow API.
 """
 
 __author__ = 'Dustin Fast [dustin.fast@outlook.com]'
@@ -16,9 +16,10 @@ from brainflow.data_filter import DataFilter, FilterTypes, AggOperations
 from lib.py import app
 
 
-_config = app.config()
-EEG_BOARD_ID = _config['DEVICE_ID_EEG_BOARD']
-EEG_BOARD_SERIAL_PORT = _config['DEVICE_ID_EEG']
+_conf = app.config()
+EEG_BOARD_ID = _conf['DEVICE_ID_EEG_BOARD']
+EEG_BOARD_SERIAL_PORT = _conf['DEVICE_ID_EEG']
+del _conf
 
 
 class EEGBrainflow():
@@ -27,7 +28,8 @@ class EEGBrainflow():
         """
         self.board = self._init_board(logger)
 
-    def _init_board(self, logger):
+    @staticmethod
+    def _init_board(logger):
         """Inits the connection to the EEG board.
         """
         # Enable or disable board's logger output
@@ -39,6 +41,7 @@ class EEGBrainflow():
         params = BrainFlowInputParams()
         params.serial_port = EEG_BOARD_SERIAL_PORT
         board = BoardShim(EEG_BOARD_ID, params)
+        
         return board
         
     @property
