@@ -111,7 +111,6 @@ class EEGBrainflow():
             data = self.board.get_board_data()
 
             if write_every:
-                print(self._do_channel_mask(data))
                 path = Path(output_dir, datetime.now().strftime(fname_template))
                 DataFilter.write_file(
                     self._do_channel_mask(data), str(path), 'a')
@@ -124,9 +123,9 @@ class EEGBrainflow():
 
 
     def log_stream_async(self, logname, md_notes, seconds=20, write_every=10):
-        """ Starts an asynchronous logging of eeg data to the application
-            output path every WRITE_EVERY seconds, and then quits after the
-            given number of seconds (0 denotes never quit).
+        """ Starts an asynchronous logging of eeg data, with writes to the
+            application's output path every WRITE_EVERY seconds for the given
+            number of seconds (0 denotes never quit).
         """
         if self._async_streamer is not None and self._async_streamer.is_alive():
             print('ERROR: Async stream is already active.')
