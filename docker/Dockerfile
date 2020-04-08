@@ -50,7 +50,8 @@ RUN echo "Installing 3rd party Python 3.6 libraries..." && \
         seaborn \
         sqlalchemy \
         tqdm \
-        brainflow
+        brainflow \
+        pynput
 
 RUN echo "Updating apt-get..." && \
     apt-get update

@@ -156,7 +156,7 @@ class EEGAsyncEventLogger(EEGBrainflow):
             if existing_notes != notes:
                 raise ValueError(f'Notes mismatch for {notefile_path}')
 
-    def _async_watcher(self, signal_queue):
+    def _async_watcher(self, signal_queue, verbose=True):
         """ The async watcher -- intended to be used as a sub process.
             Reads data from the board and, on write signal receive, writes
             the appropriate number of samples to log file. On stop signal
@@ -168,13 +168,13 @@ class EEGAsyncEventLogger(EEGBrainflow):
         # Helpers
         def _stop(signal):
             if signal == SIGNAL_STOP:
-                print('INFO: Async EEG event watcher STOP received.')
+                # print('INFO: Async EEG event watcher STOP received.')  # debug
                 return True
             return False
 
         def _event(signal):
             if signal == SIGNAL_EVENT:
-                print('INFO: Async EEG event watcher EVENT received...')
+                # print('INFO: Async EEG event watcher EVENT received...')  # debug
                 return time.time() + self._writeafter_seconds
             return time.time()
             
@@ -193,10 +193,11 @@ class EEGAsyncEventLogger(EEGBrainflow):
         self.board.start_stream(SZ_DATA_BUFF)  # Starts async data collection
         signal = None
 
-        print(f'INFO: Async EEG event watcher started at {time.time()}')
+        if verbose:
+            print(f'INFO: Async EEG event watcher started at {time.time()}')
 
         while True:
-            # Handle inner loop sig if needed, else wait for new signal
+            # Handle inner loop signal if needed, else wait for new signal
             signal = signal if signal is not None else \
                 signal_queue.get()  # blocks
 
@@ -204,9 +205,11 @@ class EEGAsyncEventLogger(EEGBrainflow):
             if _stop(signal):
                 break
             elif signal != SIGNAL_EVENT:
-                print('ERROR: Async EEG event watcher received unhandled ' +
-                    f'signal "{signal}"... Killing async EEG event watcher.')
-                break
+                if verbose:
+                    print('WARN: Async EEG event watcher received ' +
+                          f'unhandled signal "{signal}".')
+                signal = None
+                continue
             
             # If not kill or unhandled signal, start logging the EEG data
             # starting with the specified number of previous data points
@@ -214,14 +217,16 @@ class EEGAsyncEventLogger(EEGBrainflow):
             prev_points = self.board.get_board_data()
 
             if prev_points.shape[1] > 0:
+                print(f'Wrote back at {time.time()}')  # debug
                 _do_write(prev_points[:, -self._writeback_samples:])
             else:
-                print('WARN: Async watcher has no prev points to write.')
+                print('WARN: Async watcher has no prev points to write. ' +
+                      'Is it connected?')
 
             while time.time() <= write_until:
-                print(f'Fr: {time.time()}\nTo: {write_until}\n')
+                # print(f'Fr: {time.time()}\nTo: {write_until}\n')  # debug
 
-                # Let data accumalte for the specified time then write it out
+                # Let data accumulate for the specified time then log it
                 time.sleep(self._writeafter_seconds)
                 _do_write(self.board.get_board_data())
 
@@ -238,13 +243,19 @@ class EEGAsyncEventLogger(EEGBrainflow):
                 # Allow enough time to log another iteration
                 else:
                     write_until = _event(signal)
+
+            # If inner loop closed with no kill signal encountered, clear last
             else:
                 signal = None
+
+            # print(f'Inner loop exit w signal = {signal}')  # debug
 
         # Cleanup
         self.board.stop_stream()
         self.board.release_session()
-        print(f'INFO: Async EEG event watcher stopped.')
+
+        if verbose:
+            print(f'INFO: Async EEG event watcher stopped.')
 
     def start(self):
         """ Starts the async watcher, putting it in a state where it is ready
