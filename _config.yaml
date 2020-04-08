@@ -1,14 +1,20 @@
-
-# File / Directory Paths
-APP_DATA_DIR: /opt/app/data
-APP_KEY_EVENTS_DB_PATH: /opt/app/data/xinput/key_events.sql
-APP_EEG_EVENTS_CSV_DIR: /opt/app/data/eeg/raw_csv
-APP_EEG_EVENTS_DB_PATH: /opt/app/data/eeg/eeg_events.sql
+# The application's global config file...
 
 
-# Device IDs
-DEVICE_ID_DISPLAY: ":0"
-DEVICE_ID_KEYBOARD: "12"
-DEVICE_ID_MOUSE: "11"
-DEVICE_ID_EEG_BOARD: 0
-DEVICE_ID_EEG: /dev/ttyUSB0
+# EEG Device
+EEG_BOARD_ID: 0
+EEG_BOARD_SERIAL_PORT: /dev/ttyUSB0
+EEG_SZ_DATA_BUFF: 450000
+
+# Event Logging
+EVENTLOG_CSV_ROOTDIR: /opt/app/data/event_logs
+EVENTLOG_CSV_SUBDIR: raw_csv
+EVENTLOG_EEG_SUBDIR: eeg
+EVENTLOG_KEY_SUBDIR: keystroke
+EVENTLOG_NOTEFILE_FNAME: 'NOTES.md'
+
+EVENTLOG_EEG_WRITEBACK_SECONDS: 5
+EVENTLOG_EEG_WRITEAFTER_SECONDS: 5
+
+EVENTLOG_SIGNAL_EVENT: True
+EVENTLOG_SIGNAL_STOP: False
