@@ -44,17 +44,18 @@ if __name__ == "__main__":
     eeg_logger = AsyncEEGEventLogger(
         LOG_NAME, LOG_NOTES, WRITE_BACK, WRITE_AFTER)
 
-    input_logger = AsyncInputEventLogger(LOG_NAME, LOG_NOTES)
+    input_logger = AsyncInputEventLogger(
+        LOG_NAME, LOG_NOTES, eeg_logger.event)
 
     # Start the loggers
-    # eeg_logger.start()
+    eeg_logger.start()
     k = input_logger.start()
 
     # Wait for input logger to terminate via keystroke combo SHIFT + ESC
     k.join()
 
     # Cleanup
-    # eeg_logger.stop()
+    eeg_logger.stop()
 
 
     
