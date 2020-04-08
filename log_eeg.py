@@ -10,7 +10,7 @@ from pynput.keyboard import Key
 from pynput import mouse, keyboard
 
 from lib.py import app
-from lib.py.event_loggers import AsyncEEGEventLogger
+from lib.py.event_loggers import AsyncEEGEventLogger, AsyncInputEventLogger
 
 
 # App config constants
@@ -40,44 +40,21 @@ LOG_NOTES = ('# Test Log 0  \n'
 
 
 if __name__ == "__main__":
-    # Init the EEG board event logger
+    # Init and start the EEG board and key/mouse event loggers
     eeg_logger = AsyncEEGEventLogger(
         LOG_NAME, LOG_NOTES, WRITE_BACK, WRITE_AFTER)
 
-    # Start data stream watch
-    eeg_logger.start()
+    input_logger = AsyncInputEventLogger(LOG_NAME, LOG_NOTES)
 
-    def on_click(x, y, button, pressed):
-        if pressed:
-            print(f'Mouse down at ({x}, {y}) with {button}')
-        else:
-            print(f'Mouse up at ({x}, {y}) with {button}')
-        eeg_logger.event()
-        
-    
-    def on_scroll(x, y, dx, dy):
-        print(f'Mouse scrolled at ({x}, {y})({dx}, {dy})')
-        eeg_logger.event()
+    # Start the loggers
+    # eeg_logger.start()
+    k = input_logger.start()
+
+    # Wait for input logger to terminate via keystroke combo SHIFT + ESC
+    k.join()
+
+    # Cleanup
+    # eeg_logger.stop()
 
 
-    def on_press(key):
-        try:
-            print(f'Key {key.char} pressed at {time.time()}')
-        except AttributeError:
-            print(f'Special key {key} pressed at {time.time()}')
-        eeg_logger.event()
-
-    def on_release(key):
-        print('{key} released')
-        if key == keyboard.Key.esc:
-            return False  # Stop listener
-        eeg_logger.event()
-
-    
-    m = mouse.Listener(on_click=on_click, on_scroll=on_scroll)
-    m.start()
-    with keyboard.Listener(on_press=on_press,on_release=on_release) as k:
-        k.join()
-
-    eeg_logger.stop()
     

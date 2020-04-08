@@ -11,6 +11,9 @@ import multiprocessing as mp
 from datetime import datetime
 from pathlib import Path
 
+from pynput.mouse import Button
+from pynput.keyboard import Key
+from pynput import mouse, keyboard
 from brainflow.data_filter import DataFilter
 
 from lib.py import app
@@ -22,14 +25,15 @@ _conf = app.config()
 LOG_CSV_ROOTDIR = _conf['EVENTLOG_CSV_ROOTDIR']
 LOG_CSV_SUBDIR = _conf['EVENTLOG_CSV_SUBDIR']
 LOG_EEG_SUBDIR = _conf['EVENTLOG_EEG_SUBDIR']
-LOG_KEY_SUBDIR = _conf['EVENTLOG_KEY_SUBDIR']
+LOG_KEYS_SUBDIR = _conf['EVENTLOG_KEYS_SUBDIR']
 NOTEFILE_FNAME = _conf['EVENTLOG_NOTEFILE_FNAME']
 SIGNAL_EVENT = _conf['EVENTLOG_SIGNAL_EVENT']
 SIGNAL_STOP = _conf['EVENTLOG_SIGNAL_STOP']
 SZ_DATA_BUFF = _conf['EEG_SZ_DATA_BUFF']
 del _conf
 
-CSV_FNAME_TEMPLATE = '%Y-%m-%d--%H-%M.csv'
+EEG_CSV_FNAME_TEMPLATE = '%Y-%m-%d--%H-%M.csv'
+KEYS_CSV_FNAME_TEMPLATE = '%Y-%m-%d--%H.csv'
 
 
 ###########
@@ -42,8 +46,10 @@ CSV_FNAME_TEMPLATE = '%Y-%m-%d--%H-%M.csv'
 ##############
 
 class AsyncEEGEventLogger(EEGBrainflow):
-    def __init__(self, logname, notes='NA', writeback=5, writeafter=5):
-        """ # TODO: docstring
+    def __init__(
+        self, logname, notes='NA', writeback=5, writeafter=5, verbose=True):
+        """ A class for performing asynchronous logging of EEG data before
+            and after the occurance of an event.
         """
         super().__init__()
 
@@ -60,6 +66,7 @@ class AsyncEEGEventLogger(EEGBrainflow):
         self._notes = notes
         self._writeback_samples = writeback * self.sample_rate
         self._writeafter_seconds = writeafter
+        self._verbose = verbose
 
         self._logdir_path = Path(LOG_CSV_ROOTDIR, logname, LOG_EEG_SUBDIR)
         self._async_proc = None
@@ -99,7 +106,7 @@ class AsyncEEGEventLogger(EEGBrainflow):
             if existing_notes != notes:
                 raise ValueError(f'Notes mismatch for {notefile_path}')
 
-    def _async_watcher(self, signal_queue, verbose=True) -> None:
+    def _async_watcher(self, signal_queue) -> None:
         """ The async watcher -- intended to be used as a sub process.
             Reads data from the board and, on write signal receive, writes
             the appropriate number of samples to log file. On stop signal
@@ -123,7 +130,7 @@ class AsyncEEGEventLogger(EEGBrainflow):
             
         def _do_write(data):
             path = Path(
-                self._logdir_path, datetime.now().strftime(CSV_FNAME_TEMPLATE))
+                self._logdir_path, datetime.now().strftime(EEG_CSV_FNAME_TEMPLATE))
             DataFilter.write_file(
                 self._do_channel_mask(data), str(path), 'a')
 
@@ -136,7 +143,7 @@ class AsyncEEGEventLogger(EEGBrainflow):
         self.board.start_stream(SZ_DATA_BUFF)  # Starts async data collection
         signal = None
 
-        if verbose:
+        if self._verbose:
             print(f'INFO: Async EEG event watcher started at {time.time()}')
 
         while True:
@@ -148,7 +155,7 @@ class AsyncEEGEventLogger(EEGBrainflow):
             if _stop(signal):
                 break
             elif signal != SIGNAL_EVENT:
-                if verbose:
+                if self._verbose:
                     print('WARN: Async EEG event watcher received ' +
                           f'unhandled signal "{signal}".')
                 signal = None
@@ -197,7 +204,7 @@ class AsyncEEGEventLogger(EEGBrainflow):
         self.board.stop_stream()
         self.board.release_session()
 
-        if verbose:
+        if self._verbose:
             print(f'INFO: Async EEG event watcher stopped.')
 
     def start(self) -> mp.Process:
@@ -226,14 +233,19 @@ class AsyncEEGEventLogger(EEGBrainflow):
         """
         try:
             self._async_queue.put_nowait(SIGNAL_STOP)
+        except AttributeError:
+            print('ERROR: Received STOP but EEG event watcher not started.')
         except mp.queues.Full:
-            # Kick out curr msg and try again
-            time.sleep(0.25)
-            try:
-                _ = self._async_queue.get_nowait()
-            except mp.queues.Empty:
-                pass
-            self._async_queue.put_nowait(SIGNAL_STOP)
+            if not self._async_proc.is_alive():
+                print('ERROR: Received STOP but EEG event watcher IS stopped.')
+            else:
+                # Kick out curr msg and try again
+                time.sleep(0.25)
+                try:
+                    _ = self._async_queue.get_nowait()
+                except mp.queues.Empty:
+                    pass
+                self._async_queue.put_nowait(SIGNAL_STOP)
 
     def event(self) -> None:
         """ Sends the async watcher the signal to start (or continue) logging,
@@ -243,6 +255,135 @@ class AsyncEEGEventLogger(EEGBrainflow):
         """
         try:
             self._async_queue.put_nowait(SIGNAL_EVENT)
+        except AttributeError:
+            print('ERROR: Received EVENT but EEG eveon_nt watcher not started.')
         except mp.queues.Full:
-            pass # Don't flood queue with event signals
+            if not self._async_proc.is_alive():
+                print('ERROR: Received EVENT but EEG event watcher stopped.')
+            else:
+                pass # Don't flood queue with event signals
 
+
+class AsyncInputEventLogger(object):
+    def __init__(self, logname, notes='NA', on_event_func=None):
+        """ A class for asynchronously logging keyboard and mouse input events
+            and (optionally) call the given function (no args) when an input
+            event occurs.
+        """
+        # Validate params
+        assert(isinstance(logname, str) and isinstance(notes, str))
+        assert(on_event_func is None or callable(on_event_func) is True)
+
+        self._logname = logname
+        self._notes = notes
+        self._on_event = on_event_func
+
+        self._logdir_path = Path(LOG_CSV_ROOTDIR, logname, LOG_KEYS_SUBDIR)
+        self._async_keywatcher_proc = None
+        self._async_mousewatcher_proc = None
+        self._shift_down = False
+
+    def _init_outpath(self) -> None:
+        """ Sets up the objects output directory by ensuring it exists and
+            adding/verifying the notes file.
+        """
+        notes = self._notes
+        output_dir = self._logdir_path
+        notefile_path = Path(output_dir, NOTEFILE_FNAME)
+
+        # Create output dir iff not exists
+        if not output_dir.exists():
+            os.makedirs(output_dir)
+            print(f'INFO: Created log dir - {output_dir}')
+
+            # Create note file
+            with open(notefile_path, 'w') as f:
+                f.writelines(notes)
+
+            note_str = '\t' + '\n\t'.join(notes.split('\n'))
+            print(f'INFO: Created log notes - {notefile_path}\n' +
+                  f'INFO: Log dir note content -\n{note_str}')
+            
+        # Else, dir already exists... Use it iff matching notes
+        else:
+            with open(notefile_path, 'r') as f:
+                existing_notes = f.read()
+
+            note_str = '\t' + '\n\t'.join(existing_notes.split('\n'))
+            print(f'INFO: Using existing log dir - {output_dir}\n' +
+                  f'INFO: Log dir note content -\n{note_str}')
+
+            # Ensure matching notefile content
+            if existing_notes != notes:
+                raise ValueError(f'Notes mismatch for {notefile_path}')
+
+    # TODO: def _log_event(self):
+
+    def _do_on_event_call(self):
+        """ Calls the user defined on_event function iff it is defined.
+        """
+        if self._on_event is not None:
+            self._on_event()
+
+    def _on_click(self, x, y, button, pressed):
+        if pressed:
+            print(f'Mouse down at ({x}, {y}) with {button}')
+        else:
+            print(f'Mouse up at ({x}, {y}) with {button}')
+        self._do_on_event_call()
+            
+    def _on_scroll(self, x, y, dx, dy):
+        print(f'Mouse scrolled at ({x}, {y})({dx}, {dy})')
+        self._do_on_event_call()
+        
+    def _on_press(self, key):
+        print(f'Key {key} pressed at {time.time()}')
+        self._do_on_event_call()
+
+        # Note shift status, for exit keycode purposes
+        if key == keyboard.Key.shift:
+            self._shift_down = True
+
+    def _on_release(self, key):
+        print('{key} released')
+        self._do_on_event_call()
+
+        # Note shift status, for exit keycode purposes
+        if key == keyboard.Key.shift:
+            self._shift_down = False
+
+        if key == keyboard.Key.esc and self._shift_down:
+            print(f'INFO: Async keyboard watcher received STOP.')
+            return False  # Stop listener
+
+    def start(self) -> None:
+        """ Starts the async keyboard/mouse loggers (if not already running) 
+            and returns a process ref that the user may join() on.
+        """
+        m = self._async_mousewatcher_proc
+        k = self._async_keywatcher_proc
+
+        # If mouse watcher already running
+        if m and m.is_alive():
+            print('ERROR: Async mouse watcher already running.')
+
+        # Else, mouse watcher not running -- start it
+        else:
+            self._async_mousewatcher_proc = mouse.Listener(
+                on_click=self._on_click, on_scroll=self._on_scroll)
+            self._async_mousewatcher_proc.start()
+            print(f'INFO: Async mouse watcher started.')
+
+        # If keyboard watcher already running
+        if k and k.is_alive():
+            print('ERROR: Async keyboard watcher already running.')
+
+        # Else, key watcher not running -- start it
+        else:
+            self._async_keywatcher_proc = keyboard.Listener(
+                on_press=self._on_press, on_release=self._on_release)
+            self._async_keywatcher_proc.start()
+            print(f'INFO: Async keyboard event watcher started.')
+
+        # Only return the keyb proc, because it watches for STOP keystrokes
+        return self._async_keywatcher_proc
