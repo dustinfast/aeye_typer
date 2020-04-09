@@ -36,46 +36,27 @@ EEG_CSV_FNAME_TEMPLATE = '%Y-%m-%d--%H-%M.csv'
 KEYS_CSV_FNAME_TEMPLATE = '%Y-%m-%d--%H.csv'
 
 
-###########
-# Helpers #
-###########
 
-
-##############
-# Class Defs #
-##############
-
-class AsyncEEGEventLogger(EEGBrainflow):
-    def __init__(
-        self, logname, notes='NA', writeback=5, writeafter=5, verbose=True):
-        """ A class for performing asynchronous logging of EEG data before
-            and after the occurance of an event.
+class EventLogger(object):
+    def __init__(self, logname, notes, verbose):
+        """ An event logger parent class.
         """
-        super().__init__()
-
-        # Validate params
-        assert(isinstance(logname, str) and isinstance(notes, str))
-        assert(writeback > 0 and writeafter > 0)
-
-        if writeback > SZ_DATA_BUFF:
-            raise ValueError('Writeback size > data buffer size.')
-        if writeafter * self.sample_rate > SZ_DATA_BUFF:
-            raise ValueError('Writeafter value too large for data buffer.')
+        assert(isinstance(logname, str))
+        assert(isinstance(notes, str))
+        assert(isinstance(verbose, bool))
 
         self._logname = logname
         self._notes = notes
-        self._writeback_samples = writeback * self.sample_rate
-        self._writeafter_seconds = writeafter
         self._verbose = verbose
-
-        self._logdir_path = Path(LOG_CSV_ROOTDIR, logname, LOG_EEG_SUBDIR)
-        self._async_proc = None
-        self._async_queue = None
+        self._logdir_path = None
 
     def _init_outpath(self) -> None:
         """ Sets up the objects output directory by ensuring it exists and
             adding/verifying the notes file.
         """
+        if not self._logdir_path:
+            raise ValueError('Object not initialised.')
+
         notes = self._notes
         output_dir = self._logdir_path
         notefile_path = Path(output_dir, NOTEFILE_FNAME)
@@ -83,15 +64,19 @@ class AsyncEEGEventLogger(EEGBrainflow):
         # Create output dir iff not exists
         if not output_dir.exists():
             os.makedirs(output_dir)
-            print(f'INFO: Created log dir - {output_dir}')
+
+            if self._verbose:
+                print(f'INFO: Created log dir - {output_dir}')
 
             # Create note file
             with open(notefile_path, 'w') as f:
                 f.writelines(notes)
 
             note_str = '\t' + '\n\t'.join(notes.split('\n'))
-            print(f'INFO: Created log notes - {notefile_path}\n' +
-                  f'INFO: Log dir note content -\n{note_str}')
+            
+            if self._verbose:
+                print(f'INFO: Created log notes - {notefile_path}\n' +
+                      f'INFO: Log dir note content -\n{note_str}')
             
         # Else, dir already exists... Use it iff matching notes
         else:
@@ -99,12 +84,45 @@ class AsyncEEGEventLogger(EEGBrainflow):
                 existing_notes = f.read()
 
             note_str = '\t' + '\n\t'.join(existing_notes.split('\n'))
-            print(f'INFO: Using existing log dir - {output_dir}\n' +
-                  f'INFO: Log dir note content -\n{note_str}')
+
+            if self._verbose:
+                print(f'INFO: Using existing log dir - {output_dir}\n' +
+                      f'INFO: Log dir note content -\n{note_str}')
 
             # Ensure matching notefile content
             if existing_notes != notes:
-                raise ValueError(f'Notes mismatch for {notefile_path}')
+                raise ValueError(f'Note mismatch for {notefile_path}')
+
+    def start(self):
+        raise NotImplementedError  # Child classes must override
+
+    def stop(self):
+        raise NotImplementedError  # Child classes must override
+    
+
+class AsyncEEGEventLogger(EventLogger, EEGBrainflow):
+    def __init__(
+        self, logname, notes='NA', writeback=5, writeafter=5, verbose=True):
+        """ A class for performing asynchronous logging of EEG data before
+            and after the occurance of an event.
+        """
+        EEGBrainflow.__init__(self)
+        EventLogger.__init__(self, logname, notes, verbose)
+
+        # Validate params
+        assert(writeback > 0 and writeafter > 0)
+
+        if writeback > SZ_DATA_BUFF:
+            raise ValueError('Writeback size > data buffer size.')
+        if writeafter * self.sample_rate > SZ_DATA_BUFF:
+            raise ValueError('Writeafter value too large for data buffer.')
+
+        self._writeback_samples = writeback * self.sample_rate
+        self._writeafter_seconds = writeafter
+
+        self._logdir_path = Path(LOG_CSV_ROOTDIR, logname, LOG_EEG_SUBDIR)
+        self._async_proc = None
+        self._async_queue = None
 
     def _async_watcher(self, signal_queue) -> None:
         """ The async watcher -- intended to be used as a sub process.
@@ -257,7 +275,7 @@ class AsyncEEGEventLogger(EEGBrainflow):
                 pass # No need to flood queue with event signals
 
 
-class AsyncInputEventLogger(object):
+class AsyncInputEventLogger(EventLogger):
     def __init__(
         self, logname, notes='NA', callback=None, verbose=True):
         """ A class for asynchronously logging keyboard and mouse input events
@@ -265,58 +283,16 @@ class AsyncInputEventLogger(object):
             event occurs.
         """
         # Validate params
-        assert(isinstance(logname, str) and isinstance(notes, str))
         assert(callback is None or callable(callback) is True)
 
-        self._logname = logname
-        self._notes = notes
-        self._on_event = callback
-        self._verbose = verbose
+        super().__init__(logname, notes, verbose)
 
+        self._on_event = callback
         self._logdir_path = Path(LOG_CSV_ROOTDIR, logname, LOG_KEYS_SUBDIR)
+        self._shift_down = False
+        
         self._async_keywatcher_proc = None
         self._async_mousewatcher_proc = None
-        self._shift_down = False
-
-    def _init_outpath(self) -> None:
-        """ Sets up the objects output directory by ensuring it exists and
-            adding/verifying the notes file.
-        """
-        notes = self._notes
-        output_dir = self._logdir_path
-        notefile_path = Path(output_dir, NOTEFILE_FNAME)
-
-        # Create output dir iff not exists
-        if not output_dir.exists():
-            os.makedirs(output_dir)
-
-            if self._verbose:
-                print(f'INFO: Created log dir - {output_dir}')
-
-            # Create note file
-            with open(notefile_path, 'w') as f:
-                f.writelines(notes)
-
-            note_str = '\t' + '\n\t'.join(notes.split('\n'))
-            
-            if self._verbose:
-                print(f'INFO: Created log notes - {notefile_path}\n' +
-                      f'INFO: Log dir note content -\n{note_str}')
-            
-        # Else, dir already exists... Use it iff matching notes
-        else:
-            with open(notefile_path, 'r') as f:
-                existing_notes = f.read()
-
-            note_str = '\t' + '\n\t'.join(existing_notes.split('\n'))
-
-            if self._verbose:
-                print(f'INFO: Using existing log dir - {output_dir}\n' +
-                      f'INFO: Log dir note content -\n{note_str}')
-
-            # Ensure matching notefile content
-            if existing_notes != notes:
-                raise ValueError(f'Note mismatch for {notefile_path}')
 
     def _do_on_event_call(self):
         """ Calls the user-defined on_event function iff its defined.
