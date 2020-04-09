@@ -11,17 +11,3 @@
 gcc lib/cpp/tobii_cam_test.cpp  \
     -o tobii_cam_test.out       \
     -pthread /usr/lib/tobii/libtobii_stream_engine.so
-
-# echo "Compiling event logger..."
-gcc ./lib/cpp/log_keys.cpp -lstdc++ \
-    -lX11       \
-    -lXext      \
-    -lXi        \
-    -lyaml-cpp  \
-    -lsqlite3   \
-    -o log_event_data.out
-
-# Compile use_xdo
-gcc ./lib/cpp/use_xdo.cpp -lxdo -o use_xdo.out
-
-

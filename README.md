@@ -21,59 +21,35 @@ cd docker
 ./build.sh
 ```
 
-Then run/enter the docker container with (Note: Local Bluetooth will be disabled whle the container is running) --  
+Then run/enter the docker container with --  
 
 ```bash
 cd ../
 ./run_docker_cont.sh LOCAL_APP_DATA_DIRECTORY_PATH
 ```  
 
-Once inside the container, get the device ID's of your mouse and keyboard with `xinput'. E.g.  
-
-``` bash
-$ xinput
-⎡ Virtual core pointer              id=2    [master pointer  (3)]
-⎜   ↳ Virtual core XTEST pointer    id=4    [slave  pointer  (2)]
-⎜   ↳ DELL Laser Mouse              id=11   [slave  pointer  (2)] # Mouse
-⎜   ↳ SynPS/2 Synaptics TouchPad    id=15   [slave  pointer  (2)]
-⎣ Virtual core keyboard             id=3    [master keyboard (2)]
-    ↳ Virtual core XTEST keyboard   id=5    [slave  keyboard (3)]
-    ↳ Power Button                  id=6    [slave  keyboard (3)]
-    ↳ Video Bus                     id=7    [slave  keyboard (3)]
-    ↳ Video Bus                     id=8    [slave  keyboard (3)]
-    ↳ Power Button                  id=9    [slave  keyboard (3)]
-    ↳ Sleep Button                  id=10   [slave  keyboard (3)]
-    ↳ Dell Keyboard                 id=12   [slave  keyboard (3)] # Keyboard
-```
-
-Then update `_config.yaml` with those IDs. For example:  
-
-```yaml
-DEVICE_ID_MOUSE: "11"
-DEVICE_ID_KEYBOARD: "12"
-```
-
 #### Eye Tracker Installation
 
 1. Install the eye-tracker and compile binaries with `./setup.sh`.
 
-2. From a local termoinal (outside the container) commit the install to the container with ``docker commit fast_aeye_typer fast_aeye_typer:latest`.  
+2. From a local terminal (outside the container) commit the install to the container with ``docker commit fast_aeye_typer fast_aeye_typer:latest`.  
 
 3. Restart the container (this time from inside the container) with an `exit` followed by `./open_container.sh`.  
 
-4. Very your eye-tracker is correctly installed with `./tobii_cam_test.out`.
+4. Verify your eye-tracker is correctly installed with `./tobii_cam_test.out`.
 
-#### Emotiv EPOC+ Installation
+#### OpenBCI EEG Installation
 
-Set the Emotiv Epochs MAC address as `DEVICE_ID_EEG` in `_config.yaml`.
+...
 
 ### Data Collection
 
-Start data collection with `./log_event_data.out`. Keystrokes, mouse clicks, etc., are then logged to the SQLite databse given in `_config.yaml`.
+Start data collection with `./log_event_data.py`. Keystrokes, mouse clicks, EEG data, etc., are then logged to the paths given by `_config.yaml`.
+
 
 ### Training
 
-Not Implemented
+Data collected must first be converted for use by the ML algorithms with `rawdata_to_sql.py`.
 
 ### Inference
 

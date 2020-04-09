@@ -1,8 +1,7 @@
-""" A module for interacting with the application's EEG board via the
-    Brainflow API.
+""" A module for logging EEG and Keyboard/Mouse Events to CSV file.
 """
 
-__author__ = 'Dustin Fast [dustin.fast@outlook.com]'
+__author__ = 'Dustin Fast [dustin.fast@outlook.com], 2020'
 
 import os
 import time
@@ -11,6 +10,8 @@ import multiprocessing as mp
 from datetime import datetime
 from pathlib import Path
 
+import numpy as np
+import pandas as pd
 from pynput.mouse import Button
 from pynput.keyboard import Key
 from pynput import mouse, keyboard
@@ -22,18 +23,16 @@ from lib.py.eeg_brainflow import EEGBrainflow
 
 # App config constants
 _conf = app.config()
-LOG_CSV_ROOTDIR = _conf['EVENTLOG_CSV_ROOTDIR']
+LOG_ROOTDIR = _conf['EVENTLOG_ROOTDIR']
 LOG_CSV_SUBDIR = _conf['EVENTLOG_CSV_SUBDIR']
 LOG_EEG_SUBDIR = _conf['EVENTLOG_EEG_SUBDIR']
 LOG_KEYS_SUBDIR = _conf['EVENTLOG_KEYS_SUBDIR']
+LOG_MOUSE_SUBDIR = _conf['EVENTLOG_MOUSE_SUBDIR']
 NOTEFILE_FNAME = _conf['EVENTLOG_NOTEFILE_FNAME']
 SIGNAL_EVENT = _conf['EVENTLOG_SIGNAL_EVENT']
 SIGNAL_STOP = _conf['EVENTLOG_SIGNAL_STOP']
 SZ_DATA_BUFF = _conf['EEG_SZ_DATA_BUFF']
 del _conf
-
-EEG_CSV_FNAME_TEMPLATE = '%Y-%m-%d--%H-%M.csv'
-KEYS_CSV_FNAME_TEMPLATE = '%Y-%m-%d--%H.csv'
 
 
 
@@ -42,56 +41,74 @@ class EventLogger(object):
         """ An event logger parent class.
         """
         assert(isinstance(logname, str))
-        assert(isinstance(notes, str))
+        assert(isinstance(notes, (str, type(None))))
         assert(isinstance(verbose, bool))
 
-        self._logname = logname
+        self._name = logname
         self._notes = notes
         self._verbose = verbose
         self._logdir_path = None
 
-    def _init_outpath(self) -> None:
-        """ Sets up the objects output directory by ensuring it exists and
+    def _init_outpath(self, sub_dirs=[]) -> None:
+        """ Sets up the log output directory by ensuring it exists and
             adding/verifying the notes file.
+
+            :param sub_dirs: (list) One or more sub-directories to create,
+            relative to the loggers root directory.
         """
-        if not self._logdir_path:
-            raise ValueError('Object not initialised.')
+        self._logdir_path = Path(LOG_ROOTDIR, self._name)
 
         notes = self._notes
         output_dir = self._logdir_path
         notefile_path = Path(output_dir, NOTEFILE_FNAME)
 
-        # Create output dir iff not exists
+        # Create output dirs iff not exists
         if not output_dir.exists():
             os.makedirs(output_dir)
+
+            for d in sub_dirs:
+                os.makedirs(Path(output_dir, d))
 
             if self._verbose:
                 print(f'INFO: Created log dir - {output_dir}')
 
             # Create note file
-            with open(notefile_path, 'w') as f:
-                f.writelines(notes)
+            if self._notes:
+                with open(notefile_path, 'w') as f:
+                    f.writelines(notes)
 
-            note_str = '\t' + '\n\t'.join(notes.split('\n'))
-            
-            if self._verbose:
-                print(f'INFO: Created log notes - {notefile_path}\n' +
-                      f'INFO: Log dir note content -\n{note_str}')
+                note_str = '\t' + '\n\t'.join(notes.split('\n'))
+                
+                if self._verbose:
+                    print(f'INFO: Created log notes - {notefile_path}\n' +
+                        f'INFO: Log dir note content -\n{note_str}')
             
         # Else, dir already exists... Use it iff matching notes
         else:
-            with open(notefile_path, 'r') as f:
-                existing_notes = f.read()
+            print(f'INFO: Using existing log dir - {output_dir}')
 
-            note_str = '\t' + '\n\t'.join(existing_notes.split('\n'))
+            # Ensure subdirs also exist
+            for d in sub_dirs:
+                p = Path(output_dir, d)
+                os.makedirs(Path(output_dir, d)) if not p.exists() else None
 
-            if self._verbose:
-                print(f'INFO: Using existing log dir - {output_dir}\n' +
-                      f'INFO: Log dir note content -\n{note_str}')
+            try:
+                with open(notefile_path, 'r') as f:
+                    existing_notes = f.read()
+            except FileNotFoundError:
+                if self._notes:
+                    raise ValueError(f'Note mismatch for {notefile_path}')
+                else:
+                    pass  # Expected
+            else:
+                note_str = '\t' + '\n\t'.join(existing_notes.split('\n'))
 
-            # Ensure matching notefile content
-            if existing_notes != notes:
-                raise ValueError(f'Note mismatch for {notefile_path}')
+                if self._verbose:
+                    print(f'INFO: Log dir note content -\n{note_str}')
+
+                # Ensure matching notefile content
+                if not self._notes or existing_notes != notes:
+                    raise ValueError(f'Note mismatch for {notefile_path}')
 
     def start(self):
         raise NotImplementedError  # Child classes must override
@@ -101,15 +118,15 @@ class EventLogger(object):
     
 
 class AsyncEEGEventLogger(EventLogger, EEGBrainflow):
-    def __init__(
-        self, logname, notes='NA', writeback=5, writeafter=5, verbose=True):
-        """ A class for performing asynchronous logging of EEG data before
-            and after the occurance of an event.
+    _LOG_EEG_FNAME_TEMPLATE = '%Y-%m-%d--%H-%M.csv'
+
+    def __init__(self, name, notes, writeback=5, writeafter=5, verbose=True):
+        """ A class for performing asynchronous logging of EEG data to CSV
+            before and after the occurance of an event.
         """
         EEGBrainflow.__init__(self)
-        EventLogger.__init__(self, logname, notes, verbose)
+        EventLogger.__init__(self, name, notes, verbose)
 
-        # Validate params
         assert(writeback > 0 and writeafter > 0)
 
         if writeback > SZ_DATA_BUFF:
@@ -120,7 +137,6 @@ class AsyncEEGEventLogger(EventLogger, EEGBrainflow):
         self._writeback_samples = writeback * self.sample_rate
         self._writeafter_seconds = writeafter
 
-        self._logdir_path = Path(LOG_CSV_ROOTDIR, logname, LOG_EEG_SUBDIR)
         self._async_proc = None
         self._async_queue = None
 
@@ -145,7 +161,8 @@ class AsyncEEGEventLogger(EventLogger, EEGBrainflow):
             
         def _do_write(data):
             path = Path(
-                self._logdir_path, datetime.now().strftime(EEG_CSV_FNAME_TEMPLATE))
+                self._logdir_path, LOG_EEG_SUBDIR, datetime.now().strftime(
+                    self._LOG_EEG_FNAME_TEMPLATE))
             DataFilter.write_file(
                 self._do_channel_mask(data), str(path), 'a')
 
@@ -153,8 +170,7 @@ class AsyncEEGEventLogger(EventLogger, EEGBrainflow):
         if not self._prepare_session():
             return
 
-        # Init log dir and begin the data stream
-        self._init_outpath()
+        # Bbegin the data stream
         self.board.start_stream(SZ_DATA_BUFF)  # Starts async data collection
         signal = None
 
@@ -231,6 +247,8 @@ class AsyncEEGEventLogger(EventLogger, EEGBrainflow):
 
         # Else, not running -- start it
         else:
+            self._init_outpath([LOG_EEG_SUBDIR])
+
             ctx = mp.get_context('fork')
             self._async_queue = ctx.Queue(maxsize=1)
             self._async_proc = ctx.Process(
@@ -276,23 +294,38 @@ class AsyncEEGEventLogger(EventLogger, EEGBrainflow):
 
 
 class AsyncInputEventLogger(EventLogger):
-    def __init__(
-        self, logname, notes='NA', callback=None, verbose=True):
-        """ A class for asynchronously logging keyboard and mouse input events
-            and (optionally) call the given function (no args) when an input
-            event occurs.
-        """
-        # Validate params
-        assert(callback is None or callable(callback) is True)
+    _DF_MAXROWS = 2500
 
-        super().__init__(logname, notes, verbose)
+    _LOG_KEYS_FNAME_TEMPLATE = 'keys-%Y-%m-%d--%H.csv'
+    _LOG_KEYS_COLS = [('time', np.float64), 
+                      ('keycode', np.int32), 
+                      ('pressed', np.bool_)]
+
+    _LOG_MOUSE_FNAME_TEMPLATE = 'mouse-%Y-%m-%d--%H.csv'
+    _LOG_MOUSE_COLS = [('time', np.float64),
+                       ('keycode', np.int32),
+                       ('pressed', np.bool_),
+                       ('x', np.int32),
+                       ('y', np.int32)]
+
+    def __init__(self, name, notes, callback=None, verbose=True):
+        """ A class for asynchronously logging keyboard and mouse input events
+            to CSV and (optionally) calling the given function (w/no args)
+            when an input event occurs.
+        """
+        assert(callback is None or callable(callback) is True)
+        super().__init__(name, notes, verbose)
 
         self._on_event = callback
-        self._logdir_path = Path(LOG_CSV_ROOTDIR, logname, LOG_KEYS_SUBDIR)
         self._shift_down = False
-        
+
         self._async_keywatcher_proc = None
         self._async_mousewatcher_proc = None
+        
+        self._df_keylog_idx = 0
+        self._df_mouselog_idx = 0
+        self._df_keylog = self._new_log_df(self._LOG_KEYS_COLS)
+        self._df_mouselog = self._new_log_df(self._LOG_MOUSE_COLS)
 
     def _do_on_event_call(self):
         """ Calls the user-defined on_event function iff its defined.
@@ -300,52 +333,126 @@ class AsyncInputEventLogger(EventLogger):
         if self._on_event is not None:
             self._on_event()
 
-    def _log_keys_event(self, key, pressed):
-        """ Logs the given key press/release event to file.
+    def _new_log_df(self, column_defs):
+        """ Returns a new zero-filled pd.DataFrame having the given columns.
         """
-        t = time.time()
+        return pd.DataFrame(
+            np.zeros(self._DF_MAXROWS, dtype=np.dtype(column_defs)))
+
+    def _append_df_row(self, df, idx, row):
+        """ Appends the given row to the given df at the row denoted by idx
+            and returns the next row's insertion idx.
+        """
+        df.iloc[idx, :] = row
+        idx += 1
+
+        return idx
+
+    def _write_log(self, df, idx, log_subdir, fname_template, column_defs):
+        """ Returns the idx of the next row to write. If the df's capacity
+            has been reached, also writes the contents to file and resets
+            the df's contents.
+        """
+        # Write df to file and then zero-fill its contents
+        if idx >= self._DF_MAXROWS:
+            path = Path(
+                self._logdir_path, log_subdir, datetime.now().strftime(
+                    fname_template))
+
+            # Write to new file with col headers
+            if not os.path.exists(path):
+                df.to_csv(path, index=False, mode='w')
+            
+            # OR, Append to existing file with no col headers
+            else:
+                df.to_csv(path, index=False, mode='a', header=False)
+                
+            for col in df.columns:
+                df[col].values[:] = 0
+            idx = 0
+
+        return idx
+
+    def _log_key_event(self, key, pressed):
+        """ Adds the given key press/release event to the keystroke df. When
+            the df gets full it is written to file and cleared.
+        """
+        t_stamp = time.time()
         self._do_on_event_call()
 
-        if self._verbose:
-            print(f'KEY EVENT: {t}, {key}, {pressed}')
+        # Convert the Key obj to its ascii value
+        try:
+            key_id = ord(key.char.lower())
+        
+        # OR, convert the Key object to it's x11 code
+        except AttributeError:
+            try:
+                key_id = key.value.vk
+            except AttributeError:
+                key_id = key.vk
 
-    def _log_mouse_event(self, btn, pressed, x, y):
-        """ Logs the given button press/release event to file.
-            Note: if btn is scroll, pressed = 1 for scroll_up and -1 for
-            scroll_down
+        # Update the df and (iff needed) write to file
+        idx = self._append_df_row(self._df_keylog,
+                                  self._df_keylog_idx,
+                                  [t_stamp, key_id, pressed])
+        self._df_keylog_idx = self._write_log(self._df_keylog,
+                                              idx,
+                                              LOG_KEYS_SUBDIR,
+                                              self._LOG_KEYS_FNAME_TEMPLATE,
+                                              self._LOG_KEYS_COLS)
+
+        # print(f'KEY EVENT: {t}, {key_id}, {pressed}')  # debug
+
+    def _log_mouse_event(self, btn_id, pressed, x, y):
+        """ Adds the given key press/release event to the keystroke df. When
+            the df gets full it is written to file and then cleared. Note that
+            btn_ids are 1 = left, 2 = middle, right = 3, 4 = scrollwheel, and
+            0 = unknown. If event is a mouse scroll event, pressed = 1 for 
+            scroll_up and -1 for scroll_down.
         """
-        t = time.time()
+        t_stamp = time.time()
         self._do_on_event_call()
         
-        if self._verbose:
-            print(f'MOUSE EVENT: {t}, {btn}, {pressed}, ({x}, {y})')
+        # Update the df and (iff needed) write to file
+        idx = self._append_df_row(self._df_mouselog,
+                                  self._df_mouselog_idx,
+                                  [t_stamp, btn_id, pressed, x, y])
+        self._df_mouselog_idx = self._write_log(self._df_mouselog,
+                                              idx,
+                                              LOG_MOUSE_SUBDIR,
+                                              self._LOG_MOUSE_FNAME_TEMPLATE,
+                                              self._LOG_MOUSE_COLS)
+
+        # print(f'MOUSE EVENT: {t}, {btn_id}, {pressed}, ({x}, {y})')
 
     def _on_click(self, x, y, button, pressed):
         """ Mouse click callback, for use by the async listener."""
-        self._log_mouse_event(button, pressed, x, y)
+        self._log_mouse_event(button.value, pressed, x, y)
             
     def _on_scroll(self, x, y, dx, dy):
         """ Mouse scroll callback, for use by the async listener."""
-        self._log_mouse_event('scroll', dy, x, y)
+        self._log_mouse_event(4, dy, x, y)
         
     def _on_press(self, key):
         """ Keyboard key-press callback, for use by the async listener."""
-        self._log_keys_event(key, True)
+        self._log_key_event(key, True)
 
-        # Note shift-key status, for exit keycode purposes
-        if key == keyboard.Key.shift:
-            self._shift_down = True
+        # Denote shift-key status, for exit keycode purposes
+        if key == keyboard.Key.shift: self._shift_down = True
 
     def _on_release(self, key):
         """ Keyboard key-release callback, for use by the async listener."""
-        self._log_keys_event(key, False)
+        # TODO: Only log release of special chars
+        self._log_key_event(key, False)
 
-        # Note shift-key status and check for STOP key combo
-        if key == keyboard.Key.shift:
-            self._shift_down = False
+        # Denote shift-key status and check for STOP key combo
+        if key == keyboard.Key.shift: self._shift_down = False
 
         if key == keyboard.Key.esc and self._shift_down:
-            return False  # Shutdown listener
+            if self._verbose:
+                print('INFO: Async input watcher received STOP.')
+            # TODO: Write contents of any existing data
+            return False
 
     def start(self) -> None:
         """ Starts the async keyboard/mouse loggers (if not already running) 
@@ -354,7 +461,7 @@ class AsyncInputEventLogger(EventLogger):
         m = self._async_mousewatcher_proc
         k = self._async_keywatcher_proc
 
-        self._init_outpath()
+        self._init_outpath([LOG_KEYS_SUBDIR, LOG_MOUSE_SUBDIR])
 
         # If mouse watcher already running
         if m and m.is_alive():
