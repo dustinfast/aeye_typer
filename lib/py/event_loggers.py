@@ -258,18 +258,19 @@ class AsyncEEGEventLogger(EEGBrainflow):
 
 
 class AsyncInputEventLogger(object):
-    def __init__(self, logname, notes='NA', on_event_func=None, verbose=True):
+    def __init__(
+        self, logname, notes='NA', callback=None, verbose=True):
         """ A class for asynchronously logging keyboard and mouse input events
             and (optionally) call the given function (no args) when an input
             event occurs.
         """
         # Validate params
         assert(isinstance(logname, str) and isinstance(notes, str))
-        assert(on_event_func is None or callable(on_event_func) is True)
+        assert(callback is None or callable(callback) is True)
 
         self._logname = logname
         self._notes = notes
-        self._on_event = on_event_func
+        self._on_event = callback
         self._verbose = verbose
 
         self._logdir_path = Path(LOG_CSV_ROOTDIR, logname, LOG_KEYS_SUBDIR)

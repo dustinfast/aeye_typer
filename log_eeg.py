@@ -1,9 +1,7 @@
 #! /usr/bin/env python
 
-import time
-
-import numpy as np
-import pandas as pd
+import argparse
+from time import sleep
 
 from pynput.mouse import Button
 from pynput.keyboard import Key
@@ -40,22 +38,42 @@ LOG_NOTES = ('# Test Log 0  \n'
 
 
 if __name__ == "__main__":
+    # Setup cmd line args
+    parser = argparse.ArgumentParser()
+    arg_flags = ('-n', '--name')
+    arg_help_str = 'A descriptive/friendly name for the log.'
+    parser.add_argument(*arg_flags,
+                        type=str,
+                        default=LOG_NAME,
+                        help=arg_help_str)
+    arg_flags = '--no_eeg_log'
+    arg_help_str = 'Disables EEG event logging.'
+    parser.add_argument(arg_flags,
+                        action='store_true',
+                        default=False,
+                        help=arg_help_str)
+    args = parser.parse_args()
+
     # Init and start the EEG board and key/mouse event loggers
     eeg_logger = AsyncEEGEventLogger(
         LOG_NAME, LOG_NOTES, WRITE_BACK, WRITE_AFTER)
 
+    eeg_event_callback = None if args.no_eeg_log else eeg_logger.event 
+    
     input_logger = AsyncInputEventLogger(
-        LOG_NAME, LOG_NOTES, eeg_logger.event)
+        LOG_NAME, LOG_NOTES, eeg_event_callback)
 
     # Start the loggers
-    eeg_logger.start()
+    eeg_logger.start() if not args.no_eeg_log else None
     k = input_logger.start()
 
     # Wait for input logger to terminate via keystroke combo SHIFT + ESC
+    sleep(2) # Allow everything to spin up
+    print('\n*** Running... Press SHIFT + ESC from anywhere to terminate.\n')
     k.join()
 
     # Cleanup
-    eeg_logger.stop()
+    eeg_logger.stop() if not args.no_eeg_log else None
 
 
     
