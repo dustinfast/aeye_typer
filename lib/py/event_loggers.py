@@ -151,7 +151,10 @@ class AsyncEEGEventLogger(EventLogger, EEGBrainflow):
         """
         def _stop(signal):
             if signal == SIGNAL_STOP:
+                if self._verbose:
+                    print(f'INFO: Async EEG watcher received STOP.')
                 return True
+
             return False
 
         def _event(signal):
@@ -165,6 +168,9 @@ class AsyncEEGEventLogger(EventLogger, EEGBrainflow):
                     self._LOG_EEG_FNAME_TEMPLATE))
             DataFilter.write_file(
                 self._do_channel_mask(data), str(path), 'a')
+
+            if self._verbose:
+                print(f'INFO: Wrote eeg log to {path}')
 
         # Init board session or die
         if not self._prepare_session():
@@ -371,6 +377,9 @@ class AsyncInputEventLogger(EventLogger):
                 df[col].values[:] = 0
             idx = 0
 
+            if self._verbose:
+                print(f'INFO: Wrote input log to {path}')
+
         return idx
 
     def _log_key_event(self, key, pressed):
@@ -401,7 +410,7 @@ class AsyncInputEventLogger(EventLogger):
                                               self._LOG_KEYS_FNAME_TEMPLATE,
                                               self._LOG_KEYS_COLS)
 
-        # print(f'KEY EVENT: {t}, {key_id}, {pressed}')  # debug
+        # print(f'KEY EVENT: {t_stamp}, {key_id}, {pressed}')  # debug
 
     def _log_mouse_event(self, btn_id, pressed, x, y):
         """ Adds the given key press/release event to the keystroke df. When
@@ -423,7 +432,7 @@ class AsyncInputEventLogger(EventLogger):
                                               self._LOG_MOUSE_FNAME_TEMPLATE,
                                               self._LOG_MOUSE_COLS)
 
-        # print(f'MOUSE EVENT: {t}, {btn_id}, {pressed}, ({x}, {y})')
+        # print(f'MOUSE EVENT: {t_stamp}, {btn_id}, {pressed}, ({x}, {y})')
 
     def _on_click(self, x, y, button, pressed):
         """ Mouse click callback, for use by the async listener."""
@@ -442,7 +451,11 @@ class AsyncInputEventLogger(EventLogger):
 
     def _on_release(self, key):
         """ Keyboard key-release callback, for use by the async listener."""
-        # TODO: Only log release of special chars
+        # Only log release of special chars
+        if not (key == keyboard.Key.shift or key == keyboard.Key.alt or 
+            key == keyboard.Key.ctrl or key == keyboard.Key.esc):
+                return
+
         self._log_key_event(key, False)
 
         # Denote shift-key status and check for STOP key combo
@@ -451,7 +464,18 @@ class AsyncInputEventLogger(EventLogger):
         if key == keyboard.Key.esc and self._shift_down:
             if self._verbose:
                 print('INFO: Async input watcher received STOP.')
-            # TODO: Write contents of any existing data
+
+            # Write contents of any existing data
+            self._write_log(self._df_keylog.iloc[:self._df_keylog_idx, :],
+                            self._DF_MAXROWS,
+                            LOG_KEYS_SUBDIR,
+                            self._LOG_KEYS_FNAME_TEMPLATE,
+                            self._LOG_KEYS_COLS)
+            self._write_log(self._df_mouselog.iloc[:self._df_mouselog_idx, :],
+                            self._DF_MAXROWS,
+                            LOG_MOUSE_SUBDIR,
+                            self._LOG_MOUSE_FNAME_TEMPLATE,
+                            self._LOG_MOUSE_COLS)
             return False
 
     def start(self) -> None:

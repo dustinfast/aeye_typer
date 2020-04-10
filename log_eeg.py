@@ -19,9 +19,9 @@ del _conf
 
 
 # Log setup
-LOG_NAME = 'testlog_0'
-LOG_NOTES = ('# Test Log 0\n'
-             'Initial Tests  \n'
+LOG_NAME = 'log_0'
+LOG_NOTES = ('# Log 0\n'
+             'Initial Log  \n'
              '## Channels\n'
              '| # | 10-20 |\n'
              '|---| ----- |\n'
@@ -84,6 +84,3 @@ if __name__ == "__main__":
 
     # Cleanup
     eeg_logger.stop() if not args.eeg_off else None
-
-
-    
