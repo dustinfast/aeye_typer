@@ -66,12 +66,12 @@ if __name__ == "__main__":
 
     # Init and start the EEG board and key/mouse event loggers
     eeg_logger = AsyncEEGEventLogger(
-        LOG_NAME, LOG_NOTES, WRITE_BACK, WRITE_AFTER, args.verbose)
+        args.name, LOG_NOTES, WRITE_BACK, WRITE_AFTER, args.verbose)
 
     eeg_event_callback = None if args.eeg_off else eeg_logger.event 
     
     input_logger = AsyncInputEventLogger(
-        LOG_NAME, LOG_NOTES, eeg_event_callback, args.verbose)
+        args.name, LOG_NOTES, eeg_event_callback, args.verbose)
 
     # Start the loggers
     eeg_logger.start() if not args.eeg_off else None

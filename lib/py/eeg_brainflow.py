@@ -40,13 +40,13 @@ class EEGBrainflow(object):
         self.time_channel = BoardShim.get_timestamp_channel(EEG_BOARD_ID)
         self._channel_mask = [self.time_channel] + self.eeg_channels
 
-        # Start OpenBCI_Hub and ensure stays up. If not, address likely in use
-        self._bci_hub_proc = Popen([BCI_HUB_PATH])
-        time.sleep(1)
+        # TODO: Start OpenBCI_Hub and ensure stays up. If not, address likely in use
+        # self._bci_hub_proc = Popen([BCI_HUB_PATH])#, startupinfo=DETACHED_PROCESS)
+        # time.sleep(1)
 
-        if self._bci_hub_proc.poll() is not None:
-            print(f'WARN: Could not instantiate {BCI_HUB_PATH} - ' +
-                'It may already be running.')
+        # if self._bci_hub_proc.poll() is not None:
+        #     print(f'WARN: Could not instantiate {BCI_HUB_PATH} - ' +
+        #         'It may already be running.')
         
     @staticmethod
     def _init_board(logger) -> BoardShim:

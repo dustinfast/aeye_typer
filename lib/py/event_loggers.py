@@ -163,15 +163,16 @@ class AsyncEEGEventLogger(EventLogger, EEGBrainflow):
             return time.time()
             
         def _do_write(data):
-            if not self.board.is_prepared() or data.shape[1] <= 0:
-                if not self.board.is_prepared():
-                    print('*** WARN: Async EEG watcher NOT PREPARED. ')
+            # Warn if data is empty
+            if data.shape[1] <= 0:
+                print('*** WARN: Async EEG watcher has no data to write... ' +
+                      'Attempting to reconnect.')
+                self.board.stop_stream()
+                self.board.release_session()
                 
-                # Warn if data is empty
-                if data.shape[1] <= 0:
-                    print('*** WARN: Async EEG watcher has no data to write. ')
-                    print(f'Is prepared = {self.board.is_prepared()}')
-                    # self.board.prepare_session()
+                if not self._prepare_session():
+                    print(f'ERROR: Async EEG watcher failed to reconnect.')
+                self.board.start_stream(SZ_DATA_BUFF)    
                 return
             
             path = Path(
@@ -185,6 +186,7 @@ class AsyncEEGEventLogger(EventLogger, EEGBrainflow):
 
         # Init board session or die
         if not self._prepare_session():
+            print(f'ERROR: Async EEG watcher failed to get EEG board session.')
             return
 
         # Bbegin the data stream
