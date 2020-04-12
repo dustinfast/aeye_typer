@@ -7,7 +7,7 @@ __author__ = 'Dustin Fast [dustin.fast@outlook.com]'
 import os
 import time
 import queue
-from subprocess import Popen
+from subprocess import Popen, PIPE
 import multiprocessing as mp
 from datetime import datetime
 from pathlib import Path
@@ -40,13 +40,15 @@ class EEGBrainflow(object):
         self.time_channel = BoardShim.get_timestamp_channel(EEG_BOARD_ID)
         self._channel_mask = [self.time_channel] + self.eeg_channels
 
-        # TODO: Start OpenBCI_Hub and ensure stays up. If not, address likely in use
-        # self._bci_hub_proc = Popen([BCI_HUB_PATH])#, startupinfo=DETACHED_PROCESS)
-        # time.sleep(1)
+        # Start OpenBCI_Hub and ensure stays up. If not, address likely in use
+        self._bci_hub_proc = Popen([BCI_HUB_PATH], stderr=PIPE, stdout=PIPE)
+        time.sleep(1)
 
-        # if self._bci_hub_proc.poll() is not None:
-        #     print(f'WARN: Could not instantiate {BCI_HUB_PATH} - ' +
-        #         'It may already be running.')
+        if self._bci_hub_proc.poll() is not None:
+            print(f'WARN: Could not start {BCI_HUB_PATH} - ' +
+                'It may already be running.')
+        else:
+            print('INFO: Started OpenBCI_Hub.')
         
     @staticmethod
     def _init_board(logger) -> BoardShim:
