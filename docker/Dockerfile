@@ -103,6 +103,7 @@ RUN mkdir -p /tmp/OpenBCI_Hub
 COPY dependencies/OpenBCIHub-v2.1.0-linux-64bit.zip /tmp/OpenBCI_Hub
 WORKDIR /tmp/OpenBCI_Hub
 RUN unzip OpenBCIHub-v2.1.0-linux-64bit.zip
+RUN mkdir -p /opt/app/dependencies
 RUN mv OpenBCIHub-v2.1.0-linux-64bit /opt/app/dependencies/OpenBCI_Hub
 RUN ls
 RUN rm -rf /tmp/OpenBCI_Hub
