@@ -147,7 +147,7 @@ class AsyncEEGEventLogger(EventLogger, EEGBrainflow):
             received, the watcher terminates.
             Note that the watcher may often be watching but not writing, and
             will transition back and forth between watching and watching while
-            writing indefiniately until the stop signal is received.
+            writing indefinately until the stop signal is received.
         """
         def _stop(signal):
             if signal == SIGNAL_STOP:
@@ -163,6 +163,17 @@ class AsyncEEGEventLogger(EventLogger, EEGBrainflow):
             return time.time()
             
         def _do_write(data):
+            if not self.board.is_prepared() or data.shape[1] <= 0:
+                if not self.board.is_prepared():
+                    print('*** WARN: Async EEG watcher NOT PREPARED. ')
+                
+                # Warn if data is empty
+                if data.shape[1] <= 0:
+                    print('*** WARN: Async EEG watcher has no data to write. ')
+                    print(f'Is prepared = {self.board.is_prepared()}')
+                    # self.board.prepare_session()
+                return
+            
             path = Path(
                 self._logdir_path, LOG_EEG_SUBDIR, datetime.now().strftime(
                     self._LOG_EEG_FNAME_TEMPLATE))
@@ -231,7 +242,6 @@ class AsyncEEGEventLogger(EventLogger, EEGBrainflow):
             # If inner loop closed with no kill signal encountered, clear last
             else:
                 signal = None
-
 
         # Cleanup
         self.board.stop_stream()

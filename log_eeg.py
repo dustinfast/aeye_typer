@@ -19,10 +19,14 @@ del _conf
 
 
 # Log setup
-LOG_NAME = 'log_0'
+LOG_NAME = 'cgf0_log_0'
 LOG_NOTES = ('# Log 0\n'
+             '  \n'
              'Initial Log  \n'
+             'Git commit hash: 7552d7  \n'
+             '  \n'
              '## Channels\n'
+             '  \n'
              '| # | 10-20 |\n'
              '|---| ----- |\n'
              '| 0 | Time  |\n'
@@ -41,7 +45,7 @@ if __name__ == "__main__":
     # Setup cmd line args
     parser = argparse.ArgumentParser()
     arg_flags = ('-e', '--eeg_off')
-    arg_help_str = 'Disables EEG event logging.'
+    arg_help_str = 'Run with0 EEG event logging turned off.'
     parser.add_argument(*arg_flags,
                         action='store_true',
                         default=False,
@@ -59,8 +63,6 @@ if __name__ == "__main__":
                         default=False,
                         help=arg_help_str)                        
     args = parser.parse_args()
-
-    # TODO: Ensure OpenBCI_Hub is up
 
     # Init and start the EEG board and key/mouse event loggers
     eeg_logger = AsyncEEGEventLogger(

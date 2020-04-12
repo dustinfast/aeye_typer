@@ -66,6 +66,7 @@ RUN echo "Installing 3rd party linux applications..." && \
     unzip \
     iotop \
     expect \
+    dos2unix \ 
     usbutils \
     openssh-server \
     libcanberra-gtk-module \
@@ -102,7 +103,7 @@ RUN mkdir -p /tmp/OpenBCI_Hub
 COPY dependencies/OpenBCIHub-v2.1.0-linux-64bit.zip /tmp/OpenBCI_Hub
 WORKDIR /tmp/OpenBCI_Hub
 RUN unzip OpenBCIHub-v2.1.0-linux-64bit.zip
-RUN mv OpenBCIHub-v2.1.0-linux-64bit /opt/OpenBCI_Hub
+RUN mv OpenBCIHub-v2.1.0-linux-64bit /opt/app/dependencies/OpenBCI_Hub
 RUN ls
 RUN rm -rf /tmp/OpenBCI_Hub
 
