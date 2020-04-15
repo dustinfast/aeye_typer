@@ -61,7 +61,7 @@ Not Implemented
 
 Speaking as you type, because it involves more neurons.
 
-
+Use autoencoder to filter out when brain scanner giving poor reading -- i.e. not wearing earclips, not turned on, low-battery, etc.
 
 ## TODO
 

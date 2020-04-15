@@ -456,6 +456,7 @@ class AsyncInputEventLogger(EventLogger):
         
     def _on_press(self, key):
         """ Keyboard key-press callback, for use by the async listener."""
+        # TODO: Add cursor location?
         self._log_key_event(key, True)
 
         # Denote shift-key status, for exit keycode purposes

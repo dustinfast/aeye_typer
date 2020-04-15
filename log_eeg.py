@@ -19,11 +19,10 @@ del _conf
 
 
 # Log setup
-LOG_NAME = 'cgf0_log_0'
-LOG_NOTES = ('# Log 0\n'
+LOG_NAME = 'cfg0_log_2'
+LOG_NOTES = ('# Log 2\n'
              '  \n'
-             'Initial Log  \n'
-             'Git commit hash: 7552d7  \n'
+             'Git commit hash: 599e39  \n'
              '  \n'
              '## Channels\n'
              '  \n'
@@ -38,6 +37,9 @@ LOG_NOTES = ('# Log 0\n'
              '| 6 | P8    |\n'
              '| 7 | O1    |\n'
              '| 8 | O2    |\n'
+             '  \n'
+             'Writback = 20s  \n'
+             'Writeforward = 20s  \n'
 )
 
 
