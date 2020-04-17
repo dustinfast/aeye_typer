@@ -66,6 +66,9 @@ if __name__ == "__main__":
                         help=arg_help_str)                        
     args = parser.parse_args()
 
+    # Prompt to continue
+    _ = input('Press Enter to confirm that your BCI is turned on and grounded')
+
     # Init and start the EEG board and key/mouse event loggers
     eeg_logger = AsyncEEGEventLogger(
         args.name, LOG_NOTES, WRITE_BACK, WRITE_AFTER, args.verbose)

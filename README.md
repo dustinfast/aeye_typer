@@ -66,5 +66,5 @@ Use autoencoder to filter out when brain scanner giving poor reading -- i.e. not
 ## TODO
 
 * Add gaze logging on key AND mouse click
-* Fix: Mouse clicks not registered by vscode
-* Rename LogKeys to EventLogger
+* Add rawdata_to_sql
+* Add anamoly detection
