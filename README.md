@@ -10,46 +10,44 @@ This tool differs from existing solutions in that
 
 Author: Dustin Fast <dustin.fast@hotmail.com>
 
-## Usage
+## Setup
 
-### Setup
-
-First, clone the applications repo and build the docker image with --
+Clone this repo, then build the application's docker image with  
 
 ```bash
 cd docker
 ./build.sh
 ```
 
-Then run/enter the docker container with --  
+Tested on Ubuntu 18.04 with Docker 18.09.7
+
+## Usage
+
+Enter the docker container with  
 
 ```bash
-cd ../
 ./run_docker_cont.sh LOCAL_APP_DATA_DIRECTORY_PATH
 ```  
 
-#### Eye Tracker Installation
+#### Eye-Tracker Installation
 
-1. Install the eye-tracker and compile binaries with `./setup.sh`.
+Device: Tobii 4L  
 
-2. From a local terminal (outside the container) commit the install to the container with ``docker commit fast_aeye_typer fast_aeye_typer:latest`.  
+Device installation is handled by the docker build process. To verify your eye-tracker installation run `./test_eyetracker_conn.sh`.
 
-3. Restart the container (this time from inside the container) with an `exit` followed by `./open_container.sh`.  
+#### EEG Installation
 
-4. Verify your eye-tracker is correctly installed with `./tobii_cam_test.out`.
+Device: OpenBCI Cyton  
 
-#### OpenBCI EEG Installation
-
-...
+Device installation is handled by the docker build process. To verify your BCI installation run `./test_eeg_conn.sh`.
 
 ### Data Collection
 
-Start data collection with `./log_event_data.py`. Keystrokes, mouse clicks, EEG data, etc., are then logged to the paths given by `_config.yaml`.
-
+Start data collection with `./log_events.py`. Keystrokes, mouse clicks, EEG signals, and gaze-point data are then logged to the paths denoted in `_config.yaml`.
 
 ### Training
 
-Data collected must first be converted for use by the ML algorithms with `rawdata_to_sql.py`.
+Not Implemented
 
 ### Inference
 
@@ -68,3 +66,5 @@ Use autoencoder to filter out when brain scanner giving poor reading -- i.e. not
 * Add gaze logging on key AND mouse click
 * Add rawdata_to_sql
 * Add anamoly detection
+* Data filtering: Remove all key events w/no associated EEG and/or eye data
+* Data filtering: Remove all eeg events outside of known good events

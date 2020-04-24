@@ -54,7 +54,7 @@ RUN echo "Installing 3rd party Python 3.6 libraries..." && \
         pynput
 
 RUN echo "Updating apt-get..." && \
-    apt-get update
+    apt-get update 
 
 RUN echo "Installing 3rd party linux applications..." && \
     apt-get install -y --no-install-recommends \
@@ -97,6 +97,7 @@ RUN ln -s -f /usr/bin/python3.6 /usr/bin/python
 COPY dependencies/.bashrc /root/.bashrc
 # Create local codebase mount point
 RUN mkdir -p /opt/app/src
+RUN pwd
 
 RUN echo "Installing OpenBCI_Hub..."
 RUN mkdir -p /tmp/OpenBCI_Hub
@@ -105,24 +106,50 @@ WORKDIR /tmp/OpenBCI_Hub
 RUN unzip OpenBCIHub-v2.1.0-linux-64bit.zip
 RUN mkdir -p /opt/app/dependencies
 RUN mv OpenBCIHub-v2.1.0-linux-64bit /opt/app/dependencies/OpenBCI_Hub
-RUN ls
 RUN rm -rf /tmp/OpenBCI_Hub
+
+RUN echo "Installing Tobii PDK..."
+RUN mkdir -p /opt/app/dependencies/tobii_pdk_install
+COPY dependencies/IS4LARGE107_UB16_x64_1.13.15_public.zip /opt/app/dependencies/tobii_pdk_install
+WORKDIR /opt/app/dependencies/tobii_pdk_install
+RUN unzip IS4LARGE107_UB16_x64_1.13.15_public.zip
+RUN rm IS4LARGE107_UB16_x64_1.13.15_public.zip
+WORKDIR /opt/app/dependencies/tobii_pdk_install/platform_runtime
+RUN chmod 777 platform_runtime_IS4LARGE107_install.sh
+WORKDIR /opt/app/dependencies/tobii_pdk_install/client_side/stream_engine
+RUN mkdir /usr/lib/tobii
+RUN cp -pR lib/x64/*.so /usr/lib/tobii/
+RUN mkdir /usr/include/tobii
+RUN cp -R include/tobii/* /usr/include/tobii
+
+RUN echo "Installing tobii_config..."
+RUN apt-get update && \
+    apt-get install -y \
+    gconf2 \
+    libnotify4 \
+    libappindicator1
+
+RUN mkdir -p /tmp/tobii_config
+COPY dependencies/tobii_config_0.1.8_amd64.deb /tmp/tobii_config
+WORKDIR /tmp/tobii_config
+RUN dpkg -i tobii_config_0.1.8_amd64.deb
+RUN rm -rf /tmp/tobii_config
 
 RUN echo "Setting default working dir"
 WORKDIR /opt/app/src
 
-# RUN echo "Setting up psuedo-systemd..."
-# ENV container docker
-# RUN (cd /lib/systemd/system/sysinit.target.wants/; \
-#     for i in ; \
-#     do [ $i == systemd-tmpfiles-setup.service ] || rm -f $i; done)
-# RUN rm -rf /lib/systemd/system/multi-user.target.wants/
-# RUN rm -rf /etc/systemd/system/.wants/
-# RUN rm -rf /lib/systemd/system/local-fs.target.wants/
-# RUN rm -rf /lib/systemd/system/sockets.target.wants/udev
-# RUN rm -rf /lib/systemd/system/sockets.target.wants/initctl
-# RUN rm -rf /lib/systemd/system/basic.target.wants/
-# RUN rm -rf /lib/systemd/system/anaconda.target.wants/*
-# VOLUME [ “/sys/fs/cgroup” ]
-# CMD ["/sbin/init"]
+RUN echo "Setting up psuedo-systemd..."
+ENV container docker
+RUN (cd /lib/systemd/system/sysinit.target.wants/; \
+    for i in ; \
+    do [ $i == systemd-tmpfiles-setup.service ] || rm -f $i; done)
+RUN rm -rf /lib/systemd/system/multi-user.target.wants/
+RUN rm -rf /etc/systemd/system/.wants/
+RUN rm -rf /lib/systemd/system/local-fs.target.wants/
+RUN rm -rf /lib/systemd/system/sockets.target.wants/udev
+RUN rm -rf /lib/systemd/system/sockets.target.wants/initctl
+RUN rm -rf /lib/systemd/system/basic.target.wants/
+RUN rm -rf /lib/systemd/system/anaconda.target.wants/*
+VOLUME [ “/sys/fs/cgroup” ]
+CMD ["/sbin/init"]
 
