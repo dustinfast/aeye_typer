@@ -1,7 +1,7 @@
 # Application Docker image Dockerfile. 
 # Build an image from it with ./build.sh
 
-FROM nvidia/cudagl:10.0-devel-ubuntu16.04
+FROM nvidia/cudagl:10.0-devel-ubuntu18.04
 
 LABEL description="fast_aeye_typer"
 LABEL maintainer="Dustin Fast <dustin.fast@outlook.com>"
@@ -51,6 +51,7 @@ RUN echo "Installing 3rd party Python 3.6 libraries..." && \
         sqlalchemy \
         tqdm \
         brainflow \
+        tobii_research \
         pynput
 
 RUN echo "Updating apt-get..." && \
@@ -70,12 +71,16 @@ RUN echo "Installing 3rd party linux applications..." && \
     usbutils \
     openssh-server \
     libcanberra-gtk-module \
+    avahi-daemon \
     default-jre \
     default-jdk \
     libxi-dev \
     libxss-dev \
     libgconf-2-4 \
     libgtk-3-0 \
+    compiz \
+    libxcomposite-dev \
+    libcairo2-dev \
     xinput \
     xdotool \
     libxdo-dev \
