@@ -4,14 +4,14 @@
 #include <stdio.h>
 
 #include "eyetracker.h"
-#include "eyetracker_gazemark.h"
+#include "eyetracker_gazestatus.h"
 
 using namespace std;
 
 
 int main() {
-    // Init marker display
-    init_marker_disp();
+    // Instantiate gaze status
+    GazeStatus gaze = GazeStatus();
 
 
     // Connect to default eye-tracker
@@ -31,7 +31,7 @@ int main() {
     error = print_device_info(device);
     assert(error == TOBII_ERROR_NO_ERROR);
 
-    error = tobii_gaze_point_subscribe(device, gaze_marker_callback, 0);
+    error = tobii_gaze_point_subscribe(device, gaze_status_callback, &gaze);
     assert(error == TOBII_ERROR_NO_ERROR);
 
     printf("Marking gaze point...\n");
@@ -52,8 +52,6 @@ int main() {
 
     error = tobii_api_destroy(api);
     assert(error == TOBII_ERROR_NO_ERROR);
-
-    close_marker_display();
 
     return 0;
 }
