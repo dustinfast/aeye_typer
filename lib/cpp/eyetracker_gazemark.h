@@ -13,8 +13,8 @@
 #include <tobii/tobii.h>
 #include <tobii/tobii_streams.h>
 
-#include "/usr/include/cairo/cairo.h"
-#include "/usr/include/cairo/cairo-xlib.h"
+#include <cairo/cairo.h>
+#include <cairo/cairo-xlib.h>
 
 
 using namespace std;

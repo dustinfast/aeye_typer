@@ -10,7 +10,7 @@ if [ "${STATUS}" != "active" ]; then
 fi
 
 # Compile the eyetracker gazemark binary
-LD_LIBRARY_PATH=/usr/lib/tobii/:$LD_LIBRARY_PATH
+LD_LIBRARY_PATH=/usr/lib/tobii/:/usr/include/cairo/:$LD_LIBRARY_PATH
 
 gcc lib/cpp/eyetracker_gazemark.cpp  \
     -o eye_tracker_gazemark.out \
