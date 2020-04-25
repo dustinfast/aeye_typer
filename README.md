@@ -33,7 +33,7 @@ Enter the docker container with
 
 Device: Tobii 4L  
 
-Device installation is handled by the docker build process. To verify your eye-tracker installation run `./test_eyetracker_conn.sh`.
+Device installation is handled by the docker build process but must be calibrated. Run `tobiiproeyetrackermanager` perform calibration.
 
 #### EEG Installation
 
