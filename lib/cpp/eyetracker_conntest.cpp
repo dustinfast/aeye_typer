@@ -5,7 +5,6 @@
 #include <cstring>
 
 #include "eyetracker_stream.h"
-#include <tobii/tobii_config.h>
 
 using namespace std;
 
@@ -28,7 +27,7 @@ int main() {
     error = print_device_info(device);
     assert(error == TOBII_ERROR_NO_ERROR);
 
-    error = tobii_gaze_point_subscribe(device, gaze_point_callback, 0);
+    error = tobii_gaze_point_subscribe(device, gaze_print_callback, 0);
     assert(error == TOBII_ERROR_NO_ERROR);
 
     printf("Device current gaze point:\n");

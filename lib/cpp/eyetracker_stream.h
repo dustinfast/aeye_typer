@@ -1,4 +1,5 @@
 // A collection of helpers for using the Tobii Stream Engine API
+
 #include <assert.h>
 #include <stdio.h>
 #include <cstring>
@@ -8,17 +9,19 @@
 
 using namespace std;
 
-
 #define URL_MAX_LEN 256
 
 
-void gaze_point_callback(tobii_gaze_point_t const *gaze_point, void *user_data) {
+// A gaze point callback that prints gaze data to stdout as it is received.
+void gaze_print_callback(tobii_gaze_point_t const *gaze_point, void *user_data) {
     if (gaze_point->validity == TOBII_VALIDITY_VALID)
         printf("Gaze point: %f, %f\n",
                gaze_point->position_xy[0],
                gaze_point->position_xy[1]);
 }
 
+
+// Populates user_data with the first eyetracker found.
 static void single_url_receiver(char const *url, void *user_data) {
     char *buffer = (char *) user_data;
 
@@ -29,7 +32,7 @@ static void single_url_receiver(char const *url, void *user_data) {
 }
 
 
-// Prints details of the given device to stdout
+// Prints details of the given device to stdout.
 tobii_error_t print_device_info(tobii_device_t *device) {
     tobii_device_info_t info;
 
