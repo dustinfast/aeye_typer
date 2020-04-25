@@ -8,7 +8,7 @@ import argparse
 from time import sleep
 
 from lib.py import app
-from lib.py.event_loggers import AsyncEEGEventLogger, AsyncInputEventLogger
+from lib.py.event_logger import AsyncEEGEventLogger, AsyncInputEventLogger
 
 
 # App config constants
