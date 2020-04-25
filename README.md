@@ -1,12 +1,20 @@
 # Fast AEye TypeR
 
-An accessibility tool (WIP) attempting to allow hands free mouse and keyboard use via an eye-tracker and wearable bran-scanner.
+This application is a work in progress.  
 
-This tool differs from existing solutions in that
+An accessibility tool for allowing hands free use of a mouse and keyboard via a screen-mounted eyetracker and wearable brain-scanner.
+
+This tool is intended to differ from existing accessibility solutions in that
 
 * It is inteded for use in a linux environment
-* The rate of typing is intended to be on par with a proficient typist's WPM rate.
-*  Use is based on eye movement and thought alone - i.e. a completely paralyzed but fully conscious person may use it.
+* Use is based on eye movement and thought alone - i.e. a paralyzed but fully conscious person may use it.
+* The rate of typing (WPM) is intended to be on par with that of a proficient typist's.
+
+Proof of concept will be accomplished through the following steps:
+
+1. Keystrokes, mouse clicks, EEG signals, and gaze-point data are recorded while a participant uses the application in Data Collection mode.
+
+2. Machine learning models will be built and trained to infer keystrokes, mouse-clicks, and cursor location from the EEG and eyetracker data streams.
 
 Author: Dustin Fast <dustin.fast@hotmail.com>
 
@@ -43,7 +51,7 @@ Device installation is handled by the docker build process. To verify your BCI i
 
 ### Data Collection
 
-Start data collection with `./log_events.py`. Keystrokes, mouse clicks, EEG signals, and gaze-point data are then logged to the paths denoted in `_config.yaml`.
+Start data collection with `./collect_data.py`. Keystrokes, mouse clicks, EEG signals, and gaze-point data are then logged to the paths denoted in `_config.yaml`.
 
 ### Training
 
@@ -63,8 +71,9 @@ Use autoencoder to filter out when brain scanner giving poor reading -- i.e. not
 
 ## TODO
 
-* Add gaze logging on key AND mouse click
+* Add gaze logging
 * Add rawdata_to_sql
 * Add anamoly detection
 * Data filtering: Remove all key events w/no associated EEG and/or eye data
 * Data filtering: Remove all eeg events outside of known good events
+* Dashboard denoting status
