@@ -1,3 +1,5 @@
+// Connects to the eye tracker and marks gaze point to the screen in real time.
+
 #include <assert.h>
 #include <stdio.h>
 
@@ -32,7 +34,7 @@ int main() {
     error = tobii_gaze_point_subscribe(device, gaze_marker_callback, 0);
     assert(error == TOBII_ERROR_NO_ERROR);
 
-    printf("Reading gaze point...\n");
+    printf("Marking gaze point...\n");
     int is_running = 1000;
     while (--is_running > 0) {
         error = tobii_wait_for_callbacks(1, &device);

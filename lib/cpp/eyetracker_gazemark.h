@@ -3,11 +3,8 @@
 // TODO: Refactor into a class
 
 
-#include <assert.h>
 #include <stdio.h>
 #include <cstring>
-#include <chrono>
-#include <thread>
 
 #include <X11/Xlib.h>
 #include <X11/X.h>
@@ -73,6 +70,7 @@ void gaze_marker_callback(tobii_gaze_point_t const *gaze_point, void *user_data)
 
         // printf("Gaze points: %d, %d\n", x, y);  // debug
 
+        // Create the gaze marker as an overlay window
         overlay = XCreateWindow(
             d, root, x, y, 
             GAZE_MARKER_WIDTH, 
@@ -89,11 +87,10 @@ void gaze_marker_callback(tobii_gaze_point_t const *gaze_point, void *user_data)
 
         cairo_surface_t* surf = cairo_xlib_surface_create(
             d, overlay, vinf.visual, GAZE_MARKER_WIDTH, GAZE_MARKER_HEIGHT);
+
+        // Destroy the marker
         XFlush(d);
-
-
         cairo_surface_destroy(surf);
-
         XUnmapWindow(d, overlay);
     }
     else

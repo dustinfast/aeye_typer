@@ -2,10 +2,14 @@
 
 # A script for testing the on-screen eyetracker gaze marking
 
-# Start eyetracker service
-/opt/app/dependencies/tobii_pdk_install/platform_runtime/platform_runtime_IS4LARGE107_install.sh --install
+# Start eyetracker service iff needed
+STATUS="$(systemctl is-active tobii-runtime-IS4LARGE107)"
 
-# Compile the eyetracker conn test binary
+if [ "${STATUS}" != "active" ]; then
+    /opt/app/dependencies/tobii_pdk_install/platform_runtime/platform_runtime_IS4LARGE107_install.sh --install
+fi
+
+# Compile the eyetracker gazemark binary
 LD_LIBRARY_PATH=/usr/lib/tobii/:$LD_LIBRARY_PATH
 
 gcc lib/cpp/eyetracker_gazemark.cpp  \
