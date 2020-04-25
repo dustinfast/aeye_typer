@@ -140,6 +140,13 @@ WORKDIR /tmp/tobii_config
 RUN dpkg -i tobii_config_0.1.8_amd64.deb
 RUN rm -rf /tmp/tobii_config
 
+RUN echo "Installing tobii manager..."
+RUN mkdir -p /tmp/tobii_mgr
+COPY dependencies/TobiiProEyeTrackerManager-2.1.0.deb /tmp/tobii_mgr
+WORKDIR /tmp/tobii_mgr
+RUN dpkg -i TobiiProEyeTrackerManager-2.1.0.deb
+RUN rm -rf /tmp/tobii_mgr
+
 RUN echo "Setting default working dir"
 WORKDIR /opt/app/src
 
