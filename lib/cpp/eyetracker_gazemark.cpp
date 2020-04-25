@@ -3,7 +3,7 @@
 #include <assert.h>
 #include <stdio.h>
 
-#include "eyetracker_stream.h"
+#include "eyetracker.h"
 #include "eyetracker_gazemark.h"
 
 using namespace std;
