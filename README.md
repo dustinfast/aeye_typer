@@ -41,7 +41,7 @@ Enter the docker container with
 
 Device: Tobii 4L  
 
-Device installation is handled by the docker build process but must be calibrated. Run `tobiiproeyetrackermanager` perform calibration.
+Device installation is handled by the docker build process but must be calibrated. To do so, run `tobiiproeyetrackermanager`.
 
 #### EEG Installation
 
@@ -71,10 +71,11 @@ Use autoencoder to filter out when brain scanner giving poor reading -- i.e. not
 
 ## TODO
 
+* Add caret location to key logger
 * Ensure all times values are epoch time of same fmt
-* Add gaze logging
 * Add rawdata_to_sql
 * Add anamoly detection
 * Data filtering: Remove all key events w/no associated EEG and/or eye data
 * Data filtering: Remove all eeg events outside of known good events
-* Dashboard denoting status
+* Dashboard denoting status (tobii_user_position_guide_subscribe, etc)
+* Also log user position, etc., from eye-tracker and use to improve gaze point accuracy.

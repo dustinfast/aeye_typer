@@ -34,7 +34,9 @@ SIGNAL_STOP = _conf['EVENTLOG_SIGNAL_STOP']
 SZ_DATA_BUFF = _conf['EEG_SZ_DATA_BUFF']
 del _conf
 
-
+# TODO: from datetime import datetime
+# dt = datetime.now()
+# dt.microsecond
 
 class EventLogger(object):
     def __init__(self, logname, notes, verbose):

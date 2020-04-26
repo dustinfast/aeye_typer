@@ -1,5 +1,15 @@
+/////////////////////////////////////////////////////////////////////////////
 // A class for annotating gaze status from the eyetracker in real time.
-// Gaze point is displayed on the screen when valid.
+// When the gaze point is valid (i.e. a user is present) a gaze_data obj
+// is pushed to a circular buffer and the predicted gaze point is annotated
+// on the screen.
+// An extern "C" wrapper is also defined for select functions.
+//
+// Author: Dustin Fast <dustin.fast@hotmail.com>
+//
+/////////////////////////////////////////////////////////////////////////////
+
+// TODO: buff_to_csv(n)
 
 #include <chrono>
 #include <stdio.h>
@@ -58,14 +68,15 @@ class EyeTrackerGaze : EyeTracker {
         int m_disp_height;
         bool m_gaze_is_valid;
 
-        EyeTrackerGaze(int, int, int, int);
-        ~EyeTrackerGaze();
         void start();
         void stop();
         bool is_gaze_valid();
         void enque_gaze_data(int, int, time_stamp);
         void print_gaze_data();
     
+        EyeTrackerGaze(int, int, int, int);
+        ~EyeTrackerGaze();
+
     protected:
         boost::circular_buffer<gaze_data_t> m_gaze_buff;
 };
@@ -101,7 +112,6 @@ EyeTrackerGaze::~EyeTrackerGaze() {
 
 // Starts the async gaze data watcher
 void EyeTrackerGaze::start() {
-    // TODO: Subscribe to user position, etc.
     m_async_mutex = new boost::mutex;
     m_async = new boost::thread(do_gaze_point_subscribe, m_device, this);
 }
@@ -124,7 +134,7 @@ bool EyeTrackerGaze::is_gaze_valid() {
 
 // Enques gaze data into the circular buffer
 void EyeTrackerGaze::enque_gaze_data(int x, int y, time_stamp unixtime_us) {
-    // TODO: mark on freq but enque as often as possible
+    // TODO: ensure no mem leak
     gaze_data gd;
     gd.x = x;
     gd.y = y;
@@ -167,37 +177,41 @@ void do_gaze_point_subscribe(tobii_device_t *device, void *gaze) {
     assert(tobii_gaze_point_unsubscribe(device) == TOBII_ERROR_NO_ERROR);
 }
 
-
 // Gaze point callback for use with tobii_gaze_point_subscribe(). Gets the
 // eyetrackers predicted on-screen gaze coordinates (x, y) and enques gaze
-// data into Gazes' circular buffer.
+// data into EyeTrackerGazes' circular buffer. Also creates a shaded window
+// overlay 
 // ASSUMES: user_data is a ptr to an object of type EyeTrackerGaze.
 void cb_gaze_point(tobii_gaze_point_t const *gaze_point, void *user_data) {
     EyeTrackerGaze *gaze = static_cast<EyeTrackerGaze*>(user_data);
 
-    // Only process every m_mark_freq callbacks
-    gaze->m_mark_count++;
-    if (gaze->m_mark_count % gaze->m_mark_freq != 0)
-        return;
-
-    gaze->m_mark_count = 0;
-
+    // If gaze is detected, do the enque and screen annotation
     if (gaze_point->validity == TOBII_VALIDITY_VALID) {
         gaze->m_gaze_is_valid = True;
         
         // Get unix timestamp in microseconds
+        // TODO: Ensure this time is not delayed from gaze_point->timestamp_us
         time_stamp unixtime_us = time_point_cast<microseconds>(
             system_clock::now()
         );
-        // printf("epoch time: %li\n", unixtime_us);  // debug
 
         // Convert gaze point to screen coords
         int x_coord = gaze_point->position_xy[0] * gaze->m_disp_width;
         int y_coord = gaze_point->position_xy[1] * gaze->m_disp_height;
+        
         // printf("Gaze points: %d, %d\n", x, y);  // debug
+        // printf("Gaze point time: %li\n", gaze_point->timestamp_us); // debug
+        // printf("Epoch time: %li\n\n", unixtime_us);  // debug
 
         // Enque the gaze data in the circle buffer
         gaze->enque_gaze_data(x_coord, y_coord, unixtime_us);
+
+        // Annotate (x, y) on the screen every m_mark_freq callbacks
+        gaze->m_mark_count++;
+        if (gaze->m_mark_count % gaze->m_mark_freq != 0)
+            return;
+
+        gaze->m_mark_count = 0;
 
         // Create the gaze marker as an overlay window
         gaze->m_overlay = XCreateWindow(
@@ -229,10 +243,11 @@ void cb_gaze_point(tobii_gaze_point_t const *gaze_point, void *user_data) {
         cairo_surface_destroy(surf);
         XUnmapWindow(gaze->m_disp, gaze->m_overlay);
     }
-    else
-    {
+
+    // Else if no gaze detected, do nothing
+    else {
         gaze->m_gaze_is_valid = False;
-        printf("WARN: Received invalid gaze_point.\n"); // debug
+        // printf("WARN: Received invalid gaze_point.\n"); // debug
 
     }
 }

@@ -1,4 +1,10 @@
-// An abstraction of an Eyetracker.
+/////////////////////////////////////////////////////////////////////////////
+// An abstraction of an eye tracker.
+//
+// Author: Dustin Fast <dustin.fast@hotmail.com>
+//
+/////////////////////////////////////////////////////////////////////////////
+
 
 #include <assert.h>
 #include <stdio.h>
@@ -11,10 +17,15 @@
 using namespace std;
 
 
+/////////////////////////////////////////////////////////////////////////////
+// Defs
+
 #define URL_MAX_LEN 256
 
-static void single_url_receiver(char const *url, void *user_data);
+void single_url_receiver(char const *url, void *user_data);
 
+/////////////////////////////////////////////////////////////////////////////
+// Class
 
 class EyeTracker {
     protected:
@@ -88,8 +99,11 @@ void EyeTracker::set_display() {
     // assert(error == TOBII_ERROR_NO_ERROR);
 }
 
+/////////////////////////////////////////////////////////////////////////////
+// Callback functions
+
 // Populates user_data with the first eyetracker found.
-static void single_url_receiver(char const *url, void *user_data) {
+void single_url_receiver(char const *url, void *user_data) {
     char *buffer = (char *) user_data;
 
     if (*buffer != '\0') return; // only keep first device

@@ -13,7 +13,7 @@ using namespace std;
 // TODO: Move to config
 #define DISP_WIDTH 3840
 #define DISP_HEIGHT 2160
-#define GAZE_MARK_INTERVAL 7
+#define GAZE_MARK_INTERVAL 8
 #define GAZE_BUFF_SZ 10
 #define GAZE_TIME 3
 
