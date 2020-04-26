@@ -17,11 +17,12 @@ static void single_url_receiver(char const *url, void *user_data);
 
 
 class EyeTracker {
-    tobii_api_t *api;
-    void set_display();
+    protected:
+        tobii_device_t *m_device;
+        tobii_api_t *m_api;
+        void set_display();
 
     public:
-        tobii_device_t *device;
 
         EyeTracker();
         ~EyeTracker();
@@ -31,27 +32,28 @@ class EyeTracker {
 // Default constructor
 EyeTracker::EyeTracker() {
     // Connect to the default eyetracker
-    assert(tobii_api_create(&api, NULL, NULL) == TOBII_ERROR_NO_ERROR);
+    assert(tobii_api_create(&m_api, NULL, NULL) == TOBII_ERROR_NO_ERROR);
 
     char url[256] = {0};
     assert(
-        tobii_enumerate_local_device_urls(api, single_url_receiver, url
+        tobii_enumerate_local_device_urls(m_api, single_url_receiver, url
         ) == TOBII_ERROR_NO_ERROR && *url != '\0'
     );
 
-    assert(tobii_device_create(api, url, &device) == TOBII_ERROR_NO_ERROR);
+    assert(tobii_device_create(m_api, url, &m_device) == TOBII_ERROR_NO_ERROR);
 }
 
 // Destructor
 EyeTracker::~EyeTracker() {
-    assert(tobii_device_destroy(device) == TOBII_ERROR_NO_ERROR);
-    assert(tobii_api_destroy(api) == TOBII_ERROR_NO_ERROR);
+    assert(tobii_device_destroy(m_device) == TOBII_ERROR_NO_ERROR);
+    assert(tobii_api_destroy(m_api) == TOBII_ERROR_NO_ERROR);
 }
 
+// Prints eyetracker device info
 void EyeTracker::print_device_info() {
     tobii_device_info_t info;
 
-    assert(tobii_get_device_info(device, &info) == TOBII_ERROR_NO_ERROR);
+    assert(tobii_get_device_info(m_device, &info) == TOBII_ERROR_NO_ERROR);
     
     printf("Device SN: %s\n", info.serial_number);
     printf("Device Model: %s\n", info.model);
@@ -63,15 +65,16 @@ void EyeTracker::print_device_info() {
     printf("Device Runtime Build Ver: %s\n", info.runtime_build_version);
 }
 
+// Updates the eye-tracker for the current display geometry
 void EyeTracker::set_display() {
     // TODO: Get and set display area
     // tobii_geometry_mounting_t *geometry_mounting = new tobii_geometry_mounting_t;
-    // error = tobii_get_geometry_mounting(device, geometry_mounting);
+    // error = tobii_get_geometry_mounting(m_device, geometry_mounting);
     // assert(error == TOBII_ERROR_NO_ERROR);
 
     // tobii_display_area_t* d_area = new tobii_display_area_t;
     // error = tobii_calculate_display_area_basic(
-    //     api,
+    //     m_api,
     //     698.5, // width
     //     393.7, // height
     //     0, // offset
@@ -80,7 +83,7 @@ void EyeTracker::set_display() {
     // );
     // assert(error == TOBII_ERROR_NO_ERROR);
 
-    // error = tobii_set_display_area(device, d_area);
+    // error = tobii_set_display_area(m_device, d_area);
     // assert(error == TOBII_ERROR_INSUFFICIENT_LICENSE);
     // assert(error == TOBII_ERROR_NO_ERROR);
 }
