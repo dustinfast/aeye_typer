@@ -99,20 +99,22 @@ EyeTrackerGaze::~EyeTrackerGaze() {
     XCloseDisplay(m_disp);
 }
 
-// Starts watching the gaze data stream asynchronously until interuppted by
-// a stop() call.
+// Starts the async gaze data watcher
 void EyeTrackerGaze::start() {
     // TODO: Subscribe to user position, etc.
     m_async_mutex = new boost::mutex;
     m_async = new boost::thread(do_gaze_point_subscribe, m_device, this);
 }
 
+// Stops the async watcher
 void EyeTrackerGaze::stop() {
-    // TODO: Try/catch
-    m_async->interrupt();
-    m_async->join();
-    delete m_async;
-    delete m_async_mutex;
+    try {
+        m_async->interrupt();
+        m_async->join();
+        delete m_async;
+        delete m_async_mutex;
+    }
+    catch (boost::exception&) {}
 }
 
 // Returns the current gaze validity state
@@ -153,16 +155,14 @@ void do_gaze_point_subscribe(tobii_device_t *device, void *gaze) {
     assert(tobii_gaze_point_subscribe(device, cb_gaze_point, gaze
     ) == TOBII_ERROR_NO_ERROR);
 
-    while (True) {
     try {
-        assert(tobii_wait_for_callbacks(1, &device) == TOBII_ERROR_NO_ERROR);
-        assert(tobii_device_process_callbacks(device) == TOBII_ERROR_NO_ERROR);
-        boost::this_thread::sleep_for(boost::chrono::milliseconds{1});
-        }
-        catch (boost::thread_interrupted&) {
-            break;
+        while (True) {
+            assert(tobii_wait_for_callbacks(1, &device) == TOBII_ERROR_NO_ERROR);
+            assert(tobii_device_process_callbacks(device) == TOBII_ERROR_NO_ERROR);
+            boost::this_thread::sleep_for(boost::chrono::milliseconds{1});
         }
     }
+    catch (boost::thread_interrupted&) {}
 
     assert(tobii_gaze_point_unsubscribe(device) == TOBII_ERROR_NO_ERROR);
 }
