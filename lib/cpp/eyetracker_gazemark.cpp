@@ -12,6 +12,7 @@ using namespace std;
 #define DISP_WIDTH 3840
 #define DISP_HEIGHT 2160
 #define GAZE_MARK_INTERVAL 7
+#define GAZE_BUFF_SZ 10
 
 
 int main() {
@@ -22,7 +23,8 @@ int main() {
     e.print_device_info();
 
     // Instantiate gaze status
-    GazeStatus gaze = GazeStatus(DISP_WIDTH, DISP_HEIGHT, GAZE_MARK_INTERVAL);
+    GazeStatus gaze = GazeStatus(
+        DISP_WIDTH, DISP_HEIGHT, GAZE_MARK_INTERVAL, GAZE_BUFF_SZ);
 
 
     // Subscribe to gaze point
@@ -30,13 +32,15 @@ int main() {
     ) == TOBII_ERROR_NO_ERROR);
 
     printf("Marking gaze point...\n");
-    int is_running = 1000;
+    int is_running = 100;
     while (--is_running > 0) {
         assert(tobii_wait_for_callbacks(1, &e.device) == TOBII_ERROR_NO_ERROR);
         assert(tobii_device_process_callbacks(e.device) == TOBII_ERROR_NO_ERROR);
     }
 
     assert(tobii_gaze_point_unsubscribe(e.device) == TOBII_ERROR_NO_ERROR);
+
+    gaze.print_data();
 
     return 0;
 }
