@@ -3,6 +3,8 @@
 
 #include <stdio.h>
 #include <cstring>
+#include <boost/chrono.hpp>
+#include <iostream>
 
 #include <X11/Xlib.h>
 #include <X11/X.h>
@@ -14,6 +16,8 @@
 #include <cairo/cairo.h>
 #include <cairo/cairo-xlib.h>
 
+#include <boost/chrono.hpp>
+#include <boost/thread.hpp>
 #include <boost/circular_buffer.hpp>
 
 #include "eyetracker.h"
@@ -22,7 +26,7 @@ using namespace std;
 
 
 /////////////////////////////////////////////////////////////////////////////
-// Definitions
+// Defs
 
 #define GAZE_MARKER_WIDTH 5
 #define GAZE_MARKER_HEIGHT 20
@@ -30,21 +34,19 @@ using namespace std;
 #define GAZE_MARKER_OPAQUENESS 100
 #define GAZE_MARKER_BORDER 0
 
-void cb_gaze_point(tobii_gaze_point_t const *gaze_point, void *user_data);
-
 typedef struct gaze_data {
 		int x;
         int y;
         int64_t timestamp_us;
 	} gaze_data_t;
 
+void do_gaze_point_subscribe(tobii_device_t*, void*);
+void cb_gaze_point(tobii_gaze_point_t const* , void*);
 
 /////////////////////////////////////////////////////////////////////////////
 // Class Def
-class EyeTrackerGaze : EyeTracker {
-    boost::circular_buffer<gaze_data_t> gaze_buff;
-    int default_screen;
 
+class EyeTrackerGaze : EyeTracker {
     public:
         Display *m_disp;
         Window m_root_wind;
@@ -59,11 +61,15 @@ class EyeTrackerGaze : EyeTracker {
 
         EyeTrackerGaze(int, int, int, int);
         ~EyeTrackerGaze();
-        void start(int);
-        void start_async(int);
+        void start();
+        void stop();
         bool is_gaze_valid();
         void enque_gaze_data(int x, int y, int64_t);
         void print_gaze_data();
+    
+    protected:
+        boost::circular_buffer<gaze_data_t> m_gaze_buff;
+        boost::thread *m_async;
 };
 
 // Default constructor
@@ -72,17 +78,17 @@ EyeTrackerGaze::EyeTrackerGaze(
     m_disp_width = disp_width;
     m_disp_height = disp_height;
     m_mark_freq = update_freq;
-    gaze_buff = boost::circular_buffer<gaze_data_t>(buff_sz); 
+    m_gaze_buff = boost::circular_buffer<gaze_data_t>(buff_sz); 
 
     m_disp = XOpenDisplay(NULL);
     m_root_wind = DefaultRootWindow(m_disp);
-    default_screen = XDefaultScreen(m_disp);
 
     XMatchVisualInfo(
         m_disp, DefaultScreen(m_disp), GAZE_MARKER_CDEPTH, TrueColor, &m_vinfo);
 
     m_attrs.override_redirect = true;
-    m_attrs.colormap = XCreateColormap(m_disp, m_root_wind, m_vinfo.visual, AllocNone);
+    m_attrs.colormap = XCreateColormap(
+        m_disp, m_root_wind, m_vinfo.visual, AllocNone);
     m_attrs.background_pixel = GAZE_MARKER_OPAQUENESS;
     m_attrs.border_pixel = 0;
 
@@ -92,35 +98,22 @@ EyeTrackerGaze::EyeTrackerGaze(
 
 // Destructor
 EyeTrackerGaze::~EyeTrackerGaze() {
-        XCloseDisplay(m_disp);
+    XCloseDisplay(m_disp);
 }
 
-// Starts watching the gaze data stream for the given number of iterations.
-// If iterations == 0, runs indefinately.
-void EyeTrackerGaze::start(int iterations=100) {
+// Starts watching the gaze data stream asynchronously until interuppted by
+// a stop() call.
+void EyeTrackerGaze::start() {
     // TODO: Subscribe to user position, etc.
 
-    // Subscribe to gaze point
-    assert(tobii_gaze_point_subscribe(m_device, cb_gaze_point, this
-    ) == TOBII_ERROR_NO_ERROR);
-
-    bool run_indef = False;
-    if (iterations == 0)
-        run_indef = True;
-
-    while (run_indef || --iterations > 0) {
-        assert(tobii_wait_for_callbacks(1, &m_device) == TOBII_ERROR_NO_ERROR);
-        assert(tobii_device_process_callbacks(m_device) == TOBII_ERROR_NO_ERROR);
-    }
-
-    assert(tobii_gaze_point_unsubscribe(m_device) == TOBII_ERROR_NO_ERROR);
-
+    m_async = new boost::thread(do_gaze_point_subscribe, m_device, this);
 }
 
-// Starts watching the gaze data stream asynchronously for the given number of
-// iterations. If iterations == 0, runs indefinately.
-// TODO: void EyeTrackerGaze::start_async(int iterations=100) {
-// }
+void EyeTrackerGaze::stop() {
+    m_async->interrupt();
+    m_async->join();
+    delete m_async;
+}
 
 // Returns the current gaze validity state
 bool EyeTrackerGaze::is_gaze_valid() {
@@ -135,21 +128,45 @@ void EyeTrackerGaze::enque_gaze_data(int x, int y, int64_t timestamp) {
     gd.y = y;
     gd.timestamp_us = timestamp;
 
-    gaze_buff.push_back(gd);
+    m_gaze_buff.push_back(gd);
 }
 
 // Prints the contents of the circular buffer. For debug convenience.
 void EyeTrackerGaze::print_gaze_data() {
     boost::circular_buffer<gaze_data_t>::iterator i; 
 
-    for (i = gaze_buff.begin(); i < gaze_buff.end(); i++)  {
+    for (i = m_gaze_buff.begin(); i < m_gaze_buff.end(); i++)  {
         printf("%li\n", ((gaze_data)*i).timestamp_us); 
     }
 }
 
 
 /////////////////////////////////////////////////////////////////////////////
-// Gaze point callback, for use with tobii_gaze_point_subscribe(). Gets the
+// Gaze subscriber and callback functions
+
+// Starts the gaze data stream
+void do_gaze_point_subscribe(tobii_device_t *device, void *gaze) {
+
+    // Subscribe to gaze point
+    assert(tobii_gaze_point_subscribe(device, cb_gaze_point, gaze
+    ) == TOBII_ERROR_NO_ERROR);
+
+    while (True) {
+    try {
+        assert(tobii_wait_for_callbacks(1, &device) == TOBII_ERROR_NO_ERROR);
+        assert(tobii_device_process_callbacks(device) == TOBII_ERROR_NO_ERROR);
+        boost::this_thread::sleep_for(boost::chrono::milliseconds{1});
+        }
+        catch (boost::thread_interrupted&) {
+            break;
+        }
+    }
+
+    assert(tobii_gaze_point_unsubscribe(device) == TOBII_ERROR_NO_ERROR);
+}
+
+
+// Gaze point callback for use with tobii_gaze_point_subscribe(). Gets the
 // eyetrackers predicted on-screen gaze coordinates (x, y) and enques gaze
 // data into Gazes' circular buffer.
 // ASSUMES: user_data is a ptr to an object of type EyeTrackerGaze.

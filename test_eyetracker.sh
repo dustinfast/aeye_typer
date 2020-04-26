@@ -14,7 +14,8 @@ LD_LIBRARY_PATH=/usr/lib/tobii/:/usr/include/cairo/:$LD_LIBRARY_PATH
 
 gcc lib/cpp/eyetracker_gaze.cpp  \
     -o eye_tracker_gazemark.out \
-    -lstdc++ -lX11 -lcairo      \
+    -lstdc++ -lX11 -lcairo \
+    -lpthread -lboost_system  -lboost_thread  \
     -pthread /usr/lib/tobii/libtobii_stream_engine.so
 
 # Run the test
