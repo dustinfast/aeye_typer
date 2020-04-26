@@ -86,6 +86,7 @@ RUN echo "Installing 3rd party linux applications..." && \
     libxdo-dev \
     libsqlite3-dev \
     libyaml-cpp-dev \
+    libboost-all-dev \
     libxtst6 \
     libasound2 \
     libcudnn7=7.6.4.38-1+cuda10.1  \
