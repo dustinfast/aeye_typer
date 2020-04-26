@@ -5,7 +5,6 @@
 
 #include <boost/chrono.hpp>
 
-
 #include "eyetracker_gaze.h"
 
 using namespace std;
@@ -16,18 +15,20 @@ using namespace std;
 #define DISP_HEIGHT 2160
 #define GAZE_MARK_INTERVAL 7
 #define GAZE_BUFF_SZ 10
+#define GAZE_TIME 3
 
 
 int main() {
     EyeTrackerGaze gaze = EyeTrackerGaze(
         DISP_WIDTH, DISP_HEIGHT, GAZE_MARK_INTERVAL, GAZE_BUFF_SZ);
 
-    printf("Marking gaze point...\n");
+    printf("Marking gaze point for %d seconds...\n", GAZE_TIME);
     
     gaze.start();
-    boost::this_thread::sleep_for(boost::chrono::seconds{3});
+    boost::this_thread::sleep_for(boost::chrono::seconds{GAZE_TIME});
     gaze.stop();
 
+    printf("Done.\n\nLast %d gaze data timestamps:\n", GAZE_BUFF_SZ);
     gaze.print_gaze_data();
 
     return 0;

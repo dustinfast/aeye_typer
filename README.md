@@ -71,6 +71,7 @@ Use autoencoder to filter out when brain scanner giving poor reading -- i.e. not
 
 ## TODO
 
+* Ensure all times values are epoch time of same fmt
 * Add gaze logging
 * Add rawdata_to_sql
 * Add anamoly detection
