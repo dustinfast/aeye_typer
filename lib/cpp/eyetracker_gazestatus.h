@@ -14,17 +14,14 @@
 #include <cairo/cairo.h>
 #include <cairo/cairo-xlib.h>
 
-
 using namespace std;
 
-#define GAZE_MARK_INTERVAL 7
+
 #define GAZE_MARKER_WIDTH 5
 #define GAZE_MARKER_HEIGHT 20
 #define GAZE_MARKER_CDEPTH 32
 #define GAZE_MARKER_OPAQUENESS 100
 #define GAZE_MARKER_BORDER 0
-#define DISP_WIDTH 3840
-#define DISP_HEIGHT 2160
 
 
 class GazeStatus {
@@ -36,15 +33,23 @@ class GazeStatus {
         Window overlay;
         int default_screen;
         int mark_count;
+        int mark_freq;
+        int disp_width;
+        int disp_height;
+        bool gaze_is_valid;
         // TODO: Ring buffer: vector<tobii_gaze_point_t*> gaze_points; 
 
-        GazeStatus();
+        GazeStatus(int, int, int);
         ~GazeStatus();
-        // void gaze_status_callback(tobii_gaze_point_t const*, void*);
+        bool is_gaze_valid();
 };
 
 // Default constructor
-GazeStatus::GazeStatus() {
+GazeStatus::GazeStatus(int display_width, int display_height, int update_freq) {
+    disp_width = display_width;
+    disp_height = display_height;
+    mark_freq = update_freq;
+
     disp = XOpenDisplay(NULL);
     root_wind = DefaultRootWindow(disp);
     default_screen = XDefaultScreen(disp);
@@ -58,6 +63,7 @@ GazeStatus::GazeStatus() {
     attrs.border_pixel = 0;
 
     mark_count = 0;
+    gaze_is_valid = False;
 }
 
 // Destructor
@@ -65,30 +71,39 @@ GazeStatus::~GazeStatus() {
         XCloseDisplay(disp);
 }
 
-void gaze_status_callback(tobii_gaze_point_t const *gaze_point, void *user_data) {
+bool GazeStatus::is_gaze_valid() {
+    return gaze_is_valid;
+}
+
+
+// Gaze status callback, for use with tobii_gaze_point_subscribe().
+// ASSUMES: user_data is a ptr to an object of type GazeStatus.
+void cb_gaze_point(tobii_gaze_point_t const *gaze_point, void *user_data) {
     // Cast user_data ptr to a GazeStatus 
     GazeStatus *gaze_status = static_cast<GazeStatus*>(user_data);
 
     // Only mark every GAZE_MARK_INTERVAL callbacks
     gaze_status->mark_count++;
-    if (gaze_status->mark_count % GAZE_MARK_INTERVAL != 0)
+    if (gaze_status->mark_count % gaze_status->mark_freq != 0)
         return;
 
     gaze_status->mark_count = 0;
 
     if (gaze_point->validity == TOBII_VALIDITY_VALID) {
-        // Convert gaze point to screen coords
-        int x = gaze_point->position_xy[0] * DISP_WIDTH;
-        int y = gaze_point->position_xy[1] * DISP_HEIGHT;
+        gaze_status->gaze_is_valid = True;  // Update validity
 
-        printf("Gaze points: %d, %d\n", x, y);  // debug
-        // printf("%d", gaze_status->mark_count);
+        // Convert gaze point to screen coords
+        int x_coord = gaze_point->position_xy[0] * gaze_status->disp_width;
+        int y_coord = gaze_point->position_xy[1] * gaze_status->disp_height;
+
+        // printf("Gaze points: %d, %d\n", x, y);  // debug
 
         // Create the gaze marker as an overlay window
         gaze_status->overlay = XCreateWindow(
             gaze_status->disp,
             gaze_status->root_wind,
-            x, y, 
+            x_coord,
+            y_coord, 
             GAZE_MARKER_WIDTH, 
             GAZE_MARKER_HEIGHT,
             GAZE_MARKER_BORDER,
@@ -115,6 +130,8 @@ void gaze_status_callback(tobii_gaze_point_t const *gaze_point, void *user_data)
     }
     else
     {
-        printf("WARN: Received invalid gaze_point.\n");
+        gaze_status->gaze_is_valid = False;  // Update validity
+        // printf("WARN: Received invalid gaze_point.\n"); // debug
+
     }
 }

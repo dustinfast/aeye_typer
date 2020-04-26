@@ -9,49 +9,34 @@
 using namespace std;
 
 
+#define DISP_WIDTH 3840
+#define DISP_HEIGHT 2160
+#define GAZE_MARK_INTERVAL 7
+
+
 int main() {
-    // Instantiate gaze status
-    GazeStatus gaze = GazeStatus();
-
-
-    // Connect to default eye-tracker
-    tobii_api_t *api;
-    tobii_error_t error = tobii_api_create(&api, NULL, NULL);
-    assert(error == TOBII_ERROR_NO_ERROR);
-
-    char url[256] = {0};
-    error = tobii_enumerate_local_device_urls(api, single_url_receiver, url);
-    assert(error == TOBII_ERROR_NO_ERROR && *url != '\0');
-
-    tobii_device_t *device;
-    error = tobii_device_create(api, url, &device);
-    assert(error == TOBII_ERROR_NO_ERROR);
+    // Connect to eyetracker
+    EyeTracker e = EyeTracker();
 
     printf("\n*** Eye Tracking Device Detected!\n");
-    error = print_device_info(device);
-    assert(error == TOBII_ERROR_NO_ERROR);
+    e.print_device_info();
 
-    error = tobii_gaze_point_subscribe(device, gaze_status_callback, &gaze);
-    assert(error == TOBII_ERROR_NO_ERROR);
+    // Instantiate gaze status
+    GazeStatus gaze = GazeStatus(DISP_WIDTH, DISP_HEIGHT, GAZE_MARK_INTERVAL);
+
+
+    // Subscribe to gaze point
+    assert(tobii_gaze_point_subscribe(e.device, cb_gaze_point, &gaze
+    ) == TOBII_ERROR_NO_ERROR);
 
     printf("Marking gaze point...\n");
     int is_running = 1000;
     while (--is_running > 0) {
-        error = tobii_wait_for_callbacks(1, &device);
-        assert(error == TOBII_ERROR_NO_ERROR || error == TOBII_ERROR_TIMED_OUT);
-
-        error = tobii_device_process_callbacks(device);
-        assert(error == TOBII_ERROR_NO_ERROR);
+        assert(tobii_wait_for_callbacks(1, &e.device) == TOBII_ERROR_NO_ERROR);
+        assert(tobii_device_process_callbacks(e.device) == TOBII_ERROR_NO_ERROR);
     }
 
-    error = tobii_gaze_point_unsubscribe(device);
-    assert(error == TOBII_ERROR_NO_ERROR);
-
-    error = tobii_device_destroy(device);
-    assert(error == TOBII_ERROR_NO_ERROR);
-
-    error = tobii_api_destroy(api);
-    assert(error == TOBII_ERROR_NO_ERROR);
+    assert(tobii_gaze_point_unsubscribe(e.device) == TOBII_ERROR_NO_ERROR);
 
     return 0;
 }
