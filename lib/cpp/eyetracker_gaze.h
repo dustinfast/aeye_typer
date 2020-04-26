@@ -5,6 +5,7 @@
 #include <stdio.h>
 
 #include <boost/thread.hpp>
+#include <boost/thread/mutex.hpp>
 #include <boost/circular_buffer.hpp>
 #include <cairo/cairo-xlib.h>
 #include <X11/X.h>
@@ -41,6 +42,10 @@ void cb_gaze_point(tobii_gaze_point_t const* , void*);
 // Class
 
 class EyeTrackerGaze : EyeTracker {
+    private:
+        boost::thread *m_async;
+        boost::mutex *m_async_mutex;
+
     public:
         Display *m_disp;
         Window m_root_wind;
@@ -63,7 +68,6 @@ class EyeTrackerGaze : EyeTracker {
     
     protected:
         boost::circular_buffer<gaze_data_t> m_gaze_buff;
-        boost::thread *m_async;
 };
 
 // Default constructor
@@ -99,7 +103,7 @@ EyeTrackerGaze::~EyeTrackerGaze() {
 // a stop() call.
 void EyeTrackerGaze::start() {
     // TODO: Subscribe to user position, etc.
-
+    m_async_mutex = new boost::mutex;
     m_async = new boost::thread(do_gaze_point_subscribe, m_device, this);
 }
 
@@ -108,6 +112,7 @@ void EyeTrackerGaze::stop() {
     m_async->interrupt();
     m_async->join();
     delete m_async;
+    delete m_async_mutex;
 }
 
 // Returns the current gaze validity state
@@ -117,14 +122,15 @@ bool EyeTrackerGaze::is_gaze_valid() {
 
 // Enques gaze data into the circular buffer
 void EyeTrackerGaze::enque_gaze_data(int x, int y, time_stamp unixtime_us) {
-    // TODO: mutex
     // TODO: mark on freq but enque as often as possible
     gaze_data gd;
     gd.x = x;
     gd.y = y;
     gd.unixtime_us = unixtime_us;
 
+    m_async_mutex->lock();
     m_gaze_buff.push_back(gd);
+    m_async_mutex->unlock();
 }
 
 // Prints the contents of the circular buffer. For debug convenience.
@@ -132,7 +138,7 @@ void EyeTrackerGaze::print_gaze_data() {
     boost::circular_buffer<gaze_data_t>::iterator i; 
 
     for (i = m_gaze_buff.begin(); i < m_gaze_buff.end(); i++)  {
-        printf("%li\n", ((gaze_data)*i).unixtime_us); 
+        printf("(%d, %d)\n", ((gaze_data)*i).x, ((gaze_data)*i).y); 
     }
 }
 

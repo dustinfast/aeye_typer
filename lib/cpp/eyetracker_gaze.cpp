@@ -28,7 +28,7 @@ int main() {
     boost::this_thread::sleep_for(boost::chrono::seconds{GAZE_TIME});
     gaze.stop();
 
-    printf("Done.\n\nLast %d gaze data timestamps:\n", GAZE_BUFF_SZ);
+    printf("Done.\n\nLast %d gaze coords:\n", GAZE_BUFF_SZ);
     gaze.print_gaze_data();
 
     return 0;
