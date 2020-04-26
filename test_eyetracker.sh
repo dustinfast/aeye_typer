@@ -12,7 +12,7 @@ fi
 # Compile the eyetracker gazemark binary
 LD_LIBRARY_PATH=/usr/lib/tobii/:/usr/include/cairo/:$LD_LIBRARY_PATH
 
-gcc lib/cpp/eyetracker_gazemark.cpp  \
+gcc lib/cpp/eyetracker_gaze.cpp  \
     -o eye_tracker_gazemark.out \
     -lstdc++ -lX11 -lcairo      \
     -pthread /usr/lib/tobii/libtobii_stream_engine.so

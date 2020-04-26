@@ -4,7 +4,7 @@
 #include <stdio.h>
 
 // #include "eyetracker.h"
-#include "eyetracker_gazestatus.h"
+#include "eyetracker_gaze.h"
 
 using namespace std;
 
@@ -21,7 +21,7 @@ int main() {
         DISP_WIDTH, DISP_HEIGHT, GAZE_MARK_INTERVAL, GAZE_BUFF_SZ);
 
     printf("Marking gaze point...\n");
-    gaze.start(0);
+    gaze.start(100);
 
     gaze.print_gaze_data();
 
