@@ -13,8 +13,8 @@ from lib.py.event_logger import AsyncEEGEventLogger, AsyncInputEventLogger
 
 # App config constants
 _conf = app.config()
-WRITE_BACK = _conf['EVENTLOG_EEG_WRITEBACK_SECONDS']
-WRITE_AFTER = _conf['EVENTLOG_EEG_WRITEAFTER_SECONDS']
+WRITE_BACK = _conf['EVENTLOG_WRITEBACK_SECONDS']
+WRITE_AFTER = _conf['EVENTLOG_WRITEAFTER_SECONDS']
 del _conf
 
 
