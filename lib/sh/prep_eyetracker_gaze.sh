@@ -7,11 +7,11 @@
 # Build the .so file
 LD_LIBRARY_PATH=/usr/lib/tobii/:/usr/include/cairo/:$LD_LIBRARY_PATH
 
-gcc  -c -fPIC /opt/app/src/lib/cpp/eyetracker_gaze.cpp \
-    -o eyetracker_gaze.o       
+gcc  -c -fPIC /opt/app/src/lib/cpp/eyetracker_gaze.cpp  \
+     -o eyetracker_gaze.o       
 
 gcc -shared  \
-    -o eyetracker_gaze.so eyetracker_gaze.o  \
+    -o /opt/app/src/lib/so/eyetracker_gaze.so eyetracker_gaze.o  \
     -lstdc++ -lX11 -lcairo  \
     -lboost_chrono  \
     -lboost_system  \
@@ -21,7 +21,7 @@ gcc -shared  \
 
 rm eyetracker_gaze.o
 
-# Start eyetracker service iff not already running
+# Start the eyetracker runtim service iff not already running
 STATUS="$(systemctl is-active tobii-runtime-IS4LARGE107)"
 
 if [ "${STATUS}" != "active" ]; then

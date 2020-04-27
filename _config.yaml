@@ -13,12 +13,13 @@ EEG_BCI_HUB_PATH: /opt/app/dependencies/OpenBCI_Hub/OpenBCIHub
 # Eyetracker Device
 EYETRACKER_BUFF_SZ: 450000
 EYETRACKER_MARK_INTERVAL: 8
-EYETRACKER_EXTERN_LIB_PATH: ./eyetracker_gaze.so
+EYETRACKER_EXTERN_LIB_PATH: /opt/app/src/lib/so/eyetracker_gaze.so
 
 # Event Logging
 EVENTLOG_ROOTDIR: /opt/app/data/event_logs
 EVENTLOG_CSV_SUBDIR: raw_csv
 EVENTLOG_EEG_SUBDIR: eeg
+EVENTLOG_GAZE_SUBDIR: gaze
 EVENTLOG_KEYS_SUBDIR: keyboard
 EVENTLOG_MOUSE_SUBDIR: mouse
 EVENTLOG_NOTEFILE_FNAME: 'NOTES.md'
