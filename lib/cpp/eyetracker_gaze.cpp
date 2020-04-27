@@ -1,6 +1,11 @@
-// Connects to the eye tracker and marks gaze point to the screen in real time.
+/////////////////////////////////////////////////////////////////////////////
+// Demonstrates eye-tracking by connecting to the eye tracker and marking
+// gaze point to the screen in real time for the duration given by GAZE_TIME.
+//
+// Author: Dustin Fast <dustin.fast@hotmail.com>
+//
+/////////////////////////////////////////////////////////////////////////////
 
-#include <assert.h>
 #include <stdio.h>
 
 #include <boost/chrono.hpp>
@@ -10,7 +15,6 @@
 using namespace std;
 
 
-// TODO: Move to config
 #define DISP_WIDTH 3840
 #define DISP_HEIGHT 2160
 #define GAZE_MARK_INTERVAL 8

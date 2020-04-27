@@ -11,8 +11,8 @@
 
 // TODO: buff_to_csv(n)
 
-#include <chrono>
 #include <stdio.h>
+#include <chrono>
 
 #include <boost/thread.hpp>
 #include <boost/thread/mutex.hpp>
@@ -83,10 +83,10 @@ class EyeTrackerGaze : EyeTracker {
 
 // Default constructor
 EyeTrackerGaze::EyeTrackerGaze(
-    int disp_width, int disp_height, int update_freq, int buff_sz) {
+    int disp_width, int disp_height, int mark_freq, int buff_sz) {
     m_disp_width = disp_width;
     m_disp_height = disp_height;
-    m_mark_freq = update_freq;
+    m_mark_freq = mark_freq;
     m_gaze_buff = boost::circular_buffer<gaze_data_t>(buff_sz); 
 
     m_disp = XOpenDisplay(NULL);
@@ -156,6 +156,22 @@ void EyeTrackerGaze::print_gaze_data() {
 
 
 /////////////////////////////////////////////////////////////////////////////
+// Extern class wrapper, exposing instantiation and gaze stream start/stop
+
+extern "C"
+{
+    EyeTrackerGaze* eyetracker_gaze_new(
+        int disp_width, int disp_height, int mark_freq, int buff_sz) {
+            return new EyeTrackerGaze(
+                disp_width, disp_height, mark_freq, buff_sz);
+    }
+
+    void eyetracker_gaze_start(EyeTrackerGaze* gaze) {gaze->start();}
+    void eyetracker_gaze_stop(EyeTrackerGaze* gaze) {return gaze->stop();}
+}
+
+
+/////////////////////////////////////////////////////////////////////////////
 // Gaze subscriber and callback functions
 
 // Starts the gaze data stream
@@ -163,18 +179,18 @@ void do_gaze_point_subscribe(tobii_device_t *device, void *gaze) {
 
     // Subscribe to gaze point
     assert(tobii_gaze_point_subscribe(device, cb_gaze_point, gaze
-    ) == TOBII_ERROR_NO_ERROR);
+    ) == NO_ERROR);
 
     try {
         while (True) {
-            assert(tobii_wait_for_callbacks(1, &device) == TOBII_ERROR_NO_ERROR);
-            assert(tobii_device_process_callbacks(device) == TOBII_ERROR_NO_ERROR);
+            assert(tobii_wait_for_callbacks(1, &device) == NO_ERROR);
+            assert(tobii_device_process_callbacks(device) == NO_ERROR);
             boost::this_thread::sleep_for(boost::chrono::milliseconds{1});
         }
     }
     catch (boost::thread_interrupted&) {}
 
-    assert(tobii_gaze_point_unsubscribe(device) == TOBII_ERROR_NO_ERROR);
+    assert(tobii_gaze_point_unsubscribe(device) == NO_ERROR);
 }
 
 // Gaze point callback for use with tobii_gaze_point_subscribe(). Gets the

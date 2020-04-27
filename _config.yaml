@@ -1,11 +1,19 @@
 # The application's global config file...
 
+# Display Device
+DISP_WIDTH: 3840
+DISP_HEIGHT: 2160
 
 # EEG Device
 EEG_BOARD_ID: 0
 EEG_BOARD_SERIAL_PORT: /dev/ttyUSB0
 EEG_SZ_DATA_BUFF: 450000
 EEG_BCI_HUB_PATH: /opt/app/dependencies/OpenBCI_Hub/OpenBCIHub
+
+# Eyetracker Device
+EYETRACKER_BUFF_SZ: 450000
+EYETRACKER_MARK_INTERVAL: 8
+EYETRACKER_EXTERN_LIB_PATH: ./eyetracker_gaze.so
 
 # Event Logging
 EVENTLOG_ROOTDIR: /opt/app/data/event_logs
