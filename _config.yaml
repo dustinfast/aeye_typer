@@ -14,6 +14,7 @@ EEG_BCI_HUB_PATH: /opt/app/dependencies/OpenBCI_Hub/OpenBCIHub
 EYETRACKER_BUFF_SZ: 450000
 EYETRACKER_MARK_INTERVAL: 8
 EYETRACKER_EXTERN_LIB_PATH: /opt/app/src/lib/so/eyetracker_gaze.so
+EYETRACKER_PREP_SCRIPT_PATH: /opt/app/src/lib/sh/prep_eyetracker_gaze.sh
 
 # Event Logging
 EVENTLOG_ROOTDIR: /opt/app/data/event_logs
