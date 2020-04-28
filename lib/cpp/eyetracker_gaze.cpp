@@ -19,7 +19,7 @@ using namespace std;
 #define DISP_HEIGHT 2160
 #define GAZE_MARK_INTERVAL 8
 #define GAZE_BUFF_SZ 10
-#define GAZE_TIME 3
+#define GAZE_TIME 1
 
 
 int main() {
@@ -30,6 +30,9 @@ int main() {
     
     gaze.start();
     boost::this_thread::sleep_for(boost::chrono::seconds{GAZE_TIME});
+    gaze.gaze_to_csv("test.csv", 3);
+    boost::this_thread::sleep_for(boost::chrono::seconds{GAZE_TIME});
+    gaze.gaze_to_csv("test.csv", 3);
     gaze.stop();
 
     printf("Done.\n\nLast %d gaze coords:\n", GAZE_BUFF_SZ);

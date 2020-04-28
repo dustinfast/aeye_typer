@@ -24,17 +24,25 @@ class EyeTrackerGaze(object):
 
     @staticmethod
     def _init_lib(lib_path):
-        """ Loads the external lib and returns a cdll obj instance.
+        """ Loads the external lib, inits callables, and returns a ctypes.cdll.
         """
         lib = ctypes.cdll.LoadLibrary(lib_path)
         
+        # Constructor
         lib.eyetracker_gaze_new.argtypes = [
             ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int]
         lib.eyetracker_gaze_new.restype = ctypes.c_void_p
 
+        # Data to csv
+        lib.eyetracker_gaze_to_csv.argtypes = [
+            ctypes.c_void_p, ctypes.c_char_p, ctypes.c_int]
+        lib.eyetracker_gaze_to_csv.restype = ctypes.c_int
+
+        # Start
         lib.eyetracker_gaze_start.argtypes = [ctypes.c_void_p]
         lib.eyetracker_gaze_start.restype = ctypes.c_void_p
 
+        # Stop
         lib.eyetracker_gaze_stop.argtypes = [ctypes.c_void_p]
         lib.eyetracker_gaze_stop.restype = ctypes.c_void_p
 
@@ -49,3 +57,10 @@ class EyeTrackerGaze(object):
         """ Stops the asynchronous gaze tracker.
         """
         self.lib.eyetracker_gaze_stop(self.obj)
+
+    def to_csv(self, file_path, n=0):
+        """ Writes up to the last n gaze data points to the given file path,
+            creating it if exists else appending to it.
+            If n == 0, all data points in the buffer are written.
+        """
+        self.lib.eyetracker_gaze_to_csv(self.obj, file_path, n)
