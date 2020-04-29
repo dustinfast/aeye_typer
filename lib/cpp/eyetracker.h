@@ -35,7 +35,6 @@ class EyeTracker {
         void set_display();
 
     public:
-
         EyeTracker();
         ~EyeTracker();
         void print_device_info();

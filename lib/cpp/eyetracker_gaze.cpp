@@ -26,17 +26,13 @@ int main() {
     EyeTrackerGaze gaze = EyeTrackerGaze(
         DISP_WIDTH, DISP_HEIGHT, GAZE_MARK_INTERVAL, GAZE_BUFF_SZ);
 
-    printf("Marking gaze point for %d seconds...\n", GAZE_TIME);
+    printf("Marking gaze point for %d seconds from device...\n", GAZE_TIME);
+    gaze.print_device_info();
     
     gaze.start();
     boost::this_thread::sleep_for(boost::chrono::seconds{GAZE_TIME});
     gaze.gaze_to_csv("test.csv", 3);
-    boost::this_thread::sleep_for(boost::chrono::seconds{GAZE_TIME});
-    gaze.gaze_to_csv("test.csv", 3);
     gaze.stop();
-
-    printf("Done.\n\nLast %d gaze coords:\n", GAZE_BUFF_SZ);
-    gaze.print_gaze_data();
 
     return 0;
 }

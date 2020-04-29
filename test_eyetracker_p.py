@@ -36,7 +36,5 @@ if __name__ == "__main__":
     e = EyeTrackerGaze(DISP_WIDTH, DISP_HEIGHT, MARK_INTERVAL, GAZE_BUFF_SZ)
     e.start()
     time.sleep(TEST_DURATION)
-    e.to_csv('test.csv', 1)
-    # time.sleep(1)
-    # e.to_csv('test.csv', 1)
+    e.to_csv('test.csv', 4)
     e.stop()

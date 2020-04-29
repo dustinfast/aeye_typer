@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-""" A ctypes wrapper for the EyeTrackerGaze class.
+""" A ctypes wrapper for the EyeTrackerGaze CPP class.
 """
 
 __author__ = 'Dustin Fast <dustin.fast@outlook.com>'
@@ -58,9 +58,11 @@ class EyeTrackerGaze(object):
         """
         self.lib.eyetracker_gaze_stop(self.obj)
 
-    def to_csv(self, file_path, n=0):
+    def to_csv(self, file_path, num_points=0):
         """ Writes up to the last n gaze data points to the given file path,
             creating it if exists else appending to it.
             If n == 0, all data points in the buffer are written.
         """
-        self.lib.eyetracker_gaze_to_csv(self.obj, file_path, n)
+        self.lib.eyetracker_gaze_to_csv(self.obj, 
+                                        bytes(file_path, encoding="ascii"),
+                                        num_points)

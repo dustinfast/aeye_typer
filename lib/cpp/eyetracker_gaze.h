@@ -52,7 +52,7 @@ void cb_gaze_point(tobii_gaze_point_t const* , void*);
 /////////////////////////////////////////////////////////////////////////////
 // Class
 
-class EyeTrackerGaze : EyeTracker {
+class EyeTrackerGaze : public EyeTracker {
     private:
         boost::thread *m_async_streamer;
         boost::thread *m_async_writer;
@@ -236,7 +236,7 @@ extern "C" {
                 disp_width, disp_height, mark_freq, buff_sz);
     }
 
-    int eyetracker_gaze_to_csv(EyeTrackerGaze* gaze, char *file_path, int n) {
+    int eyetracker_gaze_to_csv(EyeTrackerGaze* gaze, const char *file_path, int n) {
         return gaze->gaze_to_csv(file_path, n);
     }
 
