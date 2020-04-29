@@ -19,6 +19,7 @@ from brainflow.data_filter import DataFilter
 
 from lib.py import app
 from lib.py.eeg_brainflow import EEGBrainflow
+from lib.py.eyetracker_gaze import EyeTrackerGaze
 
 
 # App config constants
@@ -27,13 +28,15 @@ LOG_ROOTDIR = _conf['EVENTLOG_ROOTDIR']
 LOG_CSV_SUBDIR = _conf['EVENTLOG_CSV_SUBDIR']
 LOG_EEG_SUBDIR = _conf['EVENTLOG_EEG_SUBDIR']
 LOG_KEYS_SUBDIR = _conf['EVENTLOG_KEYS_SUBDIR']
+LOG_GAZE_SUBDIR = _conf['EVENTLOG_GAZE_SUBDIR']
 LOG_MOUSE_SUBDIR = _conf['EVENTLOG_MOUSE_SUBDIR']
 NOTEFILE_FNAME = _conf['EVENTLOG_NOTEFILE_FNAME']
 SZ_DATA_BUFF = _conf['EEG_SZ_DATA_BUFF']
 del _conf
 
-EVENTLOG_SIGNAL_EVENT = True
-EVENTLOG_SIGNAL_STOP = False
+# MP queue signals
+SIGNAL_EVENT = True
+SIGNAL_STOP = False
 
 # TODO: from datetime import datetime
 # dt = datetime.now()
@@ -125,7 +128,7 @@ class AsyncEEGEventLogger(EventLogger, EEGBrainflow):
 
     def __init__(self, name, notes, writeback=5, writeafter=5, verbose=True):
         """ A class for performing asynchronous logging of EEG data to CSV
-            before and after the occurance of an event.
+            before and after the occurance of receipt of an event signal.
         """
         EEGBrainflow.__init__(self)
         EventLogger.__init__(self, name, notes, verbose)
@@ -197,7 +200,7 @@ class AsyncEEGEventLogger(EventLogger, EEGBrainflow):
         signal = None
 
         if self._verbose:
-            print(f'INFO: Async EEG watcher started at {time.time()}')
+            print(f'INFO: Async EEG watcher started.')
 
         while True:
             # Handle inner loop signal if needed, else wait for new signal
@@ -314,6 +317,184 @@ class AsyncEEGEventLogger(EventLogger, EEGBrainflow):
                 pass # No need to flood queue with event signals
 
 
+class AsyncGazeEventLogger(EventLogger):
+    _LOG_GAZE_FNAME_TEMPLATE = '%Y-%m-%d--%H-%M.csv'
+
+    def __init__(self, name, notes, writeback=5, writeafter=5, verbose=True):
+        """ A class for performing asynchronous logging of gaze data to CSV
+            before and after the occurance of receipt of an event signal.
+        """
+        assert(writeback > 0 and writeafter > 0)
+        EventLogger.__init__(self, name, notes, verbose)
+
+        self.eyetracker = EyeTrackerGaze()
+
+        if writeback > SZ_DATA_BUFF:
+            raise ValueError('Writeback size > data buffer size.')
+        # TODO: self._sample_rate
+        # if writeafter * self.sample_rate > SZ_DATA_BUFF:
+        #     raise ValueError('Writeafter value too large for data buffer.')
+        self._writeback_samples = writeback # debug
+        self._writeafter_seconds = writeafter
+
+        self._async_proc = None
+        self._async_queue = None
+
+    def _async_watcher(self, signal_queue) -> None:
+        """ The async watcher -- intended to be used as a sub process.
+            Reads data from the eyetracker and, on write signal receive, writes
+            the appropriate number of samples to log file. On stop signal
+            received, the watcher terminates.
+            Note that the watcher may often be watching but not writing, and
+            will transition back and forth between watching and watching while
+            writing indefinately until the stop signal is received.
+        """
+        def _stop(signal):
+            if signal == SIGNAL_STOP:
+                if self._verbose:
+                    print(f'INFO: Async Gaze watcher received STOP.')
+                return True
+
+            return False
+
+        def _event(signal):
+            if signal == SIGNAL_EVENT:
+                return time.time() + self._writeafter_seconds
+            return time.time()
+            
+        def _do_write():
+            if self.eyetracker.gaze_data_sz() <= 0:
+                print('*** WARN: Async Gaze watcher has no data to write.')
+                return
+
+            path = Path(
+                self._logdir_path, LOG_GAZE_SUBDIR, datetime.now().strftime(
+                    self._LOG_GAZE_FNAME_TEMPLATE))
+            self.eyetracker.to_csv(str(path), self._writeback_samples)
+
+            if self._verbose:
+                print(f'INFO: Wrote gaze log to {path}')
+
+        # Start the eyetrackers asynchronous data stream
+        self.eyetracker.start()
+        signal = None
+
+        if self._verbose:
+            print('INFO: Async Gaze watcher started.')
+
+        while True:
+            # Handle inner loop signal if needed, else wait for new signal
+            signal = signal if signal is not None else \
+                signal_queue.get()  # blocks
+
+            # Check for kill or unhandled signals
+            if _stop(signal):
+                break
+            elif signal != SIGNAL_EVENT:
+                if self._verbose:
+                    print('WARN: Async Gaze watcher received ' +
+                          f'unhandled signal "{signal}".')
+                signal = None
+                continue
+            
+            # If not kill or unhandled signal, start writing the gaze data
+            # starting with the specified number of previous data points
+            write_until = _event(signal)
+
+            if self.eyetracker.gaze_data_sz() >= 0:
+                _do_write()
+            else:
+                print('WARN: Async watcher has no prev data to write... ' +
+                      'Is it powered on and connected?')
+
+            while time.time() <= write_until:
+                # Let data accumulate for the specified time then log it
+                time.sleep(self._writeafter_seconds)
+                _do_write()
+
+                # Check for next msg in queue to see if we keep logging
+                try:
+                    signal = signal_queue.get_nowait()
+                except mp.queues.Empty:
+                    continue # No msg denotes stop logging -- let loop expire
+                
+                # Let outter loop handle any signal other than event sig
+                if signal != SIGNAL_EVENT:
+                    break
+                
+                # Allow enough time to log another iteration
+                else:
+                    write_until = _event(signal)
+
+            # If inner loop closed with no kill signal encountered, clear last
+            else:
+                signal = None
+
+        # If here, kill signal received. Do cleanup...
+        self.eyetracker.stop()
+
+        if self._verbose:
+            print(f'INFO: Async Gaze watcher stopped.')
+
+    def start(self) -> mp.Process:
+        """ Starts the async watcher, putting it in a state where it is ready
+            to write accumulated data to the log and is watching for the
+            signal to do so.
+
+            :returns: (multiprocessing.Process)
+        """
+        # If async watcher already running
+        if self._async_proc is not None and self._async_proc.is_alive():
+            print('ERROR: Async Gaze watcher already running.')
+
+        # Else, not running -- start it
+        else:
+            self._init_outpath([LOG_GAZE_SUBDIR])
+
+            ctx = mp.get_context('fork')
+            self._async_queue = ctx.Queue(maxsize=1)
+            self._async_proc = ctx.Process(
+                target=self._async_watcher, args=(self._async_queue,))
+            self._async_proc.start()
+
+        return self._async_proc
+
+    def stop(self) -> None:
+        """ Sends the kill signal to the async watcher.
+        """
+        try:
+            self._async_queue.put_nowait(SIGNAL_STOP)
+        except AttributeError:
+            print('ERROR: Received STOP but Gaze watcher not yet started.')
+        except mp.queues.Full:
+            if not self._async_proc.is_alive():
+                print('ERROR: Received STOP but Gaze watcher already stopped.')
+            else:
+                # Kick out curr msg and try again
+                time.sleep(0.25)
+                try:
+                    _ = self._async_queue.get_nowait()
+                except mp.queues.Empty:
+                    pass
+                self._async_queue.put_nowait(SIGNAL_STOP)
+
+    def event(self) -> None:
+        """ Sends the async watcher the signal to start (or continue) logging,
+            starting with the previous number of samples denoted by writeback,
+            and ending writeafter number of seconds after the most recent call
+            to this function.
+        """
+        try:
+            self._async_queue.put_nowait(SIGNAL_EVENT)
+        except AttributeError:
+            print('ERROR: Received EVENT but Gaze event watcher not started.')
+        except mp.queues.Full:
+            if not self._async_proc.is_alive():
+                print('ERROR: Received EVENT but Gaze watcher is stopped.')
+            else:
+                pass # No need to flood queue with event signals
+
+
 class AsyncInputEventLogger(EventLogger):
     _DF_MAXROWS = 2500
 
@@ -329,15 +510,15 @@ class AsyncInputEventLogger(EventLogger):
                        ('x', np.int32),
                        ('y', np.int32)]
 
-    def __init__(self, name, notes, callback=None, verbose=True):
+    def __init__(self, name, notes, callbacks=[], verbose=True):
         """ A class for asynchronously logging keyboard and mouse input events
             to CSV and (optionally) calling the given function (w/no args)
             when an input event occurs.
         """
-        assert(callback is None or callable(callback) is True)
+        assert(isinstance(callbacks, list))
         super().__init__(name, notes, verbose)
 
-        self._on_event = callback
+        self._callbacks = callbacks
         self._shift_down = False
 
         self._async_keywatcher_proc = None
@@ -348,11 +529,10 @@ class AsyncInputEventLogger(EventLogger):
         self._df_keylog = self._new_log_df(self._LOG_KEYS_COLS)
         self._df_mouselog = self._new_log_df(self._LOG_MOUSE_COLS)
 
-    def _do_on_event_call(self):
-        """ Calls the user-defined on_event function iff its defined.
+    def _do_callbacks(self):
+        """ Calls the user-defined on_event callbacks, if any.
         """
-        if self._on_event is not None:
-            self._on_event()
+        [f() for f in self._callbacks if callable(f)]
 
     def _new_log_df(self, column_defs):
         """ Returns a new zero-filled pd.DataFrame having the given columns.
@@ -393,7 +573,7 @@ class AsyncInputEventLogger(EventLogger):
             idx = 0
 
             if self._verbose:
-                print(f'INFO: Wrote input log to {path}')
+                print(f'INFO: Wrote {log_subdir} log to {path}')
 
         return idx
 
@@ -402,7 +582,7 @@ class AsyncInputEventLogger(EventLogger):
             the df gets full it is written to file and cleared.
         """
         t_stamp = time.time()
-        self._do_on_event_call()
+        self._do_callbacks()
 
         # Convert the Key obj to its ascii value
         try:
@@ -435,7 +615,7 @@ class AsyncInputEventLogger(EventLogger):
             scroll_up and -1 for scroll_down.
         """
         t_stamp = time.time()
-        self._do_on_event_call()
+        self._do_callbacks()
         
         # Update the df and (iff needed) write to file
         idx = self._append_df_row(self._df_mouselog,
@@ -459,7 +639,7 @@ class AsyncInputEventLogger(EventLogger):
         
     def _on_press(self, key):
         """ Keyboard key-press callback, for use by the async listener."""
-        # TODO: Add cursor location?
+        # TODO: Add cursor location
         self._log_key_event(key, True)
 
         # Denote shift-key status, for exit keycode purposes
@@ -529,5 +709,9 @@ class AsyncInputEventLogger(EventLogger):
             if self._verbose:
                 print(f'INFO: Async keyboard watcher started.')
 
-        # Only return the keyb proc, because it watches for STOP keystrokes
+        # Give the threads time to spin up
+        time.sleep(1.5)
+
+        # Only return the keyb proc, because it watches for STOP keystrokes.
+        # The user may join() on this proc if desired
         return self._async_keywatcher_proc

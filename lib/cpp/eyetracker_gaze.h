@@ -76,6 +76,7 @@ class EyeTrackerGaze : public EyeTracker {
         bool is_gaze_valid();
         void enque_gaze_data(int, int, time_stamp);
         void print_gaze_data();
+        int gaze_data_sz();
     
         EyeTrackerGaze(int, int, int, int);
         ~EyeTrackerGaze();
@@ -225,6 +226,9 @@ void EyeTrackerGaze::print_gaze_data() {
     m_async_mutex->unlock();
 }
 
+int EyeTrackerGaze::gaze_data_sz() {
+    return m_gaze_buff->size();
+}
 
 /////////////////////////////////////////////////////////////////////////////
 // Extern wrapper exposing EyeTrackerGaze(), start(), stop(), & gaze_to_csv()
@@ -246,6 +250,10 @@ extern "C" {
 
     void eyetracker_gaze_stop(EyeTrackerGaze* gaze) {
         gaze->stop();
+    }
+
+    int eyetracker_gaze_data_sz(EyeTrackerGaze* gaze) {
+        return gaze->gaze_data_sz();
     }
 }
 

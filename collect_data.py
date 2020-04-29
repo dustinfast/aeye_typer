@@ -8,7 +8,9 @@ import argparse
 from time import sleep
 
 from lib.py import app
-from lib.py.event_logger import AsyncEEGEventLogger, AsyncInputEventLogger
+from lib.py.event_logger import (AsyncEEGEventLogger, 
+                                 AsyncInputEventLogger,
+                                 AsyncGazeEventLogger)
 
 
 # App config constants
@@ -19,11 +21,11 @@ del _conf
 
 
 # Log setup
-LOG_NAME = 'cfg0_log_4_bad_notwearing'
+LOG_NAME = 'cfg0_log_5_first_gaze_data'
 LOG_NOTES = ('# Log 3\n'
              '  \n'
-             'Collected w/BCI running, but not on head.  \n'
-             'Git commit hash: fe4519  \n'
+             'First set of logs containing gaze-tracking data.\n'
+             'Git commit hash: e7785f  \n'
              '  \n'
              '## Channels\n'
              '  \n'
@@ -39,8 +41,8 @@ LOG_NOTES = ('# Log 3\n'
              '| 7 | O1    |\n'
              '| 8 | O2    |\n'
              '  \n'
-             'Writeback = 20s  \n'
-             'Writeforward = 20s  \n'
+             'Writeback = 5s  \n'
+             'Writeforward = 5s  \n'
 )
 
 
@@ -48,7 +50,13 @@ if __name__ == "__main__":
     # Setup cmd line args
     parser = argparse.ArgumentParser()
     arg_flags = ('-e', '--eeg_off')
-    arg_help_str = 'Run with0 EEG event logging turned off.'
+    arg_help_str = 'Run with EEG event logging turned off.'
+    parser.add_argument(*arg_flags,
+                        action='store_true',
+                        default=False,
+                        help=arg_help_str)
+    arg_flags = ('-g', '--gaze_off')
+    arg_help_str = 'Run with gaze event logging turned off.'
     parser.add_argument(*arg_flags,
                         action='store_true',
                         default=False,
@@ -68,27 +76,31 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Prompt to continue
-    _ = input('Press Enter to confirm that your BCI is turned on and grounded')
+    # _ = input('Press Enter to confirm your devices are turned on and grounded')
 
     # Init and start the EEG board and key/mouse event loggers
     eeg_logger = AsyncEEGEventLogger(
         args.name, LOG_NOTES, WRITE_BACK, WRITE_AFTER, args.verbose)
+    gaze_logger = AsyncGazeEventLogger(
+        args.name, LOG_NOTES, WRITE_BACK, WRITE_AFTER, args.verbose)
 
-    eeg_event_callback = None if args.eeg_off else eeg_logger.event 
+    # The eeg and gaze loggers only write to file when signaled by the input
+    # logger, so we define the callbacks that do that signaling.
+    eeg_callback = None if args.eeg_off else eeg_logger.event 
+    gaze_callback = None if args.gaze_off else gaze_logger.event 
     
     input_logger = AsyncInputEventLogger(
-        args.name, LOG_NOTES, eeg_event_callback, args.verbose)
+        args.name, LOG_NOTES, [eeg_callback, gaze_callback], args.verbose)
 
     # Start the loggers
     eeg_logger.start() if not args.eeg_off else None
-    k = input_logger.start()
-
-     # Allow time for everything to spin up
-    sleep(1.5)
-    print('\n*** Running... Press SHIFT + ESC from anywhere to terminate.\n')
+    gaze_logger.start() if not args.gaze_off else None
+    log_proc = input_logger.start()
 
     # Wait for key logger to terminate via the keystroke combo SHIFT + ESC
-    k.join()
+    print('\n*** Running... Press SHIFT + ESC from anywhere to terminate.\n')
+    log_proc.join()
 
     # Cleanup
     eeg_logger.stop() if not args.eeg_off else None
+    gaze_logger.stop() if not args.gaze_off else None
