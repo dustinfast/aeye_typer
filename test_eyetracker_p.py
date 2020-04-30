@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-""" A ctypes wrapper for the EyeTrackerGaze class.
+""" A script for testing the on-screen eyetracker gaze marking python interface
 """
 
 __author__ = 'Dustin Fast <dustin.fast@outlook.com>'
@@ -17,5 +17,5 @@ if __name__ == "__main__":
     print(f'Marking gaze for {TEST_DURATION} seconds...')
     e.start()
     time.sleep(TEST_DURATION)
-    e.to_csv('test.csv', 4)
+    # e.to_csv('test.csv', 4)
     e.stop()

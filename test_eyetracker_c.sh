@@ -1,6 +1,6 @@
 #! /usr/bin/env bash
 
-# A script for testing the on-screen eyetracker gaze marking
+# A script for testing the on-screen eyetracker gaze marking cpp interface
 
 # Start eyetracker service iff needed
 STATUS="$(systemctl is-active tobii-runtime-IS4LARGE107)"
