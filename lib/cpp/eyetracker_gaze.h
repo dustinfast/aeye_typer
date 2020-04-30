@@ -305,6 +305,8 @@ void do_gaze_point_subscribe(tobii_device_t *device, void *gaze) {
     assert(tobii_gaze_point_unsubscribe(device) == NO_ERROR);
 }
 
+// TODO: User position, etc
+
 // Gaze point callback for use with tobii_gaze_point_subscribe(). Gets the
 // eyetrackers predicted on-screen gaze coordinates (x, y) and enques gaze
 // data into EyeTrackerGazes' circular buffer. Also creates a shaded window

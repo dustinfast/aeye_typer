@@ -685,7 +685,9 @@ class AsyncInputEventLogger(EventLogger):
         # Else, mouse watcher not running -- start it
         else:
             self._async_mousewatcher_proc = mouse.Listener(
-                on_click=self._on_click, on_scroll=self._on_scroll)
+                on_click=self._on_click)
+                # on_click=self._on_click, on_scroll=self._on_scroll)
+                
             self._async_mousewatcher_proc.start()
             
             if self._verbose:
