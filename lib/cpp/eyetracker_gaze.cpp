@@ -19,7 +19,7 @@ using namespace std;
 #define DISP_HEIGHT 2160
 #define GAZE_MARK_INTERVAL 7
 #define GAZE_BUFF_SZ 450000
-#define GAZE_TIME 10
+#define GAZE_TIME 3
 
 
 int main() {
@@ -31,10 +31,7 @@ int main() {
     
     gaze.start();
     boost::this_thread::sleep_for(boost::chrono::seconds{GAZE_TIME});
-    int hz = gaze.sample_rate();
-    printf("hz: %d\n", hz);
-
-    gaze.gaze_to_csv("test.csv");
+    // gaze.gaze_to_csv("test.csv");
     // gaze.sample_rate();
     gaze.stop();
 
