@@ -15,6 +15,7 @@ _conf = app.config()
 LIB_PATH = _conf['EYETRACKER_EXTERN_LIB_PATH']
 DISP_WIDTH = _conf['DISP_WIDTH']
 DISP_HEIGHT = _conf['DISP_HEIGHT']
+GAZE_SAMPLE_HZ = _conf['EYETRACKER_SAMPLE_HZ']
 GAZE_BUFF_SZ = _conf['EYETRACKER_BUFF_SZ']
 GAZE_MARK_INTERVAL = _conf['EYETRACKER_MARK_INTERVAL']
 GAZE_PREP_PATH = _conf['EYETRACKER_PREP_SCRIPT_PATH']
@@ -32,10 +33,12 @@ class EyeTrackerGaze(object):
             print('ERROR: Eyetracker .so build failed with:', stderr, sep='\n')
             exit()
 
+        
         self.lib = self._init_lib(LIB_PATH)
-
         self.obj = self.lib.eyetracker_gaze_new(
             DISP_WIDTH, DISP_HEIGHT, GAZE_MARK_INTERVAL, GAZE_BUFF_SZ)
+
+        self.sample_rate = GAZE_SAMPLE_HZ
 
     @staticmethod
     def _init_lib(lib_path):

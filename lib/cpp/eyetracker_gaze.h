@@ -38,6 +38,7 @@ using time_stamp = time_point<system_clock, microseconds>;
 #define GAZE_MARKER_CDEPTH 32
 #define GAZE_MARKER_OPAQUENESS 100
 #define GAZE_MARKER_BORDER 0
+#define GAZE_MIN_SAMPLE_FOR_RATE_CALC 200
 
 typedef struct gaze_data {
 		int x;
@@ -77,6 +78,7 @@ class EyeTrackerGaze : public EyeTracker {
         void enque_gaze_data(int, int, time_stamp);
         void print_gaze_data();
         int gaze_data_sz();
+        int sample_rate();
     
         EyeTrackerGaze(int, int, int, int);
         ~EyeTrackerGaze();
@@ -159,9 +161,10 @@ int EyeTrackerGaze::gaze_to_csv(const char *file_path, int n=0) {
             // Write the n latest samples to file in ascending order
             int sz = gaze_buff->size();
             for (int j = sz - n; j < sz; j++)  {
+                // TODO: ensure j no throw
                 gaze_data g = gaze_buff->at(j); 
-                f << g.x << ", " << g.y << ", " << g.unixtime_us.time_since_epoch(                    
-                    ).count() << "\n";
+                f << g.x << ", " << g.y << ", " << 
+                    g.unixtime_us.time_since_epoch().count() << "\n";
             }
 
             f.close();
@@ -226,8 +229,32 @@ void EyeTrackerGaze::print_gaze_data() {
     m_async_mutex->unlock();
 }
 
+// Returns the current number of gaze points in the gaze data buffer
 int EyeTrackerGaze::gaze_data_sz() {
     return m_gaze_buff->size();
+}
+
+// Returns the sample rate in hz, calculated from the contents of the buffer.
+// If the buffer is not full enough to calculate, returns -1.
+int EyeTrackerGaze::sample_rate() {
+    int sample_count = gaze_data_sz();
+
+    if (sample_count < GAZE_MIN_SAMPLE_FOR_RATE_CALC) {
+        printf("WARN: Eyetracker hz queried but sample count insufficient.");
+        return -1;
+    }
+
+    // Earliest and latest sample times, in microseconds
+    long unsigned int t1 = m_gaze_buff->at(
+        0).unixtime_us.time_since_epoch().count();
+    long unsigned int t2 = m_gaze_buff->at(
+        sample_count-1).unixtime_us.time_since_epoch().count();
+
+    // Sample rate in hz
+    double t_diff = (t2 - t1) * .000001;
+    double sample_rate = sample_count / t_diff;
+
+    return sample_rate;
 }
 
 /////////////////////////////////////////////////////////////////////////////

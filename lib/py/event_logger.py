@@ -200,7 +200,7 @@ class AsyncEEGEventLogger(EventLogger, EEGBrainflow):
         signal = None
 
         if self._verbose:
-            print(f'INFO: Async EEG watcher started.')
+            print(f'INFO: Async EEG watcher started at {self.sample_rate} hz.')
 
         while True:
             # Handle inner loop signal if needed, else wait for new signal
@@ -328,13 +328,13 @@ class AsyncGazeEventLogger(EventLogger):
         EventLogger.__init__(self, name, notes, verbose)
 
         self.eyetracker = EyeTrackerGaze()
+        self.sample_rate = self.eyetracker.sample_rate
 
         if writeback > SZ_DATA_BUFF:
             raise ValueError('Writeback size > data buffer size.')
-        # TODO: self._sample_rate
-        # if writeafter * self.sample_rate > SZ_DATA_BUFF:
-        #     raise ValueError('Writeafter value too large for data buffer.')
-        self._writeback_samples = writeback # debug
+        if writeafter * self.sample_rate > SZ_DATA_BUFF:
+            raise ValueError('Writeafter value too large for data buffer.')
+        self._writeback_samples = writeback * self.sample_rate
         self._writeafter_seconds = writeafter
 
         self._async_proc = None
@@ -370,7 +370,10 @@ class AsyncGazeEventLogger(EventLogger):
             path = Path(
                 self._logdir_path, LOG_GAZE_SUBDIR, datetime.now().strftime(
                     self._LOG_GAZE_FNAME_TEMPLATE))
-            self.eyetracker.to_csv(str(path), self._writeback_samples)
+            # TODO: self.eyetracker.to_csv(str(path), self._writeback_samples)
+            # throw terminate called after throwing an instance of 'boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<std::out_of_range> >'
+            # what():  circular_buffer
+            # TODO: No write if no gaze? What if lookin down at keyb?
 
             if self._verbose:
                 print(f'INFO: Wrote gaze log to {path}')
@@ -380,7 +383,7 @@ class AsyncGazeEventLogger(EventLogger):
         signal = None
 
         if self._verbose:
-            print('INFO: Async Gaze watcher started.')
+            print(f'INFO: Async Gaze watcher started at {self.sample_rate} hz.')
 
         while True:
             # Handle inner loop signal if needed, else wait for new signal
