@@ -36,12 +36,13 @@ class EyeTracker {
         bool m_is_elevated;
         tobii_device_t *m_device;
         tobii_api_t *m_api;
-        void set_display();
 
     public:
         EyeTracker();
         ~EyeTracker();
         void print_device_info();
+        void set_display();
+        void print_feature_group();
 };
 
 // Default constructor
@@ -77,7 +78,7 @@ EyeTracker::EyeTracker() {
 
     // If elevated create failed due to a license issue, create unelevated
     if (validation_result != TOBII_LICENSE_VALIDATION_RESULT_OK) {
-        printf("Failed to create elevated eyetracking device... ");
+        printf("WARN: Failed to create elevated eyetracking device... ");
 
         if (validation_result == TOBII_LICENSE_VALIDATION_RESULT_EXPIRED) {
             printf("License expired.");
@@ -85,12 +86,13 @@ EyeTracker::EyeTracker() {
             printf("License invalid.");
         }
 
-        printf("\nCreating non-elevated device instead...");
+        printf("\nINFO: Using non-elevated device instead...\n");
         assert(tobii_device_create(m_api, url, &m_device) == NO_ERROR);
         m_is_elevated = False;
     
     // Else if elevated create succeeded
     } else {
+        printf("INFO: Using elevated eyetracking device...\n");
         m_is_elevated = True;
     }
 }
@@ -119,25 +121,45 @@ void EyeTracker::print_device_info() {
 
 // Updates the eye-tracker for the current display geometry
 void EyeTracker::set_display() {
-    // TODO: Get and set display area
-    // tobii_geometry_mounting_t *geometry_mounting = new tobii_geometry_mounting_t;
-    // error = tobii_get_geometry_mounting(m_device, geometry_mounting);
-    // assert(error == NO_ERROR);
+    if (!m_is_elevated) {
+        printf("Failed to set eyetracker display area... Permission denied.");
+        return;
+    }
+        
+    // Get and set display area
+    tobii_geometry_mounting_t *geometry_mounting = new tobii_geometry_mounting_t;
+    tobii_error_t error = tobii_get_geometry_mounting(m_device, geometry_mounting);
+    assert(error == NO_ERROR);
 
-    // tobii_display_area_t* d_area = new tobii_display_area_t;
-    // error = tobii_calculate_display_area_basic(
-    //     m_api,
-    //     698.5, // width
-    //     393.7, // height
-    //     0, // offset
-    //     geometry_mounting,
-    //     d_area
-    // );
-    // assert(error == NO_ERROR);
+    tobii_display_area_t* d_area = new tobii_display_area_t;
+    assert(
+        tobii_calculate_display_area_basic(
+            m_api,
+            698.5, // width
+            393.7, // height
+            0, // offset
+            geometry_mounting,
+            d_area
+        ) == NO_ERROR
+    );
 
-    // error = tobii_set_display_area(m_device, d_area);
-    // assert(error == TOBII_ERROR_INSUFFICIENT_LICENSE);
-    // assert(error == NO_ERROR);
+    assert(tobii_set_display_area(m_device, d_area) == NO_ERROR);
+}
+
+void EyeTracker::print_feature_group() {
+    tobii_feature_group_t feature_group;
+    tobii_error_t error = tobii_get_feature_group(m_device, &feature_group);
+    assert(error == TOBII_ERROR_NO_ERROR );
+    if( feature_group == TOBII_FEATURE_GROUP_BLOCKED)
+        printf( "Running with 'blocked' feature group.\n" );
+    if( feature_group == TOBII_FEATURE_GROUP_CONSUMER)
+        printf( "Running with 'consumer' feature group.\n" );
+    if( feature_group == TOBII_FEATURE_GROUP_CONFIG)
+        printf( "Running with 'config' feature group.\n" );
+    if( feature_group == TOBII_FEATURE_GROUP_PROFESSIONAL)
+        printf( "Running with 'professional' feature group.\n" );
+    if( feature_group == TOBII_FEATURE_GROUP_INTERNAL)
+        printf( "Running with 'internal' feature group.\n" );
 }
 
 /////////////////////////////////////////////////////////////////////////////
