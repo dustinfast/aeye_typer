@@ -9,8 +9,6 @@
 //
 /////////////////////////////////////////////////////////////////////////////
 
-// TODO: buff_to_csv(n)
-
 #include <stdio.h>
 #include <chrono>
 #include <fstream>
@@ -158,14 +156,15 @@ int EyeTrackerGaze::gaze_to_csv(const char *file_path, int n=0) {
             ofstream f, f2;
             f.open(file_path, fstream::in | fstream::out | fstream::app);
 
-            // Write the n latest samples to file in ascending order
+            // Write (at most) the n latest samples to csv in ascending order
             int sz = gaze_buff->size();
-            for (int j = sz - n; j < sz; j++)  {
-                // TODO: ensure j no throw
+            int n_capped = min(sz, n);
+
+            for (int j = sz - n_capped; j < sz; j++)  {
                 gaze_data g = gaze_buff->at(j); 
                 f << g.x << ", " << g.y << ", " << 
                     g.unixtime_us.time_since_epoch().count() << "\n";
-            }
+        }
 
             f.close();
             delete gaze_buff;
@@ -332,7 +331,7 @@ void cb_gaze_point(tobii_gaze_point_t const *gaze_point, void *user_data) {
         // printf("Gaze point time: %li\n", gaze_point->timestamp_us); // debug
         // printf("Epoch time: %li\n\n", unixtime_us);  // debug
 
-        // Enque the gaze data in the circle buffer
+        // Enque the gaze data in the circular buffer
         gaze->enque_gaze_data(x_coord, y_coord, unixtime_us);
 
         // Annotate (x, y) on the screen every m_mark_freq callbacks

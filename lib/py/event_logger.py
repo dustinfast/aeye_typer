@@ -38,10 +38,6 @@ del _conf
 SIGNAL_EVENT = True
 SIGNAL_STOP = False
 
-# TODO: from datetime import datetime
-# dt = datetime.now()
-# dt.microsecond
-
 class EventLogger(object):
     def __init__(self, logname, notes, verbose):
         """ An event logger parent class.
@@ -370,10 +366,7 @@ class AsyncGazeEventLogger(EventLogger):
             path = Path(
                 self._logdir_path, LOG_GAZE_SUBDIR, datetime.now().strftime(
                     self._LOG_GAZE_FNAME_TEMPLATE))
-            # TODO: self.eyetracker.to_csv(str(path), self._writeback_samples)
-            # throw terminate called after throwing an instance of 'boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<std::out_of_range> >'
-            # what():  circular_buffer
-            # TODO: No write if no gaze? What if lookin down at keyb?
+            self.eyetracker.to_csv(str(path), self._writeback_samples)
 
             if self._verbose:
                 print(f'INFO: Wrote gaze log to {path}')
@@ -642,7 +635,6 @@ class AsyncInputEventLogger(EventLogger):
         
     def _on_press(self, key):
         """ Keyboard key-press callback, for use by the async listener."""
-        # TODO: Add cursor location
         self._log_key_event(key, True)
 
         # Denote shift-key status, for exit keycode purposes
