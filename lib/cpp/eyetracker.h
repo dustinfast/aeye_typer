@@ -41,7 +41,6 @@ class EyeTracker {
         EyeTracker();
         ~EyeTracker();
         void print_device_info();
-        void set_display();
         void print_feature_group();
 };
 
@@ -117,33 +116,6 @@ void EyeTracker::print_device_info() {
     printf("Device Calibration Date: %s\n", info.hw_calibration_date);
     printf("Device Integration Type: %s\n", info.integration_type);
     printf("Device Runtime Build Ver: %s\n", info.runtime_build_version);
-}
-
-// Updates the eye-tracker for the current display geometry
-void EyeTracker::set_display() {
-    if (!m_is_elevated) {
-        printf("Failed to set eyetracker display area... Permission denied.");
-        return;
-    }
-        
-    // Get and set display area
-    tobii_geometry_mounting_t *geometry_mounting = new tobii_geometry_mounting_t;
-    tobii_error_t error = tobii_get_geometry_mounting(m_device, geometry_mounting);
-    assert(error == NO_ERROR);
-
-    tobii_display_area_t* d_area = new tobii_display_area_t;
-    assert(
-        tobii_calculate_display_area_basic(
-            m_api,
-            698.5, // width
-            393.7, // height
-            0, // offset
-            geometry_mounting,
-            d_area
-        ) == NO_ERROR
-    );
-
-    assert(tobii_set_display_area(m_device, d_area) == NO_ERROR);
 }
 
 void EyeTracker::print_feature_group() {
