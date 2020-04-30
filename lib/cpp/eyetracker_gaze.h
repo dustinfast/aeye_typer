@@ -147,7 +147,6 @@ int EyeTrackerGaze::gaze_to_csv(const char *file_path, int n=0) {
     // Copy the data and clear all samples (effectively)
     m_async_mutex->lock();
     boost::circular_buffer<gaze_data_t> *gaze_buff = m_gaze_buff;
-
     m_gaze_buff = new boost::circular_buffer<gaze_data_t>(m_buff_sz); 
     m_async_mutex->unlock();
 
@@ -207,14 +206,6 @@ bool EyeTrackerGaze::is_gaze_valid() {
 
 // Enques gaze data into the circular buffer
 void EyeTrackerGaze::enque_gaze_data(int x, int y, time_stamp unixtime_us) {
-    // TODO: ensure no mem leak - other option is to enqueue a shared_ptr
-
-    // Old, pre-shared_ptr def:
-    // gaze_data gd;
-    // gd.x = x;
-    // gd.y = y;
-    // gd.unixtime_us = unixtime_us;
-
     shared_ptr<gaze_data> gd(new gaze_data());
     gd->x = x;
     gd->y = y;

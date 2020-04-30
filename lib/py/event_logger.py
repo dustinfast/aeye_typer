@@ -400,7 +400,7 @@ class AsyncGazeEventLogger(EventLogger):
             if self.eyetracker.gaze_data_sz() >= 0:
                 _do_write()
             else:
-                print('WARN: Async watcher has no prev data to write... ' +
+                print('WARN: Async Gaze watcher has no prev data to write... ' +
                       'Is it powered on and connected?')
 
             while time.time() <= write_until:
