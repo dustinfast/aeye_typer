@@ -372,6 +372,7 @@ class AsyncGazeEventLogger(EventLogger):
                 print(f'INFO: Wrote gaze log to {path}')
 
         # Start the eyetrackers asynchronous data stream
+        self.eyetracker.open()
         self.eyetracker.start()
         signal = None
 
@@ -428,6 +429,7 @@ class AsyncGazeEventLogger(EventLogger):
 
         # If here, kill signal received. Do cleanup...
         self.eyetracker.stop()
+        self.eyetracker.close()
 
         if self._verbose:
             print(f'INFO: Async Gaze watcher stopped.')
@@ -687,7 +689,7 @@ class AsyncInputEventLogger(EventLogger):
             self._async_mousewatcher_proc = mouse.Listener(
                 on_click=self._on_click)
                 # on_click=self._on_click, on_scroll=self._on_scroll)
-                
+
             self._async_mousewatcher_proc.start()
             
             if self._verbose:

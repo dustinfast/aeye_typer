@@ -33,12 +33,9 @@ class EyeTrackerGaze(object):
             print('ERROR: Eyetracker .so build failed with:', stderr, sep='\n')
             exit()
 
-        
-        self.lib = self._init_lib(LIB_PATH)
-        self.obj = self.lib.eyetracker_gaze_new(
-            DISP_WIDTH, DISP_HEIGHT, GAZE_MARK_INTERVAL, GAZE_BUFF_SZ)
-
+        self._lib = self._init_lib(LIB_PATH)
         self.sample_rate = GAZE_SAMPLE_HZ
+        self._obj = None  # Populated on open()
 
     @staticmethod
     def _init_lib(lib_path):
@@ -50,6 +47,10 @@ class EyeTrackerGaze(object):
         lib.eyetracker_gaze_new.argtypes = [
             ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int]
         lib.eyetracker_gaze_new.restype = ctypes.c_void_p
+
+        # Destructor
+        lib.eyetracker_gaze_destructor.argtypes = [ctypes.c_void_p]
+        lib.eyetracker_gaze_destructor.restype = ctypes.c_void_p
 
         # Data to csv
         lib.eyetracker_gaze_to_csv.argtypes = [
@@ -70,26 +71,52 @@ class EyeTrackerGaze(object):
 
         return lib
 
-    def start(self):
-        """ Starts the gaze tracker asynchronously.
+    def _ensure_device_opened(self):
+        if self._obj is None:
+            raise EnvironmentError('An EyeTrackerGaze.open() is required.')
+
+    def open(self):
+        """ Opens the device for use.
         """
-        self.lib.eyetracker_gaze_start(self.obj)
+        if self._obj is not None:
+            print('ERROR: Device already open.')
+
+        self._obj = self._lib.eyetracker_gaze_new(
+            DISP_WIDTH, DISP_HEIGHT, GAZE_MARK_INTERVAL, GAZE_BUFF_SZ)
+
+    def start(self):
+        """ Starts the asynchronous gaze tracking.
+        """
+        self._ensure_device_opened()
+        self._lib.eyetracker_gaze_start(self._obj)
 
     def stop(self):
-        """ Stops the asynchronous gaze tracker.
+        """ Stops the asynchronous gaze tracking.
         """
-        self.lib.eyetracker_gaze_stop(self.obj)
+        self._ensure_device_opened()
+        self._lib.eyetracker_gaze_stop(self._obj)
+        
+    def close(self):
+        """ Closes the device.
+        """
+        if self._obj is None:
+            print('ERROR: Device not open.')
+
+        self._lib.eyetracker_gaze_destructor(self._obj)
+        self._obj = None
 
     def to_csv(self, file_path, num_points=0):
         """ Writes up to the last n gaze data points to the given file path,
             creating it if exists else appending to it.
             If n == 0, all data points in the buffer are written.
         """
-        self.lib.eyetracker_gaze_to_csv(self.obj, 
+        self._ensure_device_opened()
+        self._lib.eyetracker_gaze_to_csv(self._obj, 
                                         bytes(file_path, encoding="ascii"),
                                         num_points)
 
     def gaze_data_sz(self):
         """ Returns the number of gaze point samples in the eyetracker's buff.
         """
-        return self.lib.eyetracker_gaze_data_sz(self.obj)
+        self._ensure_device_opened()
+        return self._lib.eyetracker_gaze_data_sz(self._obj)

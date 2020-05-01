@@ -117,11 +117,16 @@ EyeTrackerGaze::EyeTrackerGaze(
 
 // Destructor
 EyeTrackerGaze::~EyeTrackerGaze() {
+    // TODO: Unresponsive after "Async Gaze Watcher Stopped -- no deconstructor call?
+    // Maybe it's catching up with 
+    printf("\nIn deconstructor\n");
     stop();
+    printf("\nDid stop from deconstructor\n");
     m_async_mutex->lock();
     delete m_gaze_buff;
     m_async_mutex->unlock();
     delete m_async_mutex;
+    printf("Closing disp from deconstructor\n");
     XCloseDisplay(m_disp);
 }
 
@@ -265,6 +270,10 @@ extern "C" {
                 disp_width, disp_height, mark_freq, buff_sz);
     }
 
+    void eyetracker_gaze_destructor(EyeTrackerGaze* gaze) {
+        gaze->~EyeTrackerGaze();
+    }
+
     int eyetracker_gaze_to_csv(EyeTrackerGaze* gaze, const char *file_path, int n) {
         return gaze->gaze_to_csv(file_path, n);
     }
@@ -300,7 +309,7 @@ void do_gaze_point_subscribe(tobii_device_t *device, void *gaze) {
             boost::this_thread::sleep_for(boost::chrono::nanoseconds{1});
         }
     }
-    catch (boost::thread_interrupted&) {}
+    catch (boost::thread_interrupted&) {printf("got interupt");}
 
     assert(tobii_gaze_point_unsubscribe(device) == NO_ERROR);
 }
