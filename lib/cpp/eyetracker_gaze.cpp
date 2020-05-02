@@ -8,7 +8,7 @@
 
 #include <stdio.h>
 
-#include <boost/chrono.hpp>
+// #include <boost/chrono.hpp>
 
 #include "eyetracker_gaze.h"
 
@@ -28,10 +28,11 @@ int main() {
 
     printf("Marking gaze point for %d seconds from device...\n", GAZE_TIME);
     gaze.print_device_info();
+    gaze.sync_device_time();
     
     gaze.start();
     boost::this_thread::sleep_for(boost::chrono::seconds{GAZE_TIME});
-    gaze.gaze_to_csv("test.csv");
+    // gaze.gaze_to_csv("test.csv");
     // gaze.sample_rate();
     gaze.stop();
 
