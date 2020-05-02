@@ -9,6 +9,8 @@
 #include <assert.h>
 #include <stdio.h>
 #include <cstring>
+#include <chrono>
+
 
 #include <tobii/tobii.h>
 #include <tobii/tobii_config.h>
@@ -37,11 +39,13 @@ class EyeTracker {
     public:
         EyeTracker();
         ~EyeTracker();
+        int64_t devicetime_to_systime(int64_t);
         void sync_device_time();
         void print_device_info();
         void print_feature_group();
 
     protected:
+        int64_t m_device_time_offset;
         bool m_is_elevated;
         tobii_device_t *m_device;
         tobii_api_t *m_api;
@@ -52,7 +56,7 @@ class EyeTracker {
 
 // Default constructor
 EyeTracker::EyeTracker() {
-    // Connect to the default eyetracker
+    // Instantiate eyetracker api
     assert(tobii_api_create(&m_api, NULL, NULL) == NO_ERROR);
 
     char url[256] = {0};
@@ -61,14 +65,15 @@ EyeTracker::EyeTracker() {
         ) == NO_ERROR && *url != '\0'
     );
 
-    // Attempt to load the device license file
+    // Attempt to load an eyetracker device license file
+    // TODO: Catch file not found
     size_t license_size = read_license_file(0);
     assert(license_size > 0);
     uint16_t* license_key = (uint16_t*)malloc(license_size);
     memset(license_key, 0, license_size);
     read_license_file(license_key);
 
-    // Create elevated device
+    // Attemtp to open the eyetracker with elevated privelidges
     tobii_license_key_t license = {license_key, license_size};
     tobii_license_validation_result_t validation_result;
     tobii_device_create_ex(m_api,
@@ -81,7 +86,7 @@ EyeTracker::EyeTracker() {
 
     free(license_key);
 
-    // If elevated create failed due to a license issue, create unelevated
+    // If open elevated failed, open in unelevated mode
     if (validation_result != TOBII_LICENSE_VALIDATION_RESULT_OK) {
         printf("WARN: Failed to create elevated eyetracking device... ");
 
@@ -100,8 +105,10 @@ EyeTracker::EyeTracker() {
         printf("INFO: Using elevated eyetracking device...\n");
         m_is_elevated = True;
     }
-
+    
+    // Set default states
     m_async_time_syncer = NULL;
+    m_device_time_offset = 0;
 }
 
 // Destructor
@@ -121,7 +128,22 @@ EyeTracker::~EyeTracker() {
 // therefore they need to be synchronized every ~30 seconds for accurate device 
 // timestamps. Calling this function will cause that to occur asynchronously.
 void EyeTracker::sync_device_time() {
+    // Start syncing time asynchronously
     m_async_time_syncer = new boost::thread(sync_device_time_async, m_device);
+
+    //Establish device to system clock offset (in mircroseconds)
+    assert(tobii_system_clock(m_api, &m_device_time_offset) == NO_ERROR);
+    m_device_time_offset = 
+        std::chrono::system_clock::now().time_since_epoch().count() -
+            m_device_time_offset;
+}
+
+// Given a device timestamp, returns the timestamp after applying the system
+// clock offset to it. This is necessary because the device knows nothing 
+// about the epoch.
+// Note: You MUST call sync_device_time at least once before using this.
+int64_t EyeTracker::devicetime_to_systime(int64_t device_time) {
+    return device_time + m_device_time_offset;
 }
 
 // Prints eyetracker device info
