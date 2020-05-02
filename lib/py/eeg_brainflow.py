@@ -49,6 +49,9 @@ class EEGBrainflow(object):
                 'It may already be running.')
         else:
             print('INFO: Started OpenBCI_Hub.')
+
+        # Set the device to use low latency serial
+        Popen(['setserial', EEG_BOARD_SERIAL_PORT, 'low_latency'])
         
     @staticmethod
     def _init_board(logger) -> BoardShim:

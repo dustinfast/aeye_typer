@@ -69,6 +69,7 @@ RUN echo "Installing 3rd party linux applications..." && \
     expect \
     dos2unix \ 
     usbutils \
+    setserial \
     openssh-server \
     libcanberra-gtk-module \
     avahi-daemon \
