@@ -359,6 +359,7 @@ class AsyncGazeEventLogger(EventLogger):
             return time.time()
             
         def _do_write():
+            s = self.eyetracker.gaze_data_sz() 
             if self.eyetracker.gaze_data_sz() <= 0:
                 print('*** WARN: Gaze watcher has no data to write.')
                 return
@@ -369,7 +370,7 @@ class AsyncGazeEventLogger(EventLogger):
             self.eyetracker.to_csv(str(path), self._writeback_samples)
 
             if self._verbose:
-                print(f'INFO: Wrote gaze log to {path}')
+                print(f'INFO: Wrote gaze log sz {s}to {path}')
 
         # Start the eyetrackers asynchronous data stream
         self.eyetracker.open()
@@ -428,8 +429,8 @@ class AsyncGazeEventLogger(EventLogger):
                 signal = None
 
         # If here, kill signal received. Do cleanup...
-        # self.eyetracker.stop()
-        # TODO: self.eyetracker.close() ?
+        self.eyetracker.stop()
+        self.eyetracker.close()
 
         if self._verbose:
             print(f'INFO: Gaze watcher stopped at {time.time()}s.')

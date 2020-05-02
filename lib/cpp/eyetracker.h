@@ -19,6 +19,7 @@
 #include <boost/thread.hpp>
 
 using namespace std;
+using namespace std::chrono;
 
 /////////////////////////////////////////////////////////////////////////////
 // Defs
@@ -134,8 +135,8 @@ void EyeTracker::sync_device_time() {
     //Establish device to system clock offset (in mircroseconds)
     assert(tobii_system_clock(m_api, &m_device_time_offset) == NO_ERROR);
     m_device_time_offset = 
-        std::chrono::system_clock::now().time_since_epoch().count() -
-            m_device_time_offset;
+        time_point_cast<microseconds>(system_clock::now()
+            ).time_since_epoch().count() - m_device_time_offset;
 }
 
 // Given a device timestamp, returns the timestamp after applying the system

@@ -18,7 +18,7 @@ using namespace std;
 #define DISP_WIDTH 3840
 #define DISP_HEIGHT 2160
 #define GAZE_MARK_INTERVAL 7
-#define GAZE_BUFF_SZ 450000
+#define GAZE_BUFF_SZ 10
 #define GAZE_TIME 1
 
 
@@ -35,6 +35,7 @@ int main() {
     // gaze.gaze_to_csv("test.csv");
     // gaze.sample_rate();
     gaze.stop();
+    gaze.gaze_to_csv("test.csv");
 
     return 0;
 }
