@@ -14,6 +14,7 @@
 #include <tobii/tobii_config.h>
 #include <tobii/tobii_streams.h>
 #include "tobii/tobii_licensing.h"
+#include <boost/thread.hpp>
 
 using namespace std;
 
@@ -24,6 +25,7 @@ using namespace std;
 #define LIC_PATH "/opt/app/src/licenses/fast_aeye_typer_temp_se_license_key"
 #define NO_ERROR TOBII_ERROR_NO_ERROR
 
+void sync_device_time_async(tobii_device_t *device);
 static size_t read_license_file(uint16_t* license);
 void single_url_receiver(char const *url, void *user_data);
 
@@ -32,16 +34,20 @@ void single_url_receiver(char const *url, void *user_data);
 // Class
 
 class EyeTracker {
+    public:
+        EyeTracker();
+        ~EyeTracker();
+        void sync_device_time();
+        void print_device_info();
+        void print_feature_group();
+
     protected:
         bool m_is_elevated;
         tobii_device_t *m_device;
         tobii_api_t *m_api;
-
-    public:
-        EyeTracker();
-        ~EyeTracker();
-        void print_device_info();
-        void print_feature_group();
+    
+    private:
+        boost::thread *m_async_time_syncer;
 };
 
 // Default constructor
@@ -94,12 +100,28 @@ EyeTracker::EyeTracker() {
         printf("INFO: Using elevated eyetracking device...\n");
         m_is_elevated = True;
     }
+
+    m_async_time_syncer = NULL;
 }
 
 // Destructor
 EyeTracker::~EyeTracker() {
+    // Cleanup the time synchronizer iff needed
+    if (m_async_time_syncer) {
+        m_async_time_syncer->interrupt();
+        delete m_async_time_syncer;
+    }
+
+    // Destroy the eyetracker device instance
     assert(tobii_device_destroy(m_device) == NO_ERROR);
     assert(tobii_api_destroy(m_api) == NO_ERROR);
+}
+
+// The device clock and the system clock it's connected to may drift over time
+// therefore they need to be synchronized every ~30 seconds for accurate device 
+// timestamps. Calling this function will cause that to occur asynchronously.
+void EyeTracker::sync_device_time() {
+    m_async_time_syncer = new boost::thread(sync_device_time_async, m_device);
 }
 
 // Prints eyetracker device info
@@ -138,6 +160,16 @@ void EyeTracker::print_feature_group() {
 
 /////////////////////////////////////////////////////////////////////////////
 // Misc Helpers
+
+// Syncs eyetracker device time w/ system clock every 30s until interrupted
+void sync_device_time_async(tobii_device_t *device) {
+    try {
+        while (True) {
+            tobii_update_timesync(device);
+            boost::this_thread::sleep_for(boost::chrono::seconds{30});
+        }
+    } catch (boost::thread_interrupted&) {}
+}
 
 // Reads an eyetracker license file (Copied from the tobii stream SDK docs)
 static size_t read_license_file(uint16_t* license) {
