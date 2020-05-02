@@ -15,7 +15,8 @@
 #include <tobii/tobii.h>
 #include <tobii/tobii_config.h>
 #include <tobii/tobii_streams.h>
-#include "tobii/tobii_licensing.h"
+#include <tobii/tobii_licensing.h>
+
 #include <boost/thread.hpp>
 
 using namespace std;
@@ -178,7 +179,6 @@ void EyeTracker::print_feature_group() {
     if( feature_group == TOBII_FEATURE_GROUP_INTERNAL)
         printf( "Running with 'internal' feature group.\n" );
 }
-
 
 
 /////////////////////////////////////////////////////////////////////////////

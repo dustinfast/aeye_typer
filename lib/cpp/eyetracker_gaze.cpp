@@ -35,7 +35,6 @@ int main() {
     // gaze.gaze_to_csv("test.csv");
     // gaze.sample_rate();
     gaze.stop();
-    gaze.gaze_to_csv("test.csv");
 
     return 0;
 }

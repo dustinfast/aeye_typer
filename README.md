@@ -75,10 +75,8 @@ Use autoencoder to filter out when brain scanner giving poor reading -- i.e. not
 
 ## TODO
 
-* Add caret location to key logger
 * Add rawdata_to_sql
 * Add anamoly detection
 * Data filtering: Remove all key events w/no associated EEG and/or eye data
 * Data filtering: Remove all eeg events outside of known good events
 * Dashboard denoting status (tobii_user_position_guide_subscribe, etc)
-* Log user position, etc., from eye-tracker and use to improve gaze point accuracy.

@@ -125,6 +125,7 @@ EyeTrackerGaze::EyeTrackerGaze(
 EyeTrackerGaze::~EyeTrackerGaze() {
     // TODO: Unresponsive delay when stopping, even w/no to_csv.
     // Maybe it's catching up with queued callbacks -- if so, need to use device time in callbacks
+    // Try tobii_device_clear_callback_buffers?
     printf("\nIn deconstructor\n");
     stop();
     printf("Did stop from deconstructor\n");
@@ -299,11 +300,7 @@ extern "C" {
 /////////////////////////////////////////////////////////////////////////////
 // Gaze subscriber and callback functions
 
-// TODO: tobii_head_pose_subscribe
-// TODO: tobii_get_face_type, tobii_set_face_type, tobii_enumerate_face_types
-
-
-// Starts the gaze data stream
+// Starts the gaze point data stream
 void do_gaze_point_subscribe(tobii_device_t *device, void *gaze) {
 
     // Subscribe to gaze point
