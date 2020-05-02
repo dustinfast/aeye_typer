@@ -117,11 +117,11 @@ EyeTrackerGaze::EyeTrackerGaze(
 
 // Destructor
 EyeTrackerGaze::~EyeTrackerGaze() {
-    // TODO: Unresponsive after "Async Gaze Watcher Stopped -- no deconstructor call?
-    // Maybe it's catching up with 
+    // TODO: Unresponsive delay when stopping, even w/no to_csv.
+    // Maybe it's catching up with queued callbacks -- if so, need to use device time in callbacks
     printf("\nIn deconstructor\n");
     stop();
-    printf("\nDid stop from deconstructor\n");
+    printf("Did stop from deconstructor\n");
     m_async_mutex->lock();
     delete m_gaze_buff;
     m_async_mutex->unlock();
@@ -306,7 +306,7 @@ void do_gaze_point_subscribe(tobii_device_t *device, void *gaze) {
         while (True) {
             assert(tobii_wait_for_callbacks(1, &device) == NO_ERROR);
             assert(tobii_device_process_callbacks(device) == NO_ERROR);
-            boost::this_thread::sleep_for(boost::chrono::nanoseconds{1});
+            boost::this_thread::sleep_for(boost::chrono::milliseconds{10});
         }
     }
     catch (boost::thread_interrupted&) {printf("got interupt");}
@@ -314,7 +314,10 @@ void do_gaze_point_subscribe(tobii_device_t *device, void *gaze) {
     assert(tobii_gaze_point_unsubscribe(device) == NO_ERROR);
 }
 
-// TODO: User position, etc
+// TODO: tobii_update_timesync every ~30 sec
+// TODO: Time from tobii_system_clock()
+//TODO: tobii_head_pose_subscribe
+// TODO: tobii_get_face_type, tobii_set_face_type, tobii_enumerate_face_types
 
 // Gaze point callback for use with tobii_gaze_point_subscribe(). Gets the
 // eyetrackers predicted on-screen gaze coordinates (x, y) and enques gaze

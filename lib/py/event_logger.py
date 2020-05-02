@@ -239,11 +239,11 @@ class AsyncEEGEventLogger(EventLogger, EEGBrainflow):
                 if signal != SIGNAL_EVENT:
                     break
                 
-                # Allow enough time to log another iteration
+                # Signal event receiverd, so log for another iteration
                 else:
                     write_until = _event(signal)
 
-            # If inner loop closed with no kill signal encountered, clear last
+            # If inner loop closed & not kill signal, reset & return to outter
             else:
                 signal = None
 
@@ -299,8 +299,8 @@ class AsyncEEGEventLogger(EventLogger, EEGBrainflow):
     def event(self) -> None:
         """ Sends the async watcher the signal to start (or continue) logging,
             starting with the previous number of samples denoted by writeback,
-            and ending writeafter number of seconds after the most recent call to this
-            function.
+            and ending writeafter number of seconds after the most recent call
+            to this function.
         """
         try:
             self._async_queue.put_nowait(SIGNAL_EVENT)
@@ -372,6 +372,7 @@ class AsyncGazeEventLogger(EventLogger):
                 print(f'INFO: Wrote gaze log to {path}')
 
         # Start the eyetrackers asynchronous data stream
+        self.eyetracker.open()
         self.eyetracker.start()
         signal = None
 

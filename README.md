@@ -14,7 +14,9 @@ Proof of concept will be accomplished through the following steps:
 
 1. Keystrokes, mouse clicks, EEG signals, and gaze-point data are recorded while a participant uses the application in Data Collection mode.
 
-2. Machine learning models will be built and trained to infer keystrokes, mouse-clicks, and cursor location from the EEG and eyetracker data streams.
+2. Machine learning models will be built and trained to infer when user is typing, clicking, or scroll-wheeling from the EEG and eyetracker data streams.
+
+3. Machine learning models will be built and trained to infer keystrokes, mouse clicks/scrolls, and cursor location from the EEG and eyetracker data streams.
 
 Author: Dustin Fast <dustin.fast@hotmail.com>
 
@@ -74,10 +76,9 @@ Use autoencoder to filter out when brain scanner giving poor reading -- i.e. not
 ## TODO
 
 * Add caret location to key logger
-* Ensure all times values are epoch time of same fmt
 * Add rawdata_to_sql
 * Add anamoly detection
 * Data filtering: Remove all key events w/no associated EEG and/or eye data
 * Data filtering: Remove all eeg events outside of known good events
 * Dashboard denoting status (tobii_user_position_guide_subscribe, etc)
-* Also log user position, etc., from eye-tracker and use to improve gaze point accuracy.
+* Log user position, etc., from eye-tracker and use to improve gaze point accuracy.
