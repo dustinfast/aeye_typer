@@ -180,10 +180,15 @@ int EyeTrackerGaze::gaze_to_csv(const char *file_path, int n=0) {
         m_async_writer = NULL;
     }
 
-    // Copy the data and clear all samples (effectively)
+    // Copy circ buff's contents then clear it
     m_async_mutex->lock();
-    boost::circular_buffer<gaze_data_t> *gaze_buff = m_gaze_buff;
-    m_gaze_buff = new boost::circular_buffer<gaze_data_t>(m_buff_sz); 
+    boost::circular_buffer<gaze_data_t> *gaze_buff = new boost::circular_buffer<gaze_data_t>(m_buff_sz); 
+
+    boost::circular_buffer<gaze_data_t>::iterator i; 
+    for (i = m_gaze_buff->begin(); i < m_gaze_buff->end(); i++)  {
+        gaze_buff->push_back((gaze_data)*i);
+    }
+    m_gaze_buff->clear();
     m_async_mutex->unlock();
 
     // Write the gaze data to file asynchronously
@@ -298,6 +303,7 @@ extern "C" {
 /////////////////////////////////////////////////////////////////////////////
 // Gaze subscriber and callback functions
 
+// TODO: Not logging for more than one second?
 // TODO: tobii_head_pose_subscribe
 // TODO: tobii_get_face_type, tobii_set_face_type, tobii_enumerate_face_types
 

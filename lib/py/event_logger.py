@@ -154,7 +154,7 @@ class AsyncEEGEventLogger(EventLogger, EEGBrainflow):
         def _stop(signal):
             if signal == SIGNAL_STOP:
                 if self._verbose:
-                    print(f'INFO: Async EEG watcher received STOP.')
+                    print(f'INFO: EEG watcher received STOP at {time.time()}s.')
                 return True
 
             return False
@@ -167,13 +167,13 @@ class AsyncEEGEventLogger(EventLogger, EEGBrainflow):
         def _do_write(data):
             # Warn if data is empty
             if data.shape[1] <= 0:
-                print('*** WARN: Async EEG watcher has no data to write... ' +
+                print('*** WARN: EEG watcher has no data to write... ' +
                       'Attempting to reconnect.')
                 self.board.stop_stream()
                 self.board.release_session()
                 
                 if not self._prepare_session():
-                    print(f'ERROR: Async EEG watcher failed to reconnect.')
+                    print(f'ERROR: EEG watcher failed to reconnect.')
                 self.board.start_stream(SZ_DATA_BUFF)    
                 return
             
@@ -188,7 +188,7 @@ class AsyncEEGEventLogger(EventLogger, EEGBrainflow):
 
         # Init board session or die
         if not self._prepare_session():
-            print(f'ERROR: Async EEG watcher failed to get EEG board session.')
+            print(f'ERROR: EEG watcher failed to get EEG board session.')
             return
 
         # Bbegin the data stream
@@ -196,7 +196,7 @@ class AsyncEEGEventLogger(EventLogger, EEGBrainflow):
         signal = None
 
         if self._verbose:
-            print(f'INFO: Async EEG watcher started at {self.sample_rate} hz.')
+            print(f'INFO: EEG watcher started at {time.time()}s.')
 
         while True:
             # Handle inner loop signal if needed, else wait for new signal
@@ -208,7 +208,7 @@ class AsyncEEGEventLogger(EventLogger, EEGBrainflow):
                 break
             elif signal != SIGNAL_EVENT:
                 if self._verbose:
-                    print('WARN: Async EEG watcher received ' +
+                    print('WARN: EEG watcher received ' +
                           f'unhandled signal "{signal}".')
                 signal = None
                 continue
@@ -221,7 +221,7 @@ class AsyncEEGEventLogger(EventLogger, EEGBrainflow):
             if prev_points.shape[1] > 0:
                 _do_write(prev_points[:, -self._writeback_samples:])
             else:
-                print('WARN: Async watcher has no prev data to write... ' +
+                print('WARN: EEG watcher has no prev data to write... ' +
                       'Is it powered on and connected?')
 
             while time.time() <= write_until:
@@ -252,7 +252,7 @@ class AsyncEEGEventLogger(EventLogger, EEGBrainflow):
         self.board.release_session()
 
         if self._verbose:
-            print(f'INFO: Async EEG watcher stopped.')
+            print(f'INFO: EEG watcher stopped at {time.time()}s.')
 
     def start(self) -> mp.Process:
         """ Starts the async watcher, putting it in a state where it is ready
@@ -263,7 +263,7 @@ class AsyncEEGEventLogger(EventLogger, EEGBrainflow):
         """
         # If async watcher already running
         if self._async_proc is not None and self._async_proc.is_alive():
-            print('ERROR: Async EEG watcher already running.')
+            print('ERROR: EEG watcher already running.')
 
         # Else, not running -- start it
         else:
@@ -348,7 +348,7 @@ class AsyncGazeEventLogger(EventLogger):
         def _stop(signal):
             if signal == SIGNAL_STOP:
                 if self._verbose:
-                    print(f'INFO: Async Gaze watcher received STOP.')
+                    print(f'INFO: Gaze watcher received STOP at {time.time()}s.')
                 return True
 
             return False
@@ -360,7 +360,7 @@ class AsyncGazeEventLogger(EventLogger):
             
         def _do_write():
             if self.eyetracker.gaze_data_sz() <= 0:
-                print('*** WARN: Async Gaze watcher has no data to write.')
+                print('*** WARN: Gaze watcher has no data to write.')
                 return
 
             path = Path(
@@ -377,7 +377,7 @@ class AsyncGazeEventLogger(EventLogger):
         signal = None
 
         if self._verbose:
-            print(f'INFO: Async Gaze watcher started at {self.sample_rate} hz.')
+            print(f'INFO: Gaze watcher started at {time.time()}s.')
 
         while True:
             # Handle inner loop signal if needed, else wait for new signal
@@ -389,7 +389,7 @@ class AsyncGazeEventLogger(EventLogger):
                 break
             elif signal != SIGNAL_EVENT:
                 if self._verbose:
-                    print('WARN: Async Gaze watcher received ' +
+                    print('WARN: Gaze watcher received ' +
                           f'unhandled signal "{signal}".')
                 signal = None
                 continue
@@ -401,7 +401,7 @@ class AsyncGazeEventLogger(EventLogger):
             if self.eyetracker.gaze_data_sz() >= 0:
                 _do_write()
             else:
-                print('WARN: Async Gaze watcher has no prev data to write... ' +
+                print('WARN: Gaze watcher has no prev data to write... ' +
                       'Is it powered on and connected?')
 
             while time.time() <= write_until:
@@ -428,11 +428,11 @@ class AsyncGazeEventLogger(EventLogger):
                 signal = None
 
         # If here, kill signal received. Do cleanup...
-        self.eyetracker.stop()
-        self.eyetracker.close()
+        # self.eyetracker.stop()
+        # TODO: self.eyetracker.close() ?
 
         if self._verbose:
-            print(f'INFO: Async Gaze watcher stopped.')
+            print(f'INFO: Gaze watcher stopped at {time.time()}s.')
 
     def start(self) -> mp.Process:
         """ Starts the async watcher, putting it in a state where it is ready
@@ -443,7 +443,7 @@ class AsyncGazeEventLogger(EventLogger):
         """
         # If async watcher already running
         if self._async_proc is not None and self._async_proc.is_alive():
-            print('ERROR: Async Gaze watcher already running.')
+            print('ERROR: Gaze watcher already running.')
 
         # Else, not running -- start it
         else:
@@ -656,7 +656,7 @@ class AsyncInputEventLogger(EventLogger):
 
         if key == keyboard.Key.esc and self._shift_down:
             if self._verbose:
-                print('INFO: Async input watcher received STOP.')
+                print(f'INFO: Input watcher received STOP at {time.time()}s.')
 
             # Write contents of any existing data
             self._write_log(self._df_keylog.iloc[:self._df_keylog_idx, :],
@@ -682,7 +682,7 @@ class AsyncInputEventLogger(EventLogger):
 
         # If mouse watcher already running
         if m and m.is_alive():
-            print('ERROR: Async mouse watcher already running.')
+            print('ERROR: Mouse watcher already running.')
 
         # Else, mouse watcher not running -- start it
         else:
@@ -692,11 +692,11 @@ class AsyncInputEventLogger(EventLogger):
             self._async_mousewatcher_proc.start()
             
             if self._verbose:
-                print(f'INFO: Async mouse watcher started.')
+                print(f'INFO: Mouse watcher started at {time.time()}s.')
 
         # If keyboard watcher already running
         if k and k.is_alive():
-            print('ERROR: Async keyboard watcher already running.')
+            print('ERROR: Keyboard watcher already running.')
 
         # Else, key watcher not running -- start it
         else:
@@ -705,7 +705,7 @@ class AsyncInputEventLogger(EventLogger):
             self._async_keywatcher_proc.start()
             
             if self._verbose:
-                print(f'INFO: Async keyboard watcher started.')
+                print(f'INFO: Keyboard watcher started at {time.time()}s.')
 
         # Give the threads time to spin up
         time.sleep(1.5)
