@@ -2,8 +2,9 @@
 // Demonstrates eye-tracking by connecting to the eye tracker and marking
 // gaze point to the screen in real time for the duration given by GAZE_TIME.
 //
-// Author: Dustin Fast <dustin.fast@hotmail.com>
+// Usage: See main()
 //
+// Author: Dustin Fast <dustin.fast@hotmail.com>
 /////////////////////////////////////////////////////////////////////////////
 
 #include <stdio.h>
