@@ -195,8 +195,7 @@ class AsyncEEGEventLogger(EventLogger, EEGBrainflow):
         self.board.start_stream(SZ_DATA_BUFF)  # Starts async data collection
         signal = None
 
-        if self._verbose:
-            print(f'INFO: EEG watcher started at {time.time()}s.')
+        print(f'INFO: EEG watcher started at {time.time()}s.')
 
         while True:
             # Handle inner loop signal if needed, else wait for new signal
@@ -251,8 +250,7 @@ class AsyncEEGEventLogger(EventLogger, EEGBrainflow):
         self.board.stop_stream()
         self.board.release_session()
 
-        if self._verbose:
-            print(f'INFO: EEG watcher stopped at {time.time()}s.')
+        print(f'INFO: EEG watcher stopped at {time.time()}s.')
 
     def start(self) -> mp.Process:
         """ Starts the async watcher, putting it in a state where it is ready
@@ -377,8 +375,7 @@ class AsyncGazeEventLogger(EventLogger):
         self.eyetracker.start()
         signal = None
 
-        if self._verbose:
-            print(f'INFO: Gaze watcher started at {time.time()}s.')
+        print(f'INFO: Gaze watcher started at {time.time()}s.')
 
         while True:
             # Handle inner loop signal if needed, else wait for new signal
@@ -432,8 +429,7 @@ class AsyncGazeEventLogger(EventLogger):
         self.eyetracker.stop()
         self.eyetracker.close()
 
-        if self._verbose:
-            print(f'INFO: Gaze watcher stopped at {time.time()}s.')
+        print(f'INFO: Gaze watcher stopped at {time.time()}s.')
 
     def start(self) -> mp.Process:
         """ Starts the async watcher, putting it in a state where it is ready
@@ -692,8 +688,7 @@ class AsyncInputEventLogger(EventLogger):
 
             self._async_mousewatcher_proc.start()
             
-            if self._verbose:
-                print(f'INFO: Mouse watcher started at {time.time()}s.')
+            print(f'INFO: Mouse watcher started at {time.time()}s.')
 
         # If keyboard watcher already running
         if k and k.is_alive():
@@ -705,8 +700,7 @@ class AsyncInputEventLogger(EventLogger):
                 on_press=self._on_press, on_release=self._on_release)
             self._async_keywatcher_proc.start()
             
-            if self._verbose:
-                print(f'INFO: Keyboard watcher started at {time.time()}s.')
+            print(f'INFO: Keyboard watcher started at {time.time()}s.')
 
         # Give the threads time to spin up
         time.sleep(1.5)
