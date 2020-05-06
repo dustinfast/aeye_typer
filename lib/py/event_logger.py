@@ -137,7 +137,9 @@ class AsyncEEGEventLogger(EventLogger, EEGBrainflow):
             raise ValueError('Writeafter value too large for data buffer.')
 
         self._writeback_samples = writeback * self.sample_rate
+        self._writeback_seconds = writeback
         self._writeafter_seconds = writeafter
+        self._stream_start_time = None
 
         self._async_proc = None
         self._async_queue = None
@@ -164,24 +166,43 @@ class AsyncEEGEventLogger(EventLogger, EEGBrainflow):
                 return time.time() + self._writeafter_seconds
             return time.time()
             
-        def _do_write(data):
+        def _log_insert_line(line, t, path):
+            """ Writes a line to the log denoting the stream start or stop time.
+                This is necessary because the timestamp in the log for each
+                sample is based on when the sample was received by the system,
+                vs actual time it was generated. Therefore the actual timestamp
+                must must later be inferred (in post-processing) from these 
+                start/stop times.
+            """
+            with open(path, 'a') as f:
+                f.write(f'{line}: {t}\n')
+
+        def _do_write(data, start_time, end_time):
+            path = Path(
+                self._logdir_path, LOG_EEG_SUBDIR, datetime.now().strftime(
+                    self._LOG_EEG_FNAME_TEMPLATE))
+
             # Warn if data is empty
             if data.shape[1] <= 0:
                 print('*** WARN: EEG watcher has no data to write... ' +
                       'Attempting to reconnect.')
+
                 self.board.stop_stream()
                 self.board.release_session()
                 
                 if not self._prepare_session():
                     print(f'ERROR: EEG watcher failed to reconnect.')
-                self.board.start_stream(SZ_DATA_BUFF)    
+                self.board.start_stream(SZ_DATA_BUFF) 
+                self._stream_start_time = time.time()   
+                _log_insert_line('EMPTY/RECONNECTING', time.time(), path)
                 return
-            
-            path = Path(
-                self._logdir_path, LOG_EEG_SUBDIR, datetime.now().strftime(
-                    self._LOG_EEG_FNAME_TEMPLATE))
+
+            _log_insert_line('START', start_time, path)
+
             DataFilter.write_file(
                 self._do_channel_mask(data), str(path), 'a')
+
+            _log_insert_line('STOP', end_time, path)
 
             if self._verbose:
                 print(f'INFO: Wrote eeg log to {path}')
@@ -191,8 +212,9 @@ class AsyncEEGEventLogger(EventLogger, EEGBrainflow):
             print(f'ERROR: EEG watcher failed to get EEG board session.')
             return
 
-        # Bbegin the data stream
-        self.board.start_stream(SZ_DATA_BUFF)  # Starts async data collection
+        # Begin the data stream
+        self.board.start_stream(SZ_DATA_BUFF)  # Async, does not block
+        self._stream_start_time = time.time()
         signal = None
 
         print(f'INFO: EEG watcher started at {time.time()}s.')
@@ -218,15 +240,29 @@ class AsyncEEGEventLogger(EventLogger, EEGBrainflow):
             prev_points = self.board.get_board_data()
 
             if prev_points.shape[1] > 0:
-                _do_write(prev_points[:, -self._writeback_samples:])
+                # Determine if chunk start time is stream start time, or earlier
+                if self._stream_start_time and time.time() - \
+                        self._stream_start_time < self._writeback_seconds:
+                            start_time = self._stream_start_time
+                else:
+                    start_time = time.time() - self._writeback_seconds
+                    self._stream_start_time = None
+
+                _do_write(prev_points[:, -self._writeback_samples:],
+                          start_time,
+                          time.time())
             else:
                 print('WARN: EEG watcher has no prev data to write... ' +
                       'Is it powered on and connected?')
 
+
             while time.time() <= write_until:
-                # Let data accumulate for the specified time then log it
+                # Let data accumulate for the specified time then write to file
+                start_time = time.time()
                 time.sleep(self._writeafter_seconds)
-                _do_write(self.board.get_board_data())
+                _do_write(self.board.get_board_data(),
+                          start_time,
+                          time.time())
 
                 # Check for next msg in queue to see if we keep logging
                 try:
