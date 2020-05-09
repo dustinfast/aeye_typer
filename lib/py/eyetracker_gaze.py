@@ -7,11 +7,10 @@ __author__ = 'Dustin Fast <dustin.fast@outlook.com>'
 import ctypes
 from subprocess import Popen, PIPE
 
-from lib.py import app
-
+from lib.py.app import config, info, warn, error
 
 # Get external .so lib path from app config
-_conf = app.config()
+_conf = config()
 LIB_PATH = _conf['EYETRACKER_EXTERN_LIB_PATH']
 DISP_WIDTH = _conf['DISP_WIDTH']
 DISP_HEIGHT = _conf['DISP_HEIGHT']
@@ -30,7 +29,7 @@ class EyeTrackerGaze(object):
         prep_proc.wait()
 
         if stderr:
-            print('ERROR: Eyetracker .so build failed with:', stderr, sep='\n')
+            error(f'Eyetracker .so build failed with:\n {stderr}')
             exit()
 
         self._lib = self._init_lib(LIB_PATH)
@@ -79,7 +78,7 @@ class EyeTrackerGaze(object):
         """ Opens the device for use.
         """
         if self._obj is not None:
-            print('ERROR: Device already open.')
+            warn('Device already open.')
 
         self._obj = self._lib.eyetracker_gaze_new(
             DISP_WIDTH, DISP_HEIGHT, GAZE_MARK_INTERVAL, GAZE_BUFF_SZ)
@@ -100,7 +99,7 @@ class EyeTrackerGaze(object):
         """ Closes the device.
         """
         if self._obj is None:
-            print('ERROR: Device not open.')
+            error('Device not open.')
 
         self._lib.eyetracker_gaze_destructor(self._obj)
         self._obj = None

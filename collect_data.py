@@ -76,7 +76,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Prompt to continue
-    _ = input('Press Enter to confirm your devices are turned on and grounded')
+    _ = input('\nPress Enter to confirm your devices are turned on/grounded')
 
     # Init and start the EEG board and key/mouse event loggers
     eeg_logger = AsyncEEGEventLogger(
@@ -98,7 +98,7 @@ if __name__ == "__main__":
     log_proc = input_logger.start()
 
     # Wait for key logger to terminate via the keystroke combo SHIFT + ESC
-    print('\n*** Running... Press SHIFT + ESC from anywhere to terminate.\n')
+    app.bold('\nRunning... Press SHIFT + ESC from anywhere to terminate.\n')
     log_proc.join()
 
     # Cleanup

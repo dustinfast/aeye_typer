@@ -123,21 +123,12 @@ EyeTrackerGaze::EyeTrackerGaze(
 
 // Destructor
 EyeTrackerGaze::~EyeTrackerGaze() {
-    // TODO: Unresponsive delay when stopping, even w/no to_csv.
-    // Maybe it's catching up with queued callbacks -- if so, need to use device time in callbacks
-    // Try tobii_device_clear_callback_buffers?
-    printf("\nIn deconstructor...\n");
-    printf("Locking\n");
+    stop();
     m_async_mutex->lock();
-    printf("Deleting buff\n");
     delete m_gaze_buff;
-    printf("UnLocking\n");
     m_async_mutex->unlock();
-    printf("Deleting mutex\n");
     delete m_async_mutex;
-    printf("Closing disp\n");
     XCloseDisplay(m_disp);
-    printf("Destructor finished");
 }
 
 // Starts the async gaze threads
@@ -151,20 +142,15 @@ void EyeTrackerGaze::start() {
 void EyeTrackerGaze::stop() {
     // Stop the gaze data streamer with an interrupt
     if (m_async_streamer) {
-        printf("Stopping streamer..");
         m_async_streamer->interrupt();
-        printf("Joined streamer..");
         m_async_streamer->join();
-        printf("Deleting streamer..");
         delete m_async_streamer;
         m_async_streamer = NULL;
     }
 
     // Wait for the writer thread to finish its current write
     if (m_async_writer) {
-        printf("Joined writer..");
         m_async_writer->join();
-        printf("Deleting writer..");
         delete m_async_writer;
         m_async_writer = NULL;
     }
@@ -318,12 +304,17 @@ void do_gaze_point_subscribe(tobii_device_t *device, void *gaze) {
         while (True) {
             assert(tobii_wait_for_callbacks(1, &device) == NO_ERROR);
             assert(tobii_device_process_callbacks(device) == NO_ERROR);
-            // assert(tobii_device_clear_callback_buffers(device) == NO_ERROR);
-            boost::this_thread::sleep_for(boost::chrono::milliseconds{1});
+            boost::this_thread::sleep_for(boost::chrono::microseconds{1});
+            assert(tobii_device_clear_callback_buffers(device) == NO_ERROR);
+            boost::this_thread::sleep_for(boost::chrono::microseconds{1});
         }
     } catch (boost::thread_interrupted&) {}
 
+    printf("Unsubscribing from gp w 2s delay...\n");
+    boost::this_thread::sleep_for(boost::chrono::milliseconds{2000});
+    printf("Unsubscribing from gp after delay...\n");
     assert(tobii_gaze_point_unsubscribe(device) == NO_ERROR);
+    printf("Unsubscribed from gp.\n\n");
 }
 
 

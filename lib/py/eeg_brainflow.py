@@ -16,11 +16,10 @@ import numpy as np
 from brainflow.board_shim import BoardShim, BrainFlowInputParams
 from brainflow.board_shim import BrainFlowError
 
-from lib.py import app
-
+from lib.py.app import config, info, warn, error
 
 # App config constants
-_conf = app.config()
+_conf = config()
 BCI_HUB_PATH = _conf['EEG_BCI_HUB_PATH']
 EEG_SZ_DATA_BUFF = _conf['EEG_SZ_DATA_BUFF']
 EEG_BOARD_SERIAL_PORT = _conf['EEG_BOARD_SERIAL_PORT']
@@ -45,10 +44,9 @@ class EEGBrainflow(object):
         time.sleep(1)
 
         if self._bci_hub_proc.poll() is not None:
-            print(f'WARN: Could not start {BCI_HUB_PATH} - ' +
-                'It may already be running.')
+            warn(f'Could not start {BCI_HUB_PATH} - It may already be running.')
         else:
-            print('INFO: Started OpenBCI_Hub.')
+            info('Started OpenBCI_Hub.')
 
         # Set the device to use low latency serial
         Popen(['setserial', EEG_BOARD_SERIAL_PORT, 'low_latency'])
@@ -75,10 +73,10 @@ class EEGBrainflow(object):
         try:
             self.board.prepare_session()
         except BrainFlowError:
-            print('ERROR: Failed to get eeg board session. Is it plugged in?')
+            error('Failed to get eeg board session. Is it plugged in?')
             return False
-        else:
-            return True
+        
+        return self.board.is_prepared()
 
     def _do_channel_mask(self, data) -> np.ndarray:
         """ Returns a view of the given board data with only the timestamp
