@@ -126,14 +126,16 @@ EyeTrackerGaze::~EyeTrackerGaze() {
     // TODO: Unresponsive delay when stopping, even w/no to_csv.
     // Maybe it's catching up with queued callbacks -- if so, need to use device time in callbacks
     // Try tobii_device_clear_callback_buffers?
-    printf("\nIn deconstructor\n");
-    stop();
-    printf("Did stop from deconstructor\n");
+    printf("\nIn deconstructor...\n");
+    printf("Locking\n");
     m_async_mutex->lock();
+    printf("Deleting buff\n");
     delete m_gaze_buff;
+    printf("UnLocking\n");
     m_async_mutex->unlock();
+    printf("Deleting mutex\n");
     delete m_async_mutex;
-    printf("Closing disp from deconstructor\n");
+    printf("Closing disp\n");
     XCloseDisplay(m_disp);
     printf("Destructor finished");
 }
@@ -149,15 +151,20 @@ void EyeTrackerGaze::start() {
 void EyeTrackerGaze::stop() {
     // Stop the gaze data streamer with an interrupt
     if (m_async_streamer) {
+        printf("Stopping streamer..");
         m_async_streamer->interrupt();
+        printf("Joined streamer..");
         m_async_streamer->join();
+        printf("Deleting streamer..");
         delete m_async_streamer;
         m_async_streamer = NULL;
     }
 
     // Wait for the writer thread to finish its current write
     if (m_async_writer) {
+        printf("Joined writer..");
         m_async_writer->join();
+        printf("Deleting writer..");
         delete m_async_writer;
         m_async_writer = NULL;
     }

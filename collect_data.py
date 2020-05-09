@@ -76,7 +76,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Prompt to continue
-    # _ = input('Press Enter to confirm your devices are turned on and grounded')
+    _ = input('Press Enter to confirm your devices are turned on and grounded')
 
     # Init and start the EEG board and key/mouse event loggers
     eeg_logger = AsyncEEGEventLogger(
