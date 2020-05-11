@@ -14,8 +14,12 @@ TEST_DURATION = 1200
 if __name__ == "__main__":
     e = EyeTrackerGaze()
     
-    print(f'Marking gaze for {TEST_DURATION} seconds...')
+    e.open()
     e.start()
+    print(f'Marking gaze for {TEST_DURATION} seconds...')
+
     time.sleep(TEST_DURATION)
     # e.to_csv('test.csv', 4)
+
     e.stop()
+    e.close()
