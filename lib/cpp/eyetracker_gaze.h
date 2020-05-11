@@ -304,9 +304,7 @@ void do_gaze_point_subscribe(tobii_device_t *device, void *gaze) {
         while (True) {
             assert(tobii_wait_for_callbacks(1, &device) == NO_ERROR);
             assert(tobii_device_process_callbacks(device) == NO_ERROR);
-            boost::this_thread::sleep_for(boost::chrono::microseconds{1});
             assert(tobii_device_clear_callback_buffers(device) == NO_ERROR);
-            boost::this_thread::sleep_for(boost::chrono::microseconds{1});
         }
     } catch (boost::thread_interrupted&) {}
 
