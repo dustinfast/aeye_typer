@@ -128,7 +128,12 @@ EyeTrackerGaze::~EyeTrackerGaze() {
     delete m_gaze_buff;
     m_async_mutex->unlock();
     delete m_async_mutex;
+    int64_t t_start = time_point_cast<milliseconds>(system_clock::now()
+            ).time_since_epoch().count();
     XCloseDisplay(m_disp);
+    int64_t t_end = time_point_cast<milliseconds>(system_clock::now()
+            ).time_since_epoch().count();
+    printf("Destructor took %li.\n\n", (t_end - t_start));
 }
 
 // Starts the async gaze threads
@@ -304,15 +309,11 @@ void do_gaze_point_subscribe(tobii_device_t *device, void *gaze) {
         while (True) {
             assert(tobii_wait_for_callbacks(1, &device) == NO_ERROR);
             assert(tobii_device_process_callbacks(device) == NO_ERROR);
-            assert(tobii_device_clear_callback_buffers(device) == NO_ERROR);
+            boost::this_thread::sleep_for(boost::chrono::microseconds{1});
         }
     } catch (boost::thread_interrupted&) {}
 
-    printf("Unsubscribing from gp w 2s delay...\n");
-    boost::this_thread::sleep_for(boost::chrono::milliseconds{2000});
-    printf("Unsubscribing from gp after delay...\n");
     assert(tobii_gaze_point_unsubscribe(device) == NO_ERROR);
-    printf("Unsubscribed from gp.\n\n");
 }
 
 

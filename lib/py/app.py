@@ -1,7 +1,7 @@
 """ Misc application level helpers.
 """
 
-__author__ = 'Dustin Fast [dustin.fast@outlook.com]'
+__author__ = 'Dustin Fast <dustin.fast@outlook.com>'
 
 import yaml
 import random

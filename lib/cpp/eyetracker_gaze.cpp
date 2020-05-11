@@ -9,8 +9,6 @@
 
 #include <stdio.h>
 
-// #include <boost/chrono.hpp>
-
 #include "eyetracker_gaze.h"
 
 using namespace std;
@@ -18,24 +16,31 @@ using namespace std;
 
 #define DISP_WIDTH 3840
 #define DISP_HEIGHT 2160
-#define GAZE_MARK_INTERVAL 7
+#define GAZE_MARK_INTERVAL 15
 #define GAZE_BUFF_SZ 10
-#define GAZE_TIME 1
+#define GAZE_TIME 600
 
 
 int main() {
     EyeTrackerGaze gaze = EyeTrackerGaze(
         DISP_WIDTH, DISP_HEIGHT, GAZE_MARK_INTERVAL, GAZE_BUFF_SZ);
 
-    printf("Marking gaze point for %d seconds from device...\n", GAZE_TIME);
+    // printf("Marking gaze point for %d seconds from device...\n", GAZE_TIME);
     gaze.print_device_info();
-    gaze.sync_device_time();
     
     gaze.start();
     boost::this_thread::sleep_for(boost::chrono::seconds{GAZE_TIME});
-    // gaze.gaze_to_csv("test.csv");
-    // gaze.sample_rate();
+    // // gaze.gaze_to_csv("test.csv");
+    // // gaze.sample_rate();
+
+    int64_t t_start = time_point_cast<milliseconds>(system_clock::now()
+        ).time_since_epoch().count();
+
     gaze.stop();
+
+    int64_t t_end = time_point_cast<milliseconds>(system_clock::now()
+            ).time_since_epoch().count();
+    printf("Stopped in %li.\n\n", (t_end - t_start));
 
     return 0;
 }

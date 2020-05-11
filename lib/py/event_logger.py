@@ -25,9 +25,8 @@ from lib.py.eyetracker_gaze import EyeTrackerGaze
 # App config constants
 _conf = config()
 LOG_ROOTDIR = _conf['EVENTLOG_ROOTDIR']
-LOG_CSV_SUBDIR = _conf['EVENTLOG_CSV_SUBDIR']
 LOG_EEG_SUBDIR = _conf['EVENTLOG_EEG_SUBDIR']
-LOG_KEYS_SUBDIR = _conf['EVENTLOG_KEYS_SUBDIR']
+LOG_KEYB_SUBDIR = _conf['EVENTLOG_KEYB_SUBDIR']
 LOG_GAZE_SUBDIR = _conf['EVENTLOG_GAZE_SUBDIR']
 LOG_MOUSE_SUBDIR = _conf['EVENTLOG_MOUSE_SUBDIR']
 NOTEFILE_FNAME = _conf['EVENTLOG_NOTEFILE_FNAME']
@@ -637,7 +636,7 @@ class AsyncInputEventLogger(EventLogger):
                                   [t_stamp, key_id, pressed])
         self._df_keylog_idx = self._write_log(self._df_keylog,
                                               idx,
-                                              LOG_KEYS_SUBDIR,
+                                              LOG_KEYB_SUBDIR,
                                               self._LOG_KEYS_FNAME_TEMPLATE,
                                               self._LOG_KEYS_COLS)
 
@@ -699,7 +698,7 @@ class AsyncInputEventLogger(EventLogger):
             # Write contents of any existing data
             self._write_log(self._df_keylog.iloc[:self._df_keylog_idx, :],
                             self._DF_MAXROWS,
-                            LOG_KEYS_SUBDIR,
+                            LOG_KEYB_SUBDIR,
                             self._LOG_KEYS_FNAME_TEMPLATE,
                             self._LOG_KEYS_COLS)
             self._write_log(self._df_mouselog.iloc[:self._df_mouselog_idx, :],
@@ -716,7 +715,7 @@ class AsyncInputEventLogger(EventLogger):
         m = self._async_mousewatcher_proc
         k = self._async_keywatcher_proc
 
-        self._init_outpath([LOG_KEYS_SUBDIR, LOG_MOUSE_SUBDIR])
+        self._init_outpath([LOG_KEYB_SUBDIR, LOG_MOUSE_SUBDIR])
 
         # If mouse watcher already running
         if m and m.is_alive():
