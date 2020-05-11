@@ -20,7 +20,7 @@ if __name__ == "__main__":
 
     for _ in range(TEST_DURATION):
         time.sleep(1)
-        e.to_csv('test.csv', 10)
+        # e.to_csv('test.csv', 10)
 
     t_start = time.time()
     e.stop()

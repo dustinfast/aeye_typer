@@ -198,7 +198,7 @@ int EyeTrackerGaze::gaze_to_csv(const char *file_path, int n=0) {
 
             for (int j = sz - n_capped; j < sz; j++)  {
                 gaze_data g = gaze_buff->at(j); 
-                f << g.x << ", " << g.y << ", " << g.unixtime_us << "\n";
+                f << g.unixtime_us << ", " << g.x << ", " << g.y << "\n";
         }
 
             f.close();

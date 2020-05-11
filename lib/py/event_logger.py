@@ -595,9 +595,9 @@ class AsyncInputEventLogger(EventLogger):
                 self._logdir_path, log_subdir, datetime.now().strftime(
                     fname_template))
 
-            # Write to new file with col headers
+            # Write to new file with no col headers
             if not os.path.exists(path):
-                df.to_csv(path, index=False, mode='w')
+                df.to_csv(path, index=False, mode='w', header=False)
             
             # OR, Append to existing file with no col headers
             else:
