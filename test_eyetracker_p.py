@@ -9,7 +9,7 @@ import time
 from lib.py.eyetracker_gaze import EyeTrackerGaze
 
 
-TEST_DURATION = 1
+TEST_DURATION = 1200
 
 if __name__ == "__main__":
     e = EyeTrackerGaze()

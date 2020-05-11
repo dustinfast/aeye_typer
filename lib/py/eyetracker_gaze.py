@@ -79,6 +79,7 @@ class EyeTrackerGaze(object):
         """
         if self._obj is not None:
             warn('Device already open.')
+            return
 
         self._obj = self._lib.eyetracker_gaze_new(
             DISP_WIDTH, DISP_HEIGHT, GAZE_MARK_INTERVAL, GAZE_BUFF_SZ)
