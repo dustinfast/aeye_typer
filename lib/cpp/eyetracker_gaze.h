@@ -442,34 +442,62 @@ static void cb_gaze_data(tobii_gaze_data_t const *gaze_data, void *user_data) {
         cgd->unixtime_us = timestamp_us;
         cgd->left_pupildiameter_mm = gaze_data->left.pupil_diameter_mm;
         cgd->right_pupildiameter_mm = gaze_data->right.pupil_diameter_mm;
-        cgd->left_eyeposition_normed_x = gaze_data->left.eye_position_in_track_box_normalized_xyz[0];
-		cgd->left_eyeposition_normed_y = gaze_data->left.eye_position_in_track_box_normalized_xyz[1];
-		cgd->left_eyeposition_normed_z = gaze_data->left.eye_position_in_track_box_normalized_xyz[2];
-		cgd->right_eyeposition_normed_x = gaze_data->right.eye_position_in_track_box_normalized_xyz[0];
-		cgd->right_eyeposition_normed_y = gaze_data->right.eye_position_in_track_box_normalized_xyz[1];
-		cgd->right_eyeposition_normed_z = gaze_data->right.eye_position_in_track_box_normalized_xyz[2];
-        cgd->left_eyecenter_mm_x = gaze_data->left.eyeball_center_from_eye_tracker_mm_xyz[0];
-		cgd->left_eyecenter_mm_y = gaze_data->left.eyeball_center_from_eye_tracker_mm_xyz[1];
-		cgd->left_eyecenter_mm_z = gaze_data->left.eyeball_center_from_eye_tracker_mm_xyz[2];
-		cgd->right_eyecenter_mm_x = gaze_data->right.eyeball_center_from_eye_tracker_mm_xyz[0];
-		cgd->right_eyecenter_mm_y = gaze_data->right.eyeball_center_from_eye_tracker_mm_xyz[1];
-		cgd->right_eyecenter_mm_z = gaze_data->right.eyeball_center_from_eye_tracker_mm_xyz[2];
-        cgd->left_gazeorigin_mm_x = gaze_data->left.gaze_origin_from_eye_tracker_mm_xyz[0];
-		cgd->left_gazeorigin_mm_y = gaze_data->left.gaze_origin_from_eye_tracker_mm_xyz[1];
-		cgd->left_gazeorigin_mm_z = gaze_data->left.gaze_origin_from_eye_tracker_mm_xyz[2];
-		cgd->right_gazeorigin_mm_x = gaze_data->right.gaze_origin_from_eye_tracker_mm_xyz[0];
-		cgd->right_gazeorigin_mm_y = gaze_data->right.gaze_origin_from_eye_tracker_mm_xyz[1];
-		cgd->right_gazeorigin_mm_z = gaze_data->right.gaze_origin_from_eye_tracker_mm_xyz[2];
-        cgd->left_gazepoint_mm_x = gaze_data->left.gaze_point_from_eye_tracker_mm_xyz[0];
-		cgd->left_gazepoint_mm_y = gaze_data->left.gaze_point_from_eye_tracker_mm_xyz[1];
-		cgd->left_gazepoint_mm_z = gaze_data->left.gaze_point_from_eye_tracker_mm_xyz[2];
-		cgd->right_gazepoint_mm_x = gaze_data->right.gaze_point_from_eye_tracker_mm_xyz[0];
-		cgd->right_gazepoint_mm_y = gaze_data->right.gaze_point_from_eye_tracker_mm_xyz[1];
-		cgd->right_gazepoint_mm_z = gaze_data->right.gaze_point_from_eye_tracker_mm_xyz[2];
-        cgd->left_gazepoint_normed_x = gaze_data->left.gaze_point_on_display_normalized_xy[0];
-		cgd->left_gazepoint_normed_y = gaze_data->left.gaze_point_on_display_normalized_xy[1];
-		cgd->right_gazepoint_normed_x = gaze_data->right.gaze_point_on_display_normalized_xy[0];
-		cgd->right_gazepoint_normed_y = gaze_data->right.gaze_point_on_display_normalized_xy[1];
+        cgd->left_eyeposition_normed_x = 
+            gaze_data->left.eye_position_in_track_box_normalized_xyz[0];
+		cgd->left_eyeposition_normed_y = 
+            gaze_data->left.eye_position_in_track_box_normalized_xyz[1];
+		cgd->left_eyeposition_normed_z = 
+            gaze_data->left.eye_position_in_track_box_normalized_xyz[2];
+		cgd->right_eyeposition_normed_x = 
+            gaze_data->right.eye_position_in_track_box_normalized_xyz[0];
+		cgd->right_eyeposition_normed_y = 
+            gaze_data->right.eye_position_in_track_box_normalized_xyz[1];
+		cgd->right_eyeposition_normed_z = 
+            gaze_data->right.eye_position_in_track_box_normalized_xyz[2];
+        cgd->left_eyecenter_mm_x = 
+            gaze_data->left.eyeball_center_from_eye_tracker_mm_xyz[0];
+		cgd->left_eyecenter_mm_y = 
+            gaze_data->left.eyeball_center_from_eye_tracker_mm_xyz[1];
+		cgd->left_eyecenter_mm_z = 
+            gaze_data->left.eyeball_center_from_eye_tracker_mm_xyz[2];
+		cgd->right_eyecenter_mm_x = 
+            gaze_data->right.eyeball_center_from_eye_tracker_mm_xyz[0];
+		cgd->right_eyecenter_mm_y = 
+            gaze_data->right.eyeball_center_from_eye_tracker_mm_xyz[1];
+		cgd->right_eyecenter_mm_z = 
+            gaze_data->right.eyeball_center_from_eye_tracker_mm_xyz[2];
+        cgd->left_gazeorigin_mm_x = 
+            gaze_data->left.gaze_origin_from_eye_tracker_mm_xyz[0];
+		cgd->left_gazeorigin_mm_y = 
+            gaze_data->left.gaze_origin_from_eye_tracker_mm_xyz[1];
+		cgd->left_gazeorigin_mm_z = 
+            gaze_data->left.gaze_origin_from_eye_tracker_mm_xyz[2];
+		cgd->right_gazeorigin_mm_x = 
+            gaze_data->right.gaze_origin_from_eye_tracker_mm_xyz[0];
+		cgd->right_gazeorigin_mm_y = 
+            gaze_data->right.gaze_origin_from_eye_tracker_mm_xyz[1];
+		cgd->right_gazeorigin_mm_z = 
+            gaze_data->right.gaze_origin_from_eye_tracker_mm_xyz[2];
+        cgd->left_gazepoint_mm_x = 
+            gaze_data->left.gaze_point_from_eye_tracker_mm_xyz[0];
+		cgd->left_gazepoint_mm_y = 
+            gaze_data->left.gaze_point_from_eye_tracker_mm_xyz[1];
+		cgd->left_gazepoint_mm_z = 
+            gaze_data->left.gaze_point_from_eye_tracker_mm_xyz[2];
+		cgd->right_gazepoint_mm_x = 
+            gaze_data->right.gaze_point_from_eye_tracker_mm_xyz[0];
+		cgd->right_gazepoint_mm_y = 
+            gaze_data->right.gaze_point_from_eye_tracker_mm_xyz[1];
+		cgd->right_gazepoint_mm_z = 
+            gaze_data->right.gaze_point_from_eye_tracker_mm_xyz[2];
+        cgd->left_gazepoint_normed_x = 
+            gaze_data->left.gaze_point_on_display_normalized_xy[0];
+		cgd->left_gazepoint_normed_y = 
+            gaze_data->left.gaze_point_on_display_normalized_xy[1];
+		cgd->right_gazepoint_normed_x = 
+            gaze_data->right.gaze_point_on_display_normalized_xy[0];
+		cgd->right_gazepoint_normed_y = 
+            gaze_data->right.gaze_point_on_display_normalized_xy[1];
         cgd->combined_gazepoint_x = x_gazepoint;
         cgd->combined_gazepoint_y = y_gazepoint;
 

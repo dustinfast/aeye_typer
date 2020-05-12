@@ -31,7 +31,7 @@ int main() {
     gaze.start();
 
     for (int i = 0; i < GAZE_TIME; i++) {
-        boost::this_thread::sleep_for(boost::chrono::seconds{5});
+        boost::this_thread::sleep_for(boost::chrono::seconds{1});
         gaze.gaze_to_csv("test.csv", 0);
     }
 

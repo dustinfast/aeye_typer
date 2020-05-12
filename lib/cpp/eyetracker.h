@@ -54,7 +54,7 @@ class EyeTracker {
         tobii_api_t *m_api;
     
     private:
-        boost::thread *m_async_time_syncer;
+        shared_ptr<boost::thread> m_async_time_syncer;
 };
 
 // Default constructor
@@ -119,7 +119,7 @@ EyeTracker::~EyeTracker() {
     // Cleanup the time synchronizer iff needed
     if (m_async_time_syncer) {
         m_async_time_syncer->interrupt();
-        delete m_async_time_syncer;
+        m_async_time_syncer->join();
     }
 
     // Destroy the eyetracker device instance
@@ -131,10 +131,14 @@ EyeTracker::~EyeTracker() {
 // therefore they need to be synchronized every ~30 seconds for accurate device 
 // timestamps. Calling this function will cause that to occur asynchronously.
 void EyeTracker::sync_device_time() {
-    // Start syncing time asynchronously
-    m_async_time_syncer = new boost::thread(sync_device_time_async, m_device);
+    if (m_async_time_syncer)
+        return;  // No need to run multiple times
 
-    //Establish device to system clock offset (in mircroseconds)
+    // Start syncing time asynchronously
+    shared_ptr<boost::thread> m_async_time_syncer = 
+        make_shared<boost::thread>(sync_device_time_async, m_device);
+
+    //Establish device to system clock offset (in microseconds)
     assert(tobii_system_clock(m_api, &m_device_time_offset) == NO_ERROR);
     m_device_time_offset = 
         time_point_cast<microseconds>(system_clock::now()
