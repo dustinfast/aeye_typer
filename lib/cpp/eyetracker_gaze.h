@@ -356,7 +356,7 @@ extern "C" {
 
     void eyetracker_gaze_destructor(EyeTrackerGaze* gaze) {
         gaze->~EyeTrackerGaze();
-        delete gaze;
+        // delete gaze;
     }
 
     int eyetracker_gaze_to_csv(EyeTrackerGaze* gaze, const char *file_path, int n) {

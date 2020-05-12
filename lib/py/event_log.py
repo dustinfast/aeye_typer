@@ -14,7 +14,7 @@ from lib.py.eyetracker_gaze import EyeTrackerGaze
 
 # App config constants
 _conf = config()
-LOG_ROOTDIR = _conf['EVENTLOG_ROOTDIR']
+LOG_RAW_ROOTDIR = _conf['EVENTLOG_RAW_ROOTDIR']
 LOG_EEG_SUBDIR = _conf['EVENTLOG_EEG_SUBDIR']
 LOG_GAZE_SUBDIR = _conf['EVENTLOG_GAZE_SUBDIR']
 LOG_KEYB_SUBDIR = _conf['EVENTLOG_KEYB_SUBDIR']
@@ -55,17 +55,19 @@ class EventLog(object):
             
             :param logs: ([str]) A list of log names.
         """
-        self._root_paths = []           # Paths to each of the base log dirs
-        self._raw_eeg_paths = []        # Paths to each eeg-log in all logs
+        # TODO: if not logs, use all in rootdir
+
+        self._root_raw_paths = []       # Base path to all raw logs
+        self._raw_eeg_paths = []        # Paths to raw eeg log files 
         self._raw_gaze_paths = []       # ...
         self._raw_keyb_paths = []
         self._raw_mouse_paths = []
 
-        # Populate root paths
-        [self._root_paths.append(Path(LOG_ROOTDIR, log)) for log in logs]
+        # Populate raw root paths
+        [self._root_raw_paths.append(Path(LOG_RAW_ROOTDIR, log)) for log in logs]
 
         # Populate raw (i.e., csv) paths and sort by file name
-        for p in self._root_paths:
+        for p in self._root_raw_paths:
             try:
                 self._raw_eeg_paths += files_in_dir(Path(p, LOG_EEG_SUBDIR))
             except FileNotFoundError:
@@ -109,3 +111,6 @@ class EventLogRaw(EventLog):
         self._df_gaze = pd_from_csvs(self._raw_gaze_paths, EVENTLOG_GAZE_COLS)
         self._df_keyb = pd_from_csvs(self._raw_keyb_paths, EVENTLOG_KEYB_COLS)
         self._df_mouse = pd_from_csvs(self._raw_mouse_paths, EVENTLOG_MOUSE_COLS)
+
+    def to_sql(self, title):
+        """ Writes the raw data to a sqlite db of the given name into 

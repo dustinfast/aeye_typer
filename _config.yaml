@@ -7,7 +7,7 @@ DISP_HEIGHT: 2160
 # EEG Device
 EEG_BOARD_ID: 0
 EEG_BOARD_SERIAL_PORT: /dev/ttyUSB0
-EYETRACKER_SAMPLE_HZ: 250  # 4ms per sample
+EYETRACKER_SAMPLE_HZ: 250  # ~4ms per sample
 EEG_SZ_DATA_BUFF: 45000
 EEG_BCI_HUB_PATH: /opt/app/dependencies/OpenBCI_Hub/OpenBCIHub
 
@@ -19,11 +19,12 @@ EYETRACKER_EXTERN_LIB_PATH: /opt/app/src/lib/so/eyetracker_gaze.so
 EYETRACKER_PREP_SCRIPT_PATH: /opt/app/src/lib/sh/prep_eyetracker_gaze.sh
 
 # Event Logging
-EVENTLOG_ROOTDIR: /opt/app/data/event_logs
-EVENTLOG_EEG_SUBDIR: eeg
-EVENTLOG_GAZE_SUBDIR: gaze
-EVENTLOG_KEYB_SUBDIR: keyboard
-EVENTLOG_MOUSE_SUBDIR: mouse
+EVENTLOG_RAW_ROOTDIR: /opt/app/data/event_logs/raw      # Raw log data (.csv)
+EVENTLOG_SAMPLED_ROOTDIR: /opt/app/data/event_logs/sampled  # Parsed log data (.sqlite)
+EVENTLOG_EEG_SUBDIR: eeg                                # Subdir in raw and sampled dirs
+EVENTLOG_GAZE_SUBDIR: gaze                              # Subdir in raw and sampled dirs
+EVENTLOG_KEYB_SUBDIR: keyboard                          # Subdir in raw and sampled dirs
+EVENTLOG_MOUSE_SUBDIR: mouse                            # Subdir in raw and sampled dirs
 EVENTLOG_NOTEFILE_FNAME: 'NOTES.md'
 EVENTLOG_GAZE_TIME_CONVERT_IPLIER: .000001
 EVENTLOG_EEG_COLS: ['timestamp',
@@ -76,6 +77,7 @@ EVENTLOG_MOUSE_COLS: ['timestamp',
                       'event_code',   # 1 = click OR scroll_up, 0 = scroll_down
                       'x',
                       'y']
+EVENTLOG_WRITEBACK_SECONDS: 7
+EVENTLOG_WRITEAFTER_SECONDS: 7
 
-EVENTLOG_WRITEBACK_SECONDS: 10
-EVENTLOG_WRITEAFTER_SECONDS: 10
+# Data Parsing

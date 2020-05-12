@@ -21,10 +21,10 @@ del _conf
 
 
 # Log setup
-LOG_NAME = 'cfg0_log_5_first_gaze_data'
-LOG_NOTES = ('# Log 3\n'
+LOG_NAME = 'cfg0_log0'
+LOG_NOTES = ('# Log Notes\n'
              '  \n'
-             'First set of logs containing gaze-tracking data.\n'
+             'First set of logs containing gaze_point_data.\n'
              'Git commit hash: e7785f  \n'
              '  \n'
              '## Channels\n'
@@ -41,8 +41,8 @@ LOG_NOTES = ('# Log 3\n'
              '| 7 | O1    |\n'
              '| 8 | O2    |\n'
              '  \n'
-             'Writeback = 5s  \n'
-             'Writeforward = 5s  \n'
+             'Writeback = 7s  \n'
+             'Writeforward = 7s  \n'
 )
 
 

@@ -1,4 +1,4 @@
-""" A module for logging EEG and Keyboard/Mouse Events to CSV file.
+""" A module for logging EEG, Gaze, and Keyboard/Mouse Events to CSV file.
 """
 
 __author__ = 'Dustin Fast [dustin.fast@outlook.com], 2020'
@@ -24,7 +24,7 @@ from lib.py.eyetracker_gaze import EyeTrackerGaze
 
 # App config constants
 _conf = config()
-LOG_ROOTDIR = _conf['EVENTLOG_ROOTDIR']
+LOG_RAW_ROOTDIR = _conf['EVENTLOG_RAW_ROOTDIR']
 LOG_EEG_SUBDIR = _conf['EVENTLOG_EEG_SUBDIR']
 LOG_KEYB_SUBDIR = _conf['EVENTLOG_KEYB_SUBDIR']
 LOG_GAZE_SUBDIR = _conf['EVENTLOG_GAZE_SUBDIR']
@@ -57,7 +57,7 @@ class EventLogger(object):
             :param sub_dirs: (list) One or more sub-directories to create,
             relative to the loggers root directory.
         """
-        self._logdir_path = Path(LOG_ROOTDIR, self._name)
+        self._logdir_path = Path(LOG_RAW_ROOTDIR, self._name)
 
         notes = self._notes
         output_dir = self._logdir_path
