@@ -119,15 +119,15 @@ class EyeTrackerGaze : public EyeTracker {
         shared_ptr<circ_buff> m_gaze_buff;
 
     private:
-        boost::thread *m_async_streamer;
+        shared_ptr<boost::thread> m_async_streamer;
         shared_ptr<boost::thread> m_async_writer;
-        boost::mutex *m_async_mutex;
+        shared_ptr<boost::mutex> m_async_mutex;
 };
 
 // Default constructor
 EyeTrackerGaze::EyeTrackerGaze(
     int disp_width, int disp_height, int mark_freq, int buff_sz) {
-        // Init from args
+        // Init members from args
         m_disp_width = disp_width;
         m_disp_height = disp_height;
         m_mark_freq = mark_freq;
@@ -151,7 +151,7 @@ EyeTrackerGaze::EyeTrackerGaze(
 
         // Init circular gaze data buffer and mutex
         m_gaze_buff = make_shared<circ_buff>(buff_sz); 
-        m_async_mutex = new boost::mutex;
+        m_async_mutex = make_shared<boost::mutex>();
 
         // Set default states
         m_mark_count = 0;
@@ -167,7 +167,6 @@ EyeTrackerGaze::~EyeTrackerGaze() {
     stop();
     m_async_mutex->lock();
     m_async_mutex->unlock();
-    delete m_async_mutex;
     XCloseDisplay(m_disp);
 
     int64_t t_end = time_point_cast<milliseconds>(system_clock::now()
@@ -177,9 +176,13 @@ EyeTrackerGaze::~EyeTrackerGaze() {
 
 // Starts the async gaze threads
 void EyeTrackerGaze::start() {
-    m_async_streamer = new boost::thread(
-        do_gaze_data_subscribe, m_device, this
-    );
+    if (m_async_streamer) {
+        printf("ERROR: Gaze stream already running.");
+    } else {
+        m_async_streamer = make_shared<boost::thread>(
+            do_gaze_data_subscribe, m_device, this
+        );
+    }
 }
 
 // Stops the async gaze threads
@@ -188,11 +191,10 @@ void EyeTrackerGaze::stop() {
     if (m_async_streamer) {
         m_async_streamer->interrupt();
         m_async_streamer->join();
-        delete m_async_streamer;
         m_async_streamer = NULL;
     }
 
-    // Wait for the writer thread to finish its current write
+    // Wait for writer thread to finish its current write
     if (m_async_writer) {
         m_async_writer->join();
         m_async_writer = NULL;
@@ -435,7 +437,7 @@ static void cb_gaze_data(tobii_gaze_data_t const *gaze_data, void *user_data) {
             gaze_data->timestamp_system_us);
 
         // Copy data
-        shared_ptr<custom_gaze_data_t> cgd(new custom_gaze_data_t());
+        shared_ptr<custom_gaze_data_t> cgd = make_shared<custom_gaze_data_t>();
 
         cgd->unixtime_us = timestamp_us;
         cgd->left_pupildiameter_mm = gaze_data->left.pupil_diameter_mm;
