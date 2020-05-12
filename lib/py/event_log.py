@@ -19,10 +19,10 @@ LOG_EEG_SUBDIR = _conf['EVENTLOG_EEG_SUBDIR']
 LOG_GAZE_SUBDIR = _conf['EVENTLOG_GAZE_SUBDIR']
 LOG_KEYB_SUBDIR = _conf['EVENTLOG_KEYB_SUBDIR']
 LOG_MOUSE_SUBDIR = _conf['EVENTLOG_MOUSE_SUBDIR']
-EVENTLOG_EEG_COLS = _conf['EVENTLOG_EEG_COLS']
-EVENTLOG_GAZE_COLS = _conf['EVENTLOG_GAZE_COLS']
-EVENTLOG_KEYB_COLS = _conf['EVENTLOG_KEYB_COLS']
-EVENTLOG_MOUSE_COLS = _conf['EVENTLOG_MOUSE_COLS']
+LOG_EEG_COLS = _conf['EVENTLOG_EEG_COLS']
+LOG_GAZE_COLS = _conf['EVENTLOG_GAZE_COLS']
+LOG_KEYB_COLS = _conf['EVENTLOG_KEYB_COLS']
+LOG_MOUSE_COLS = _conf['EVENTLOG_MOUSE_COLS']
 del _conf
 
 
@@ -64,7 +64,8 @@ class EventLog(object):
         self._raw_mouse_paths = []
 
         # Populate raw root paths
-        [self._root_raw_paths.append(Path(LOG_RAW_ROOTDIR, log)) for log in logs]
+        [self._root_raw_paths.append(Path(LOG_RAW_ROOTDIR, log))
+            for log in logs]
 
         # Populate raw (i.e., csv) paths and sort by file name
         for p in self._root_raw_paths:
@@ -107,10 +108,10 @@ class EventLogRaw(EventLog):
         super().__init__(logs)
 
         # Load df's from log paths
-        self._df_eeg = pd_from_csvs(self._raw_eeg_paths, EVENTLOG_EEG_COLS)
-        self._df_gaze = pd_from_csvs(self._raw_gaze_paths, EVENTLOG_GAZE_COLS)
-        self._df_keyb = pd_from_csvs(self._raw_keyb_paths, EVENTLOG_KEYB_COLS)
-        self._df_mouse = pd_from_csvs(self._raw_mouse_paths, EVENTLOG_MOUSE_COLS)
+        self._df_eeg = pd_from_csvs(self._raw_eeg_paths, LOG_EEG_COLS)
+        self._df_gaze = pd_from_csvs(self._raw_gaze_paths, LOG_GAZE_COLS)
+        self._df_keyb = pd_from_csvs(self._raw_keyb_paths, LOG_KEYB_COLS)
+        self._df_mouse = pd_from_csvs(self._raw_mouse_paths, LOG_MOUSE_COLS)
 
     def to_sql(self, title):
         """ Writes the raw data to a sqlite db of the given name into 

@@ -25,7 +25,7 @@ LOG_NAME = 'cfg0_log0'
 LOG_NOTES = ('# Log Notes\n'
              '  \n'
              'First set of logs containing gaze_point_data.\n'
-             'Git commit hash: e7785f  \n'
+             'Git commit hash: 588e23  \n'
              '  \n'
              '## Channels\n'
              '  \n'
@@ -42,8 +42,7 @@ LOG_NOTES = ('# Log Notes\n'
              '| 8 | O2    |\n'
              '  \n'
              'Writeback = 7s  \n'
-             'Writeforward = 7s  \n'
-)
+             'Writeforward = 7s  \n')
 
 
 if __name__ == "__main__":
