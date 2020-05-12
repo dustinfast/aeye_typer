@@ -25,7 +25,6 @@
 
 using namespace std;
 
-
 /////////////////////////////////////////////////////////////////////////////
 // Defs
 
@@ -36,14 +35,54 @@ using namespace std;
 #define GAZE_MARKER_BORDER 0
 #define GAZE_MIN_SAMPLE_FOR_RATE_CALC 200
 
-typedef struct gaze_data {
-		int x;
-        int y;
+typedef struct custom_gaze_data {
         int64_t unixtime_us;
-	} gaze_data_t;
 
-void do_gaze_point_subscribe(tobii_device_t*, void*);
-void cb_gaze_point(tobii_gaze_point_t const* , void*);
+        float left_pupildiameter_mm;
+        float right_pupildiameter_mm;
+
+        float left_eyeposition_normed_x;
+		float left_eyeposition_normed_y;
+		float left_eyeposition_normed_z;
+		float right_eyeposition_normed_x;
+		float right_eyeposition_normed_y;
+		float right_eyeposition_normed_z;
+
+        float left_eyecenter_mm_x;
+		float left_eyecenter_mm_y;
+		float left_eyecenter_mm_z;
+		float right_eyecenter_mm_x;
+		float right_eyecenter_mm_y;
+		float right_eyecenter_mm_z;
+
+        float left_gazeorigin_mm_x;
+		float left_gazeorigin_mm_y;
+		float left_gazeorigin_mm_z;
+		float right_gazeorigin_mm_x;
+		float right_gazeorigin_mm_y;
+		float right_gazeorigin_mm_z;
+
+        float left_gazepoint_mm_x;
+		float left_gazepoint_mm_y;
+		float left_gazepoint_mm_z;
+		float right_gazepoint_mm_x;
+		float right_gazepoint_mm_y;
+		float right_gazepoint_mm_z;
+
+        float left_gazepoint_normed_x;
+		float left_gazepoint_normed_y;
+		float right_gazepoint_normed_x;
+		float right_gazepoint_normed_y;
+
+        int combined_gazepoint_x;
+        int combined_gazepoint_y;
+
+	    } custom_gaze_data_t;
+
+typedef boost::circular_buffer<shared_ptr<custom_gaze_data_t>> circ_buff;
+
+void do_gaze_data_subscribe(tobii_device_t*, void*);
+static void cb_gaze_data(tobii_gaze_data_t const*, void*);
 
 
 /////////////////////////////////////////////////////////////////////////////
@@ -55,7 +94,6 @@ class EyeTrackerGaze : public EyeTracker {
         int m_mark_freq;
         int m_disp_width;
         int m_disp_height;
-        bool m_gaze_is_valid;
         Display *m_disp;
         Window m_root_wind;
         XVisualInfo m_vinfo;
@@ -66,21 +104,23 @@ class EyeTrackerGaze : public EyeTracker {
         void stop();
         int gaze_to_csv(const char*, int);
         bool is_gaze_valid();
-        void enque_gaze_data(int, int, int64_t);
+        void enque_gaze_data(shared_ptr<custom_gaze_data_t>);
         void print_gaze_data();
         int gaze_data_sz();
         int sample_rate();
+        int disp_x_from_normed_x(float);
+        int disp_y_from_normed_y(float);
     
         EyeTrackerGaze(int, int, int, int);
         ~EyeTrackerGaze();
 
     protected:
         int m_buff_sz;
-        boost::circular_buffer<gaze_data_t> *m_gaze_buff;
+        shared_ptr<circ_buff> m_gaze_buff;
 
     private:
         boost::thread *m_async_streamer;
-        boost::thread *m_async_writer;
+        shared_ptr<boost::thread> m_async_writer;
         boost::mutex *m_async_mutex;
 };
 
@@ -109,28 +149,27 @@ EyeTrackerGaze::EyeTrackerGaze(
         // Since we care about device timestamps, start time synchronization
         sync_device_time();
 
-        // Init circular gaze point buffer and mutex
-        m_gaze_buff = new boost::circular_buffer<gaze_data_t>(buff_sz); 
+        // Init circular gaze data buffer and mutex
+        m_gaze_buff = make_shared<circ_buff>(buff_sz); 
         m_async_mutex = new boost::mutex;
 
         // Set default states
-        m_gaze_is_valid = False;
         m_mark_count = 0;
-
         m_async_writer = NULL;
         m_async_streamer = NULL;
 }
 
 // Destructor
 EyeTrackerGaze::~EyeTrackerGaze() {
-    stop();
-    m_async_mutex->lock();
-    delete m_gaze_buff;
-    m_async_mutex->unlock();
-    delete m_async_mutex;
     int64_t t_start = time_point_cast<milliseconds>(system_clock::now()
             ).time_since_epoch().count();
+
+    stop();
+    m_async_mutex->lock();
+    m_async_mutex->unlock();
+    delete m_async_mutex;
     XCloseDisplay(m_disp);
+
     int64_t t_end = time_point_cast<milliseconds>(system_clock::now()
             ).time_since_epoch().count();
     printf("Destructor took %li.\n\n", (t_end - t_start));
@@ -139,7 +178,7 @@ EyeTrackerGaze::~EyeTrackerGaze() {
 // Starts the async gaze threads
 void EyeTrackerGaze::start() {
     m_async_streamer = new boost::thread(
-        do_gaze_point_subscribe, m_device, this
+        do_gaze_data_subscribe, m_device, this
     );
 }
 
@@ -156,7 +195,6 @@ void EyeTrackerGaze::stop() {
     // Wait for the writer thread to finish its current write
     if (m_async_writer) {
         m_async_writer->join();
-        delete m_async_writer;
         m_async_writer = NULL;
     }
 }
@@ -165,29 +203,28 @@ void EyeTrackerGaze::stop() {
 // else appending to it. If n is given, writes only the most recent n samples.
 // Returns an int representing the number of samples written.
 int EyeTrackerGaze::gaze_to_csv(const char *file_path, int n=0) {
-    int sample_count = m_gaze_buff->size();
+    // Copy circ buff contents then (effectively) clear it
+    m_async_mutex->lock();
+    shared_ptr<circ_buff> gaze_buff = m_gaze_buff;
+    m_gaze_buff = make_shared<circ_buff>(m_buff_sz);
+    m_async_mutex->unlock();
 
+    // Get buff content count and return if empty
+    int sample_count = gaze_buff->size();
     if (sample_count <= 0)
         return 0;
     
+    // n == 0 denotes write entire buff contents
     if (n == 0)
         n = sample_count;
 
     // Ensure any previous async write job has finished and free its mem
     if (m_async_writer) {
         m_async_writer->join();
-        delete m_async_writer;
-        m_async_writer = NULL;
     }
 
-    // Copy circ buff contents then clear it
-    m_async_mutex->lock();
-    boost::circular_buffer<gaze_data_t> *gaze_buff = m_gaze_buff;
-    m_gaze_buff = new boost::circular_buffer<gaze_data_t>(m_buff_sz); 
-    m_async_mutex->unlock();
-
     // Write the gaze data to file asynchronously
-    m_async_writer = new boost::thread(
+    m_async_writer = make_shared<boost::thread>(
         [file_path, gaze_buff, n]() {
             ofstream f, f2;
             f.open(file_path, fstream::in | fstream::out | fstream::app);
@@ -197,44 +234,71 @@ int EyeTrackerGaze::gaze_to_csv(const char *file_path, int n=0) {
             int n_capped = min(sz, n);
 
             for (int j = sz - n_capped; j < sz; j++)  {
-                gaze_data g = gaze_buff->at(j); 
-                f << g.unixtime_us << ", " << g.x << ", " << g.y << "\n";
-        }
+                auto cgd = *gaze_buff->at(j); 
+                f << 
+                    cgd.unixtime_us << ", " <<
+                    cgd.left_pupildiameter_mm << ", " <<
+                    cgd.right_pupildiameter_mm << ", " <<
+                    cgd.left_eyeposition_normed_x << ", " <<
+                    cgd.left_eyeposition_normed_y << ", " <<
+                    cgd.left_eyeposition_normed_z << ", " <<
+                    cgd.right_eyeposition_normed_x << ", " <<
+                    cgd.right_eyeposition_normed_y << ", " <<
+                    cgd.right_eyeposition_normed_z << ", " <<
+                    cgd.left_eyecenter_mm_x << ", " <<
+                    cgd.left_eyecenter_mm_y << ", " <<
+                    cgd.left_eyecenter_mm_z << ", " <<
+                    cgd.right_eyecenter_mm_x << ", " <<
+                    cgd.right_eyecenter_mm_y << ", " <<
+                    cgd.right_eyecenter_mm_z << ", " <<
+                    cgd.left_gazeorigin_mm_x << ", " <<
+                    cgd.left_gazeorigin_mm_y << ", " <<
+                    cgd.left_gazeorigin_mm_z << ", " <<
+                    cgd.right_gazeorigin_mm_x << ", " <<
+                    cgd.right_gazeorigin_mm_y << ", " <<
+                    cgd.right_gazeorigin_mm_z << ", " <<
+                    cgd.left_gazepoint_mm_x << ", " <<
+                    cgd.left_gazepoint_mm_y << ", " <<
+                    cgd.left_gazepoint_mm_z << ", " <<
+                    cgd.right_gazepoint_mm_x << ", " <<
+                    cgd.right_gazepoint_mm_y << ", " <<
+                    cgd.right_gazepoint_mm_z << ", " <<
+                    cgd.left_gazepoint_normed_x << ", " <<
+                    cgd.left_gazepoint_normed_y << ", " <<
+                    cgd.right_gazepoint_normed_x << ", " <<
+                    cgd.right_gazepoint_normed_y << ", " <<
+                    cgd.combined_gazepoint_x << ", " <<
+                    cgd.combined_gazepoint_y << "\n";
+            }
 
             f.close();
-            delete gaze_buff;
         }
     );
 
     return sample_count;
 }
 
-// Returns the current gaze validity state
-bool EyeTrackerGaze::is_gaze_valid() {
-    return m_gaze_is_valid;
-}
-
 // Enques gaze data into the circular buffer
-void EyeTrackerGaze::enque_gaze_data(int x, int y, int64_t unixtime_us) {
-    shared_ptr<gaze_data> gd(new gaze_data());
-    gd->x = x;
-    gd->y = y;
-    gd->unixtime_us = unixtime_us;
-
+void EyeTrackerGaze::enque_gaze_data(shared_ptr<custom_gaze_data_t> cgd) {
     m_async_mutex->lock();
-    m_gaze_buff->push_back(*gd);
+    m_gaze_buff->push_back(cgd);
     m_async_mutex->unlock();
 }
 
 // Prints the coord contents of the circular buffer. For debug convenience.
 void EyeTrackerGaze::print_gaze_data() {
-    boost::circular_buffer<gaze_data_t>::iterator i; 
+    circ_buff::iterator i; 
 
     m_async_mutex->lock();
     for (i = m_gaze_buff->begin(); i < m_gaze_buff->end(); i++)  {
-        printf("(%d, %d)\n", ((gaze_data)*i).x, ((gaze_data)*i).y); 
+        printf("(%d, %d)\n",
+        i->get()->combined_gazepoint_x,
+        i->get()->combined_gazepoint_y); 
     }
     m_async_mutex->unlock();
+
+    printf("Gaze sample count: %li\n", m_gaze_buff->size());
+
 }
 
 // Returns the current number of gaze points in the gaze data buffer
@@ -253,14 +317,29 @@ int EyeTrackerGaze::sample_rate() {
     }
 
     // Earliest and latest sample times, in microseconds
-    long unsigned int t1 = m_gaze_buff->at(0).unixtime_us;
-    long unsigned int t2 = m_gaze_buff->at(sample_count-1).unixtime_us;
+    m_async_mutex->lock();
+    auto cgd_first = *m_gaze_buff->at(0); 
+    auto cgd_last = *m_gaze_buff->at(sample_count-1); 
+    m_async_mutex->unlock();
+
+    long unsigned int t1 = cgd_first.unixtime_us;
+    long unsigned int t2 = cgd_last.unixtime_us;
 
     // Sample rate, in hz
     double t_diff = (t2 - t1) * .000001;
     double sample_rate = sample_count / t_diff;
 
     return sample_rate;
+}
+
+// Given a normalized gaze point's x coord, returns the x in display coords.
+int EyeTrackerGaze::disp_x_from_normed_x(float x_normed) {
+    return x_normed * m_disp_width;
+}
+
+// Given a normalized gaze point's y coord, returns the x in display coords.
+int EyeTrackerGaze::disp_y_from_normed_y(float y_normed) {
+    return y_normed * m_disp_height;
 }
 
 
@@ -275,6 +354,7 @@ extern "C" {
 
     void eyetracker_gaze_destructor(EyeTrackerGaze* gaze) {
         gaze->~EyeTrackerGaze();
+        delete gaze;
     }
 
     int eyetracker_gaze_to_csv(EyeTrackerGaze* gaze, const char *file_path, int n) {
@@ -299,10 +379,10 @@ extern "C" {
 // Gaze subscriber and callback functions
 
 // Starts the gaze point data stream
-void do_gaze_point_subscribe(tobii_device_t *device, void *gaze) {
+void do_gaze_data_subscribe(tobii_device_t *device, void *gaze) {
 
     // Subscribe to gaze point
-    assert(tobii_gaze_point_subscribe(device, cb_gaze_point, gaze
+    assert(tobii_gaze_data_subscribe(device, cb_gaze_data, gaze
     ) == NO_ERROR);
 
     try {
@@ -316,7 +396,7 @@ void do_gaze_point_subscribe(tobii_device_t *device, void *gaze) {
     int64_t t_start = time_point_cast<milliseconds>(system_clock::now()
             ).time_since_epoch().count();
     
-    assert(tobii_gaze_point_unsubscribe(device) == NO_ERROR);
+    assert(tobii_gaze_data_unsubscribe(device) == NO_ERROR);
     
     int64_t t_end = time_point_cast<milliseconds>(system_clock::now()
             ).time_since_epoch().count();
@@ -330,41 +410,82 @@ void do_gaze_point_subscribe(tobii_device_t *device, void *gaze) {
 // data into EyeTrackerGazes' circular buffer. Also creates a shaded window
 // overlay denoting the gaze point on the screen.
 // ASSUMES: user_data is a ptr to an object of type EyeTrackerGaze.
-void cb_gaze_point(tobii_gaze_point_t const *gaze_point, void *user_data) {
+static void cb_gaze_data(tobii_gaze_data_t const *gaze_data, void *user_data) {
     EyeTrackerGaze *gaze = static_cast<EyeTrackerGaze*>(user_data);
 
-    // If gaze is detected, do the enque and screen annotation
-    if (gaze_point->validity == TOBII_VALIDITY_VALID) {
-        gaze->m_gaze_is_valid = True;
-
+    if(gaze_data->left.gaze_point_validity == TOBII_VALIDITY_VALID ==
+    gaze_data->right.gaze_point_validity) {
+        
         // Convert gaze point to screen coords
-        int x_coord = gaze_point->position_xy[0] * gaze->m_disp_width;
-        int y_coord = gaze_point->position_xy[1] * gaze->m_disp_height;
+        int left_gazepoint_x = gaze->disp_x_from_normed_x(
+            gaze_data->left.gaze_point_on_display_normalized_xy[0]);
+        int left_gazepoint_y = gaze->disp_y_from_normed_y(
+            gaze_data->left.gaze_point_on_display_normalized_xy[1]);
+            
+        int right_gazepoint_x = gaze->disp_x_from_normed_x(
+            gaze_data->right.gaze_point_on_display_normalized_xy[0]);
+        int right_gazepoint_y = gaze->disp_y_from_normed_y(
+            gaze_data->right.gaze_point_on_display_normalized_xy[1]);
+
+        int x_gazepoint = (left_gazepoint_x + right_gazepoint_x) / 2;
+        int y_gazepoint = (left_gazepoint_y + right_gazepoint_y) / 2;
 
         // Convert timestamp from device time to system clock time
-        int64_t timestamp = gaze->devicetime_to_systime(
-            gaze_point->timestamp_us);
-        
-        // printf("Gaze points: %d, %d\n", x_coord, y_coord);  // debug
-        // printf("timestamp    : %li\n", gaze_point->timestamp_us); // debug
-        // printf("timestamp adj: %li\n", timestamp); // debug
+        int64_t timestamp_us = gaze->devicetime_to_systime(
+            gaze_data->timestamp_system_us);
 
-        // Enque converted gaze data in the circular buffer
-        gaze->enque_gaze_data(x_coord, y_coord, timestamp);
-        
+        // Copy data
+        shared_ptr<custom_gaze_data_t> cgd(new custom_gaze_data_t());
+
+        cgd->unixtime_us = timestamp_us;
+        cgd->left_pupildiameter_mm = gaze_data->left.pupil_diameter_mm;
+        cgd->right_pupildiameter_mm = gaze_data->right.pupil_diameter_mm;
+        cgd->left_eyeposition_normed_x = gaze_data->left.eye_position_in_track_box_normalized_xyz[0];
+		cgd->left_eyeposition_normed_y = gaze_data->left.eye_position_in_track_box_normalized_xyz[1];
+		cgd->left_eyeposition_normed_z = gaze_data->left.eye_position_in_track_box_normalized_xyz[2];
+		cgd->right_eyeposition_normed_x = gaze_data->right.eye_position_in_track_box_normalized_xyz[0];
+		cgd->right_eyeposition_normed_y = gaze_data->right.eye_position_in_track_box_normalized_xyz[1];
+		cgd->right_eyeposition_normed_z = gaze_data->right.eye_position_in_track_box_normalized_xyz[2];
+        cgd->left_eyecenter_mm_x = gaze_data->left.eyeball_center_from_eye_tracker_mm_xyz[0];
+		cgd->left_eyecenter_mm_y = gaze_data->left.eyeball_center_from_eye_tracker_mm_xyz[1];
+		cgd->left_eyecenter_mm_z = gaze_data->left.eyeball_center_from_eye_tracker_mm_xyz[2];
+		cgd->right_eyecenter_mm_x = gaze_data->right.eyeball_center_from_eye_tracker_mm_xyz[0];
+		cgd->right_eyecenter_mm_y = gaze_data->right.eyeball_center_from_eye_tracker_mm_xyz[1];
+		cgd->right_eyecenter_mm_z = gaze_data->right.eyeball_center_from_eye_tracker_mm_xyz[2];
+        cgd->left_gazeorigin_mm_x = gaze_data->left.gaze_origin_from_eye_tracker_mm_xyz[0];
+		cgd->left_gazeorigin_mm_y = gaze_data->left.gaze_origin_from_eye_tracker_mm_xyz[1];
+		cgd->left_gazeorigin_mm_z = gaze_data->left.gaze_origin_from_eye_tracker_mm_xyz[2];
+		cgd->right_gazeorigin_mm_x = gaze_data->right.gaze_origin_from_eye_tracker_mm_xyz[0];
+		cgd->right_gazeorigin_mm_y = gaze_data->right.gaze_origin_from_eye_tracker_mm_xyz[1];
+		cgd->right_gazeorigin_mm_z = gaze_data->right.gaze_origin_from_eye_tracker_mm_xyz[2];
+        cgd->left_gazepoint_mm_x = gaze_data->left.gaze_point_from_eye_tracker_mm_xyz[0];
+		cgd->left_gazepoint_mm_y = gaze_data->left.gaze_point_from_eye_tracker_mm_xyz[1];
+		cgd->left_gazepoint_mm_z = gaze_data->left.gaze_point_from_eye_tracker_mm_xyz[2];
+		cgd->right_gazepoint_mm_x = gaze_data->right.gaze_point_from_eye_tracker_mm_xyz[0];
+		cgd->right_gazepoint_mm_y = gaze_data->right.gaze_point_from_eye_tracker_mm_xyz[1];
+		cgd->right_gazepoint_mm_z = gaze_data->right.gaze_point_from_eye_tracker_mm_xyz[2];
+        cgd->left_gazepoint_normed_x = gaze_data->left.gaze_point_on_display_normalized_xy[0];
+		cgd->left_gazepoint_normed_y = gaze_data->left.gaze_point_on_display_normalized_xy[1];
+		cgd->right_gazepoint_normed_x = gaze_data->right.gaze_point_on_display_normalized_xy[0];
+		cgd->right_gazepoint_normed_y = gaze_data->right.gaze_point_on_display_normalized_xy[1];
+        cgd->combined_gazepoint_x = x_gazepoint;
+        cgd->combined_gazepoint_y = y_gazepoint;
+
+        gaze->enque_gaze_data(cgd);
+
         // Annotate (x, y) on the screen every m_mark_freq callbacks
         gaze->m_mark_count++;
         if (gaze->m_mark_count % gaze->m_mark_freq != 0)
             return;
 
+        // Else, reset the gaze mark count & create gaze marker overlay
         gaze->m_mark_count = 0;
 
-        // Create the gaze marker as an overlay window
         gaze->m_overlay = XCreateWindow(
             gaze->m_disp,
             gaze->m_root_wind,
-            x_coord,
-            y_coord, 
+            x_gazepoint,
+            y_gazepoint, 
             GAZE_MARKER_WIDTH, 
             GAZE_MARKER_HEIGHT,
             GAZE_MARKER_BORDER,
@@ -388,12 +509,9 @@ void cb_gaze_point(tobii_gaze_point_t const *gaze_point, void *user_data) {
         XFlush(gaze->m_disp);
         cairo_surface_destroy(surf);
         XUnmapWindow(gaze->m_disp, gaze->m_overlay);
+
+    } else {
+        // printf("WARN: Invalid gaze_point.\n"); // debug
     }
 
-    // Else if no gaze detected by the device, do nothing
-    else {
-        gaze->m_gaze_is_valid = False;
-        // printf("WARN: Received invalid gaze_point.\n"); // debug
-
-    }
 }

@@ -16,6 +16,7 @@
 #include <tobii/tobii_config.h>
 #include <tobii/tobii_streams.h>
 #include <tobii/tobii_licensing.h>
+#include <tobii/tobii_advanced.h>
 
 #include <boost/thread.hpp>
 

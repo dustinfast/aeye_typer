@@ -21,5 +21,8 @@ gcc lib/cpp/eyetracker_gaze.cpp  \
 # Run the test
 ./eye_tracker_gazemark.out
 
-# Remove the binary
-rm eye_tracker_gazemark.out
+# Remove the binary if no cmd line arg
+if [[ -z $1 ]]
+then
+    rm eye_tracker_gazemark.out
+fi

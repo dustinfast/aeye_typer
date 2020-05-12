@@ -9,7 +9,7 @@ import time
 from lib.py.eyetracker_gaze import EyeTrackerGaze
 
 
-TEST_DURATION = 60
+TEST_DURATION = 600
 
 if __name__ == "__main__":
     e = EyeTrackerGaze()
@@ -18,9 +18,9 @@ if __name__ == "__main__":
     e.start()
     print(f'Marking gaze for {TEST_DURATION} seconds...')
 
-    for _ in range(TEST_DURATION):
-        time.sleep(1)
-        e.to_csv('test.csv', 10)
+    for _ in range(int(TEST_DURATION / 10)):
+        time.sleep(10)
+        e.to_csv('test.csv', 100)
 
     t_start = time.time()
     e.stop()
