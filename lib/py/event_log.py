@@ -109,4 +109,3 @@ class EventLogRaw(EventLog):
         self._df_gaze = pd_from_csvs(self._raw_gaze_paths, EVENTLOG_GAZE_COLS)
         self._df_keyb = pd_from_csvs(self._raw_keyb_paths, EVENTLOG_KEYB_COLS)
         self._df_mouse = pd_from_csvs(self._raw_mouse_paths, EVENTLOG_MOUSE_COLS)
-        # TODO: Keyb/mouse: strip headers

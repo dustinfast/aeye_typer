@@ -151,9 +151,11 @@ int64_t EyeTracker::devicetime_to_systime(int64_t device_time) {
 // Prints eyetracker device info
 void EyeTracker::print_device_info() {
     tobii_device_info_t info;
+    tobii_supported_t supported;
 
     assert(tobii_get_device_info(m_device, &info) == NO_ERROR);
     
+    // Basic device info
     printf("Device SN: %s\n", info.serial_number);
     printf("Device Model: %s\n", info.model);
     printf("Device Generation: %s\n", info.generation);
@@ -162,6 +164,39 @@ void EyeTracker::print_device_info() {
     printf("Device Calibration Date: %s\n", info.hw_calibration_date);
     printf("Device Integration Type: %s\n", info.integration_type);
     printf("Device Runtime Build Ver: %s\n", info.runtime_build_version);
+
+    printf("Device supports gaze point stream: "); 
+    tobii_stream_supported(m_device, TOBII_STREAM_GAZE_POINT, &supported);
+    if(supported == TOBII_SUPPORTED) { printf( "True" ); 
+    } else { printf( "False" ); }
+    
+    printf("\nDevice supports gaze origin stream: "); 
+    tobii_stream_supported(m_device, TOBII_STREAM_GAZE_ORIGIN, &supported);
+    if(supported == TOBII_SUPPORTED) { printf( "True" ); 
+    } else { printf( "False" ); }
+
+    printf("\nDevice supports eye position: "); 
+    tobii_stream_supported(m_device, TOBII_STREAM_EYE_POSITION_NORMALIZED, &supported);
+    if(supported == TOBII_SUPPORTED) { printf( "True" ); 
+    } else { printf( "False" ); }
+
+    printf("\nDevice supports head position: "); 
+    tobii_stream_supported(m_device, TOBII_STREAM_HEAD_POSE, &supported);
+    if(supported == TOBII_SUPPORTED) { printf( "True" ); 
+    } else { printf( "False" ); }
+
+    printf("\nDevice supports gaze data: "); 
+    tobii_stream_supported(m_device, TOBII_STREAM_GAZE_DATA, &supported);
+    if(supported == TOBII_SUPPORTED) { printf( "True" ); 
+    } else { printf( "False" ); }
+
+    printf("\nDevice supports diag image: "); 
+    tobii_stream_supported(m_device, TOBII_STREAM_DIAGNOSTICS_IMAGE, &supported);
+    if(supported == TOBII_SUPPORTED) { printf( "True" ); 
+    } else { printf( "False" ); }
+
+    printf("\n");
+    
 }
 
 void EyeTracker::print_feature_group() {

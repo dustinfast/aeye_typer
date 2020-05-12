@@ -9,7 +9,7 @@ import time
 from lib.py.eyetracker_gaze import EyeTrackerGaze
 
 
-TEST_DURATION = 600
+TEST_DURATION = 60
 
 if __name__ == "__main__":
     e = EyeTrackerGaze()
@@ -20,11 +20,11 @@ if __name__ == "__main__":
 
     for _ in range(TEST_DURATION):
         time.sleep(1)
-        # e.to_csv('test.csv', 10)
+        e.to_csv('test.csv', 10)
 
     t_start = time.time()
     e.stop()
-    print(f'stopped in {1000 * (time.time() - t_start)}\n')
+    print(f'\nstopped in {1000 * (time.time() - t_start)}\n')
 
     t_start = time.time()
     e.close()

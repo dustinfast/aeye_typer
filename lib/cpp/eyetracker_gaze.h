@@ -313,7 +313,15 @@ void do_gaze_point_subscribe(tobii_device_t *device, void *gaze) {
         }
     } catch (boost::thread_interrupted&) {}
 
+    int64_t t_start = time_point_cast<milliseconds>(system_clock::now()
+            ).time_since_epoch().count();
+    
     assert(tobii_gaze_point_unsubscribe(device) == NO_ERROR);
+    
+    int64_t t_end = time_point_cast<milliseconds>(system_clock::now()
+            ).time_since_epoch().count();
+
+    printf("\nUnsubscribe took %li.\n\n", (t_end - t_start));
 }
 
 

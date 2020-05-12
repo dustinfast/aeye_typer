@@ -29,9 +29,11 @@ int main() {
     gaze.print_device_info();
     
     gaze.start();
-    boost::this_thread::sleep_for(boost::chrono::seconds{GAZE_TIME});
-    // // gaze.gaze_to_csv("test.csv");
-    // // gaze.sample_rate();
+
+    for (int i = 0; i < GAZE_TIME; i++) {
+        boost::this_thread::sleep_for(boost::chrono::seconds{1});
+        gaze.gaze_to_csv("test.csv", 10);
+    }
 
     int64_t t_start = time_point_cast<milliseconds>(system_clock::now()
         ).time_since_epoch().count();
@@ -40,6 +42,7 @@ int main() {
 
     int64_t t_end = time_point_cast<milliseconds>(system_clock::now()
             ).time_since_epoch().count();
+
     printf("Stopped in %li.\n\n", (t_end - t_start));
 
     return 0;
