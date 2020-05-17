@@ -7,6 +7,8 @@ __author__ = 'Dustin Fast [dustin.fast@outlook.com], 2020'
 import argparse
 from time import sleep
 
+import pyximport; pyximport.install()
+
 from lib.py import app
 from lib.py.event_logger import (AsyncEEGEventLogger, 
                                  AsyncInputEventLogger,

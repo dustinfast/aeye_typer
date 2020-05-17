@@ -50,6 +50,7 @@ RUN echo "Installing 3rd party Python 3.6 libraries..." && \
         seaborn \
         sqlalchemy \
         tqdm \
+        cython \
         brainflow \
         tobii_research \
         pynput

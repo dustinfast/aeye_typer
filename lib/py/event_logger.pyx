@@ -1,6 +1,6 @@
+#cython: language_level=3
 """ A module for logging EEG, Gaze, and Keyboard/Mouse Events to CSV file.
 """
-
 __author__ = 'Dustin Fast [dustin.fast@outlook.com], 2020'
 
 import os
