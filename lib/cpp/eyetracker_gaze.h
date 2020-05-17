@@ -423,7 +423,6 @@ void do_gaze_data_subscribe(tobii_device_t *device, void *gaze) {
 static void cb_gaze_data(tobii_gaze_data_t const *gaze_data, void *user_data) {
     EyeTrackerGaze *gaze = static_cast<EyeTrackerGaze*>(user_data);
 
-    // TODO: Log even when invalid, but add valid flag?
     if(gaze_data->left.gaze_point_validity == TOBII_VALIDITY_VALID ==
     gaze_data->right.gaze_point_validity) {
         
