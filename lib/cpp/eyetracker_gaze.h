@@ -15,7 +15,6 @@
 #include <boost/thread.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/circular_buffer.hpp>
-#include <cairo/cairo-xlib.h>
 
 #include <X11/X.h>
 #include <X11/Xlib.h>
@@ -157,6 +156,24 @@ EyeTrackerGaze::EyeTrackerGaze(
         m_mark_count = 0;
         m_async_writer = NULL;
         m_async_streamer = NULL;
+
+
+        m_overlay = XCreateWindow(
+            m_disp,
+            m_root_wind,
+            10,
+            10, 
+            GAZE_MARKER_WIDTH, 
+            GAZE_MARKER_HEIGHT,
+            GAZE_MARKER_BORDER,
+            m_vinfo.depth,
+            InputOutput, 
+            m_vinfo.visual,
+            CWOverrideRedirect | CWColormap | CWBackPixel | CWBorderPixel, 
+            &m_attrs
+        );
+
+        XMapWindow(m_disp, m_overlay);
 }
 
 // Destructor
@@ -485,43 +502,22 @@ static void cb_gaze_data(tobii_gaze_data_t const *gaze_data, void *user_data) {
 
         gaze->enque_gaze_data(cgd);
 
-        // // Annotate (x, y) on the screen every m_mark_freq callbacks
-        // gaze->m_mark_count++;
-        // if (gaze->m_mark_count % gaze->m_mark_freq != 0)
-        //     return;
+        // Annotate (x, y) on the screen every m_mark_freq callbacks
+        gaze->m_mark_count++;
+        if (gaze->m_mark_count % gaze->m_mark_freq != 0)
+            return;
 
-        // // Else, reset the gaze mark count & create gaze marker overlay
-        // gaze->m_mark_count = 0;
-        // // TODO: Improve cpu usage of the overlay
-        // gaze->m_overlay = XCreateWindow(
-        //     gaze->m_disp,
-        //     gaze->m_root_wind,
-        //     x_gazepoint,
-        //     y_gazepoint, 
-        //     GAZE_MARKER_WIDTH, 
-        //     GAZE_MARKER_HEIGHT,
-        //     GAZE_MARKER_BORDER,
-        //     gaze->m_vinfo.depth,
-        //     InputOutput, 
-        //     gaze->m_vinfo.visual,
-        //     CWOverrideRedirect | CWColormap | CWBackPixel | CWBorderPixel, 
-        //     &gaze->m_attrs
-        // );
+        // Else, reset the gaze mark count & update marker position
+        gaze->m_mark_count = 0;
 
-        // XMapWindow(gaze->m_disp, gaze->m_overlay);
-
-        // cairo_surface_t* surf = cairo_xlib_surface_create(
-        //     gaze->m_disp, 
-        //     gaze->m_overlay,
-        //     gaze->m_vinfo.visual,
-        //     GAZE_MARKER_WIDTH,
-        //     GAZE_MARKER_HEIGHT);
-
-        // // Destroy the marker immediately, so it appears for a very short time
-        // XFlush(gaze->m_disp);
-        // cairo_surface_destroy(surf);
-        // XUnmapWindow(gaze->m_disp, gaze->m_overlay);
-
+        XMoveWindow(
+            gaze->m_disp,
+            gaze->m_overlay, 
+            x_gazepoint,
+            y_gazepoint);
+        
+        XFlush(gaze->m_disp);
+        
     } else {
         // printf("WARN: Invalid gaze_point.\n"); // debug
     }

@@ -16,9 +16,9 @@ using namespace std;
 
 #define DISP_WIDTH 3840
 #define DISP_HEIGHT 2160
-#define GAZE_MARK_INTERVAL 16
+#define GAZE_MARK_INTERVAL 10
 #define GAZE_BUFF_SZ 45000
-#define GAZE_TIME 100
+#define GAZE_TIME 10
 
 
 int main() {
@@ -31,7 +31,7 @@ int main() {
     gaze.start();
 
     for (int i = 0; i < GAZE_TIME; i++) {
-        boost::this_thread::sleep_for(boost::chrono::seconds{6});
+        boost::this_thread::sleep_for(boost::chrono::seconds{1});
         // gaze.gaze_to_csv("test.csv", 0);
     }
 
