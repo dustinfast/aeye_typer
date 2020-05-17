@@ -7,7 +7,7 @@ DISP_HEIGHT: 2160
 # EEG Device
 EEG_BOARD_ID: 0
 EEG_BOARD_SERIAL_PORT: /dev/ttyUSB0
-EYETRACKER_SAMPLE_HZ: 250  # ~4ms per sample
+EEG_SAMPLE_HZ: 250  # ~4ms per sample
 EEG_SZ_DATA_BUFF: 45000
 EEG_BCI_HUB_PATH: /opt/app/dependencies/OpenBCI_Hub/OpenBCIHub
 
