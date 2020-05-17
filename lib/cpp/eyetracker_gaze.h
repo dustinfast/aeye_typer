@@ -1,9 +1,9 @@
 /////////////////////////////////////////////////////////////////////////////
 // A class for annotating gaze status from the eyetracker in real time.
-// When the gaze point is valid (i.e. a user is present) a gaze_data obj
-// is pushed to a circular buffer and the predicted gaze point is annotated
-// on the screen.
-// An extern "C" wrapper is also defined for select functions.
+// When the gaze point is valid (i.e. a user is present) custom_gaze_data
+// objects are pushed to a circular buffer and the predicted gaze point is
+// annotated on the screen.
+// Extern "C" wrappers are defined for select functions.
 //
 // Author: Dustin Fast <dustin.fast@hotmail.com>
 //
@@ -29,8 +29,6 @@ using namespace std;
 
 #define GAZE_MARKER_WIDTH 5
 #define GAZE_MARKER_HEIGHT 20
-#define GAZE_MARKER_CDEPTH 32
-#define GAZE_MARKER_OPAQUENESS 100
 #define GAZE_MARKER_BORDER 0
 #define GAZE_MIN_SAMPLE_FOR_RATE_CALC 200
 
@@ -82,6 +80,7 @@ typedef boost::circular_buffer<shared_ptr<custom_gaze_data_t>> circ_buff;
 
 void do_gaze_data_subscribe(tobii_device_t*, void*);
 static void cb_gaze_data(tobii_gaze_data_t const*, void*);
+XColor createXColorFromRGBA(void*, short, short, short, short);
 
 
 /////////////////////////////////////////////////////////////////////////////
@@ -91,12 +90,7 @@ class EyeTrackerGaze : public EyeTracker {
     public:
         int m_mark_count;
         int m_mark_freq;
-        int m_disp_width;
-        int m_disp_height;
         Display *m_disp;
-        Window m_root_wind;
-        XVisualInfo m_vinfo;
-        XSetWindowAttributes m_attrs;
         Window m_overlay;
 
         void start();
@@ -114,6 +108,8 @@ class EyeTrackerGaze : public EyeTracker {
         ~EyeTrackerGaze();
 
     protected:
+        int m_disp_width;
+        int m_disp_height;
         int m_buff_sz;
         shared_ptr<circ_buff> m_gaze_buff;
 
@@ -132,45 +128,57 @@ EyeTrackerGaze::EyeTrackerGaze(
         m_mark_freq = mark_freq;
         m_buff_sz = buff_sz;
 
-        // Init X11 display
-        m_disp = XOpenDisplay(NULL);
-        m_root_wind = DefaultRootWindow(m_disp);
-
-        XMatchVisualInfo(
-            m_disp, DefaultScreen(m_disp), GAZE_MARKER_CDEPTH, TrueColor, &m_vinfo);
-
-        m_attrs.override_redirect = true;
-        m_attrs.colormap = XCreateColormap(
-            m_disp, m_root_wind, m_vinfo.visual, AllocNone);
-        m_attrs.background_pixel = GAZE_MARKER_OPAQUENESS;
-        m_attrs.border_pixel = 0;
-
         // Since we care about device timestamps, start time synchronization
         sync_device_time();
 
-        // Init circular gaze data buffer and mutex
+        // Init circular gaze data buffer and mutex 
         m_gaze_buff = make_shared<circ_buff>(buff_sz); 
         m_async_mutex = make_shared<boost::mutex>();
 
-        // Set default states
+        // Set default tracker states
         m_mark_count = 0;
         m_async_writer = NULL;
         m_async_streamer = NULL;
 
+        // Init X11 display
+        m_disp = XOpenDisplay(NULL);
+        Window root_win = DefaultRootWindow(m_disp);
+
+        XVisualInfo vinfo;
+        XMatchVisualInfo(
+            m_disp,
+            DefaultScreen(m_disp),
+            32,
+            TrueColor,
+            &vinfo
+        );
+
+        // Create the gaze marker (as an X11 window)
+        XSetWindowAttributes attrs;
+        attrs.save_under= true;
+        attrs.override_redirect = true;
+        attrs.border_pixel = 0;
+        attrs.background_pixel = createXColorFromRGBA(
+            this, 255, 100, 0, 175).pixel;
+        attrs.colormap = XCreateColormap(
+            m_disp, root_win, vinfo.visual, AllocNone);
 
         m_overlay = XCreateWindow(
             m_disp,
-            m_root_wind,
-            10,
-            10, 
+            root_win,
+            0, 0, 
             GAZE_MARKER_WIDTH, 
             GAZE_MARKER_HEIGHT,
             GAZE_MARKER_BORDER,
-            m_vinfo.depth,
+            vinfo.depth,
             InputOutput, 
-            m_vinfo.visual,
-            CWOverrideRedirect | CWColormap | CWBackPixel | CWBorderPixel, 
-            &m_attrs
+            vinfo.visual,
+            CWSaveUnder | 
+            CWOverrideRedirect | 
+            CWBackPixel | 
+            CWBorderPixel | 
+            CWColormap, 
+            &attrs
         );
 
         XMapWindow(m_disp, m_overlay);
@@ -178,6 +186,8 @@ EyeTrackerGaze::EyeTrackerGaze(
 
 // Destructor
 EyeTrackerGaze::~EyeTrackerGaze() {
+    XUnmapWindow(m_disp, m_overlay);
+    XFlush(m_disp);
     XCloseDisplay(m_disp);
 }
 
@@ -435,7 +445,7 @@ static void cb_gaze_data(tobii_gaze_data_t const *gaze_data, void *user_data) {
         int64_t timestamp_us = gaze->devicetime_to_systime(
             gaze_data->timestamp_system_us);
 
-        // Copy data
+        // Copy gaze data then enque it in the EyeTrackerGaze buff
         shared_ptr<custom_gaze_data_t> cgd = make_shared<custom_gaze_data_t>();
 
         cgd->unixtime_us = timestamp_us;
@@ -517,9 +527,28 @@ static void cb_gaze_data(tobii_gaze_data_t const *gaze_data, void *user_data) {
             y_gazepoint);
         
         XFlush(gaze->m_disp);
-        
-    } else {
-        // printf("WARN: Invalid gaze_point.\n"); // debug
     }
+}
 
+// Helper for creating an XColor for the gaze display
+// Adapted from gist.github.com/ericek111/774a1661be69387de846f5f5a5977a46
+XColor createXColorFromRGBA(void *gz, short r, short g, short b, short alpha) {
+    EyeTrackerGaze *gaze = static_cast<EyeTrackerGaze*>(gz);
+    XColor color;
+
+    // m_color.red = red * 65535 / 255;
+    color.red = (r * 0xFFFF) / 0xFF;
+    color.green = (g * 0xFFFF) / 0xFF;
+    color.blue = (b * 0xFFFF) / 0xFF;
+    color.flags = DoRed | DoGreen | DoBlue;
+
+    XAllocColor(
+        gaze->m_disp,
+        DefaultColormap(gaze->m_disp, DefaultScreen(gaze->m_disp)),
+        &color
+    );
+
+    *(&color.pixel) = ((*(&color.pixel)) & 0x00ffffff) | (alpha << 24);
+
+    return color;
 }
