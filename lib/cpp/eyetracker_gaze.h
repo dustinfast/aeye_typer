@@ -161,17 +161,7 @@ EyeTrackerGaze::EyeTrackerGaze(
 
 // Destructor
 EyeTrackerGaze::~EyeTrackerGaze() {
-    int64_t t_start = time_point_cast<milliseconds>(system_clock::now()
-            ).time_since_epoch().count();
-
-    stop();
-    m_async_mutex->lock();
-    m_async_mutex->unlock();
     XCloseDisplay(m_disp);
-
-    int64_t t_end = time_point_cast<milliseconds>(system_clock::now()
-            ).time_since_epoch().count();
-    printf("Destructor took %li.\n\n", (t_end - t_start));
 }
 
 // Starts the async gaze threads
@@ -356,7 +346,6 @@ extern "C" {
 
     void eyetracker_gaze_destructor(EyeTrackerGaze* gaze) {
         gaze->~EyeTrackerGaze();
-        // delete gaze;
     }
 
     int eyetracker_gaze_to_csv(EyeTrackerGaze* gaze, const char *file_path, int n) {
@@ -395,15 +384,7 @@ void do_gaze_data_subscribe(tobii_device_t *device, void *gaze) {
         }
     } catch (boost::thread_interrupted&) {}
 
-    int64_t t_start = time_point_cast<milliseconds>(system_clock::now()
-            ).time_since_epoch().count();
-    
     assert(tobii_gaze_data_unsubscribe(device) == NO_ERROR);
-    
-    int64_t t_end = time_point_cast<milliseconds>(system_clock::now()
-            ).time_since_epoch().count();
-
-    printf("\nUnsubscribe took %li.\n\n", (t_end - t_start));
 }
 
 
@@ -415,6 +396,7 @@ void do_gaze_data_subscribe(tobii_device_t *device, void *gaze) {
 static void cb_gaze_data(tobii_gaze_data_t const *gaze_data, void *user_data) {
     EyeTrackerGaze *gaze = static_cast<EyeTrackerGaze*>(user_data);
 
+    // TODO: Log even when invalid, but add valid flag?
     if(gaze_data->left.gaze_point_validity == TOBII_VALIDITY_VALID ==
     gaze_data->right.gaze_point_validity) {
         
@@ -503,42 +485,42 @@ static void cb_gaze_data(tobii_gaze_data_t const *gaze_data, void *user_data) {
 
         gaze->enque_gaze_data(cgd);
 
-        // Annotate (x, y) on the screen every m_mark_freq callbacks
-        gaze->m_mark_count++;
-        if (gaze->m_mark_count % gaze->m_mark_freq != 0)
-            return;
+        // // Annotate (x, y) on the screen every m_mark_freq callbacks
+        // gaze->m_mark_count++;
+        // if (gaze->m_mark_count % gaze->m_mark_freq != 0)
+        //     return;
 
-        // Else, reset the gaze mark count & create gaze marker overlay
-        gaze->m_mark_count = 0;
+        // // Else, reset the gaze mark count & create gaze marker overlay
+        // gaze->m_mark_count = 0;
+        // // TODO: Improve cpu usage of the overlay
+        // gaze->m_overlay = XCreateWindow(
+        //     gaze->m_disp,
+        //     gaze->m_root_wind,
+        //     x_gazepoint,
+        //     y_gazepoint, 
+        //     GAZE_MARKER_WIDTH, 
+        //     GAZE_MARKER_HEIGHT,
+        //     GAZE_MARKER_BORDER,
+        //     gaze->m_vinfo.depth,
+        //     InputOutput, 
+        //     gaze->m_vinfo.visual,
+        //     CWOverrideRedirect | CWColormap | CWBackPixel | CWBorderPixel, 
+        //     &gaze->m_attrs
+        // );
 
-        gaze->m_overlay = XCreateWindow(
-            gaze->m_disp,
-            gaze->m_root_wind,
-            x_gazepoint,
-            y_gazepoint, 
-            GAZE_MARKER_WIDTH, 
-            GAZE_MARKER_HEIGHT,
-            GAZE_MARKER_BORDER,
-            gaze->m_vinfo.depth,
-            InputOutput, 
-            gaze->m_vinfo.visual,
-            CWOverrideRedirect | CWColormap | CWBackPixel | CWBorderPixel, 
-            &gaze->m_attrs
-        );
+        // XMapWindow(gaze->m_disp, gaze->m_overlay);
 
-        XMapWindow(gaze->m_disp, gaze->m_overlay);
+        // cairo_surface_t* surf = cairo_xlib_surface_create(
+        //     gaze->m_disp, 
+        //     gaze->m_overlay,
+        //     gaze->m_vinfo.visual,
+        //     GAZE_MARKER_WIDTH,
+        //     GAZE_MARKER_HEIGHT);
 
-        cairo_surface_t* surf = cairo_xlib_surface_create(
-            gaze->m_disp, 
-            gaze->m_overlay,
-            gaze->m_vinfo.visual,
-            GAZE_MARKER_WIDTH,
-            GAZE_MARKER_HEIGHT);
-
-        // Destroy the marker immediately, so it appears for a very short time
-        XFlush(gaze->m_disp);
-        cairo_surface_destroy(surf);
-        XUnmapWindow(gaze->m_disp, gaze->m_overlay);
+        // // Destroy the marker immediately, so it appears for a very short time
+        // XFlush(gaze->m_disp);
+        // cairo_surface_destroy(surf);
+        // XUnmapWindow(gaze->m_disp, gaze->m_overlay);
 
     } else {
         // printf("WARN: Invalid gaze_point.\n"); // debug

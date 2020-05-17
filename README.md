@@ -18,6 +18,8 @@ Proof of concept will be accomplished through the following steps:
 
 3. Machine learning models will be built and trained to infer keystrokes, mouse clicks/scrolls, and cursor location from the EEG and eyetracker data streams.
 
+4. Machine learning models will be built and trained to improve gaze-to-display-coordinates for the users specific setup.
+
 Author: Dustin Fast <dustin.fast@hotmail.com>
 
 ## Setup
@@ -39,6 +41,8 @@ Enter the docker container with
 ./run_docker_cont.sh LOCAL_APP_DATA_DIRECTORY_PATH
 ```  
 
+### Device Setup 
+
 #### Eye-Tracker Installation
 
 Device: Tobii 4L  
@@ -57,6 +61,8 @@ Device installation is handled by the docker build process. To verify your BCI i
 
 Start data collection with `./collect_data.py`. Keystrokes, mouse clicks, EEG signals, and gaze-point data are then logged to the paths denoted in `_config.yaml`.
 
+Note that data is logged in the following way # TODO: no gaze if gaze not valid, etc.
+
 ### Training
 
 Not Implemented
@@ -72,6 +78,7 @@ Not Implemented
 
 ## TODO
 
+* Cythonize
 * Add rawdata_to_sql
 * Data filtering: Remove all key events w/no associated EEG and/or eye data
 * Data filtering: Remove all eeg events outside of known good events

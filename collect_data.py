@@ -21,7 +21,7 @@ del _conf
 
 
 # Log setup
-LOG_NAME = 'cfg0_log0'
+LOG_NAME = 'cfg0_log1'
 LOG_NOTES = ('# Log Notes\n'
              '  \n'
              'First set of logs containing gaze_point_data.\n'
@@ -103,3 +103,4 @@ if __name__ == "__main__":
     # Cleanup
     eeg_logger.stop() if not args.eeg_off else None
     gaze_logger.stop() if not args.gaze_off else None
+

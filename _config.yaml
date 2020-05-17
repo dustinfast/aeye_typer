@@ -14,7 +14,7 @@ EEG_BCI_HUB_PATH: /opt/app/dependencies/OpenBCI_Hub/OpenBCIHub
 # Eyetracker Device
 EYETRACKER_SAMPLE_HZ: 90
 EYETRACKER_BUFF_SZ: 45000
-EYETRACKER_MARK_INTERVAL: 16
+EYETRACKER_MARK_INTERVAL: 45
 EYETRACKER_EXTERN_LIB_PATH: /opt/app/src/lib/so/eyetracker_gaze.so
 EYETRACKER_PREP_SCRIPT_PATH: /opt/app/src/lib/sh/prep_eyetracker_gaze.sh
 

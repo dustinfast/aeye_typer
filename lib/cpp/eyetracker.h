@@ -229,7 +229,7 @@ void sync_device_time_async(tobii_device_t *device) {
     try {
         while (True) {
             tobii_update_timesync(device);
-            boost::this_thread::sleep_for(boost::chrono::seconds{30});
+            boost::this_thread::sleep_for(boost::chrono::seconds{10});
         }
     } catch (boost::thread_interrupted&) {}
 }

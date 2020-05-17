@@ -237,6 +237,7 @@ class AsyncEEGEventLogger(EventLogger, EEGBrainflow):
             # Check for kill or unhandled signals
             if _stop(signal):
                 break
+
             elif signal != SIGNAL_EVENT:
                 warn(f'EEG watcher received unhandled signal "{signal}".')
                 signal = None
@@ -322,6 +323,7 @@ class AsyncEEGEventLogger(EventLogger, EEGBrainflow):
         """
         try:
             self._async_queue.put_nowait(SIGNAL_STOP)
+            info(f'EEG watcher sending stop A at {time.time()}s.') # debug
         except AttributeError:
             error('Received STOP but EEG watcher not yet started.')
         except mp.queues.Full:
@@ -335,6 +337,7 @@ class AsyncEEGEventLogger(EventLogger, EEGBrainflow):
                 except mp.queues.Empty:
                     pass
                 self._async_queue.put_nowait(SIGNAL_STOP)
+                info(f'EEG watcher sending stop B at {time.time()}s.') # debug
 
     def event(self) -> None:
         """ Sends the async watcher the signal to start (or continue) logging,
@@ -499,6 +502,8 @@ class AsyncGazeEventLogger(EventLogger):
         """
         try:
             self._async_queue.put_nowait(SIGNAL_STOP)
+            info(f'Gaze watcher sending stop A at {time.time()}s.') # debug
+
         except AttributeError:
             error('Received STOP but Gaze watcher not yet started.')
         except mp.queues.Full:
@@ -512,6 +517,8 @@ class AsyncGazeEventLogger(EventLogger):
                 except mp.queues.Empty:
                     pass
                 self._async_queue.put_nowait(SIGNAL_STOP)
+                info(f'Gaze watcher sending stop B at {time.time()}s.') # debug
+
 
     def event(self) -> None:
         """ Sends the async watcher the signal to start (or continue) logging,
@@ -640,8 +647,6 @@ class AsyncInputEventLogger(EventLogger):
                                               self._LOG_KEYS_FNAME_TEMPLATE,
                                               self._LOG_KEYS_COLS)
 
-        # print(f'KEY EVENT: {t_stamp}, {key_id}, {pressed}')  # debug
-
     def _log_mouse_event(self, btn_id, pressed, x, y):
         """ Adds the given key press/release event to the keystroke df. When
             the df gets full it is written to file and then cleared. Note that
@@ -661,8 +666,6 @@ class AsyncInputEventLogger(EventLogger):
                                               LOG_MOUSE_SUBDIR,
                                               self._LOG_MOUSE_FNAME_TEMPLATE,
                                               self._LOG_MOUSE_COLS)
-
-        # print(f'MOUSE EVENT: {t_stamp}, {btn_id}, {pressed}, ({x}, {y})')
 
     def _on_click(self, x, y, button, pressed):
         """ Mouse click callback, for use by the async listener."""
@@ -692,8 +695,8 @@ class AsyncInputEventLogger(EventLogger):
         if key == keyboard.Key.shift: self._shift_down = False
 
         if key == keyboard.Key.esc and self._shift_down:
-            if self._verbose:
-                info(f'Input watcher received STOP at {time.time()}s.')
+            # if self._verbose: # debug
+            info(f'Input watcher received STOP at {time.time()}s.')
 
             # Write contents of any existing data
             self._write_log(self._df_keylog.iloc[:self._df_keylog_idx, :],
@@ -743,7 +746,7 @@ class AsyncInputEventLogger(EventLogger):
             info(f'Keyboard watcher started at {time.time()}s.')
 
         # Give the threads time to spin up
-        time.sleep(1.5)
+        time.sleep(2)
 
         # Only return the keyb proc, because it watches for STOP keystrokes.
         # The user may join() on this proc if desired

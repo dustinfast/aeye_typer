@@ -24,8 +24,8 @@ if __name__ == "__main__":
 
     t_start = time.time()
     e.stop()
-    print(f'\nstopped in {1000 * (time.time() - t_start)}\n')
+    print(f'\nstopped in {1000 * (time.time() - t_start)} ms\n')
 
     t_start = time.time()
     e.close()
-    print(f'closed in {1000 * (time.time() - t_start)}\n')
+    print(f'closed in {1000 * (time.time() - t_start)} ms\n')

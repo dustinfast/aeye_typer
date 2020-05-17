@@ -32,18 +32,10 @@ int main() {
 
     for (int i = 0; i < GAZE_TIME; i++) {
         boost::this_thread::sleep_for(boost::chrono::seconds{6});
-        gaze.gaze_to_csv("test.csv", 0);
+        // gaze.gaze_to_csv("test.csv", 0);
     }
 
-    int64_t t_start = time_point_cast<milliseconds>(system_clock::now()
-        ).time_since_epoch().count();
-
     gaze.stop();
-
-    int64_t t_end = time_point_cast<milliseconds>(system_clock::now()
-            ).time_since_epoch().count();
-
-    printf("Stopped in %li.\n\n", (t_end - t_start));
 
     return 0;
 }
