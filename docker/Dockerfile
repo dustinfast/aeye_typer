@@ -32,8 +32,8 @@ RUN apt-get install -y \
     python3-pip \
     python3.6-dev \
     python3.6 \
-    python3-setuptools && \
-    python3.6 -m pip install --upgrade pip
+    python3-setuptools
+RUN python3.6 -m pip install --upgrade pip
 
 RUN echo "Installing 3rd party Python 3.6 libraries..." && \
     python3.6 -m pip install \
@@ -43,16 +43,12 @@ RUN echo "Installing 3rd party Python 3.6 libraries..." && \
         numpy \
         jupyter \
         pandas \
-        pandas_profiling \
         sklearn \
         pyyaml \
         matplotlib \
-        seaborn \
         sqlalchemy \
-        tqdm \
         cython \
         brainflow \
-        tobii_research \
         pynput
 
 RUN echo "Updating apt-get..." && \
@@ -67,12 +63,10 @@ RUN echo "Installing 3rd party linux applications..." && \
     bzip2 \
     unzip \
     iotop \
-    expect \
     dos2unix \ 
     usbutils \
     setserial \
     openssh-server \
-    libcanberra-gtk-module \
     avahi-daemon \
     default-jre \
     default-jdk \
@@ -80,9 +74,10 @@ RUN echo "Installing 3rd party linux applications..." && \
     libxss-dev \
     libgconf-2-4 \
     libgtk-3-0 \
+    libcanberra-gtk-module \
+    libcanberra-gtk3-module \
     compiz \
     libxcomposite-dev \
-    libcairo2-dev \
     xinput \
     xdotool \
     libxdo-dev \

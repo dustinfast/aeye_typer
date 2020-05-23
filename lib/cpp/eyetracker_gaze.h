@@ -527,6 +527,9 @@ static void cb_gaze_data(tobii_gaze_data_t const *gaze_data, void *user_data) {
         
         XFlush(gaze->m_disp);
     }
+    else {
+        // printf("Gaze point not valid.");  // Debug
+    }
 }
 
 // Helper for creating an XColor for the gaze display

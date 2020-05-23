@@ -7,15 +7,16 @@
 STATUS="$(systemctl is-active tobii-runtime-IS4LARGE107)"
 
 if [ "${STATUS}" != "active" ]; then
+    echo "Starting tobii service..."
     /opt/app/dependencies/tobii_pdk_install/platform_runtime/platform_runtime_IS4LARGE107_install.sh --install
 fi
 
 # Compile the eyetracker gazemark binary
-LD_LIBRARY_PATH=/usr/lib/tobii/:/usr/include/cairo/:$LD_LIBRARY_PATH
+LD_LIBRARY_PATH=/usr/lib/tobii/:$LD_LIBRARY_PATH
 
 gcc lib/cpp/eyetracker_gaze.cpp  \
     -o eye_tracker_gazemark.out \
-    -lstdc++ -lX11 -lcairo \
+    -lstdc++ -lX11 \
     -lpthread -lboost_system  -lboost_thread  \
     -pthread /usr/lib/tobii/libtobii_stream_engine.so
 
