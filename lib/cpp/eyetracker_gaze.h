@@ -27,10 +27,12 @@ using namespace std;
 /////////////////////////////////////////////////////////////////////////////
 // Defs
 
-#define GAZE_MARKER_WIDTH 5
+#define GAZE_MARKER_WIDTH 3
 #define GAZE_MARKER_HEIGHT 20
 #define GAZE_MARKER_BORDER 0
+#define GAZE_MARKER_BORDER 0
 #define GAZE_MIN_SAMPLE_FOR_RATE_CALC 200
+#define MOUNT_OFFSET_MM 0.0
 
 typedef struct custom_gaze_data {
         int64_t unixtime_us;
@@ -104,7 +106,7 @@ class EyeTrackerGaze : public EyeTracker {
         int disp_x_from_normed_x(float);
         int disp_y_from_normed_y(float);
     
-        EyeTrackerGaze(int, int, int, int);
+        EyeTrackerGaze(float, float, int, int, int, int);
         ~EyeTrackerGaze();
 
     protected:
@@ -120,13 +122,20 @@ class EyeTrackerGaze : public EyeTracker {
 };
 
 // Default constructor
-EyeTrackerGaze::EyeTrackerGaze(
-    int disp_width, int disp_height, int mark_freq, int buff_sz) {
+EyeTrackerGaze::EyeTrackerGaze(float disp_width_mm, 
+                               float disp_height_mm,
+                               int disp_width_px,
+                               int disp_height_px,
+                               int mark_freq,
+                               int buff_sz) {
         // Init members from args
-        m_disp_width = disp_width;
-        m_disp_height = disp_height;
+        m_disp_width = disp_width_px;
+        m_disp_height = disp_height_px;
         m_mark_freq = mark_freq;
         m_buff_sz = buff_sz;
+
+        // Calibrate gaze tracker's disp area
+        set_display(disp_width_mm, disp_height_mm, MOUNT_OFFSET_MM);
 
         // Since we care about device timestamps, start time synchronization
         sync_device_time();
@@ -366,9 +375,12 @@ int EyeTrackerGaze::disp_y_from_normed_y(float y_normed) {
 // Extern wrapper exposing EyeTrackerGaze(), start(), stop(), & gaze_to_csv()
 extern "C" {
     EyeTrackerGaze* eyetracker_gaze_new(
-        int disp_width, int disp_height, int mark_freq, int buff_sz) {
-            return new EyeTrackerGaze(
-                disp_width, disp_height, mark_freq, buff_sz);
+        float disp_width_mm, float disp_height_mm, int disp_width_px, 
+            int disp_height_px, int mark_freq, int buff_sz) {
+                return new EyeTrackerGaze(
+                    disp_width_mm, disp_height_mm, disp_width_px,
+                        disp_height_px, mark_freq, buff_sz
+                );
     }
 
     void eyetracker_gaze_destructor(EyeTrackerGaze* gaze) {

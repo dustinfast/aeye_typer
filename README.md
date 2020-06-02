@@ -78,6 +78,7 @@ Not Implemented
 
 ## TODO
 
+* Remove distance outliers from click to gaze data
 * Super Key -> Mouse click
 * Gaze log "fill-in", to fill in gaps where user looks down at keyboard, etc.
 * Add rawdata_to_sql

@@ -52,6 +52,7 @@ class EyeTracker {
         bool m_is_elevated;
         tobii_device_t *m_device;
         tobii_api_t *m_api;
+        void set_display(float, float, float);
     
     private:
         shared_ptr<boost::thread> m_async_time_syncer;
@@ -207,7 +208,7 @@ void EyeTracker::print_device_info() {
 void EyeTracker::print_feature_group() {
     tobii_feature_group_t feature_group;
     tobii_error_t error = tobii_get_feature_group(m_device, &feature_group);
-    assert(error == TOBII_ERROR_NO_ERROR );
+    assert(error == NO_ERROR );
     if( feature_group == TOBII_FEATURE_GROUP_BLOCKED)
         printf( "Running with 'blocked' feature group.\n" );
     if( feature_group == TOBII_FEATURE_GROUP_CONSUMER)
@@ -218,6 +219,26 @@ void EyeTracker::print_feature_group() {
         printf( "Running with 'professional' feature group.\n" );
     if( feature_group == TOBII_FEATURE_GROUP_INTERNAL)
         printf( "Running with 'internal' feature group.\n" );
+}
+
+// Sets the eyetrackers's display area from the given screen sz & device-mount offset.
+void EyeTracker::set_display(float width_mm, float height_mm, float offset_x_mm) {
+    tobii_error_t error;
+    tobii_geometry_mounting_t geo_mounting;
+    tobii_display_area_t display_area;
+
+    // Get mounting geometry
+    error = tobii_get_geometry_mounting(m_device, &geo_mounting);
+    assert(error == NO_ERROR );
+
+    // Calculate display area
+    error = tobii_calculate_display_area_basic(
+        m_api, width_mm, height_mm, offset_x_mm, &geo_mounting, &display_area);
+    assert(error == NO_ERROR );
+    
+    // Set device's disp area
+    error = tobii_set_display_area(m_device, &display_area);
+    assert(error == NO_ERROR );
 }
 
 

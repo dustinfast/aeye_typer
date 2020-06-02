@@ -1,8 +1,10 @@
 # The application's global config file...
 
 # Display Device
-DISP_WIDTH: 3840
-DISP_HEIGHT: 2160
+DISP_WIDTH_MM: 698.5
+DISP_HEIGHT_MM: 393.7
+DISP_WIDTH_PX: 3840
+DISP_HEIGHT_PX: 2160
 
 # EEG Device
 EEG_BOARD_ID: 0

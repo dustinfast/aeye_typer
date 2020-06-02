@@ -12,8 +12,10 @@ from lib.py.app import config, info, warn, error
 
 _conf = config()
 LIB_PATH = _conf['EYETRACKER_EXTERN_LIB_PATH']
-DISP_WIDTH = _conf['DISP_WIDTH']
-DISP_HEIGHT = _conf['DISP_HEIGHT']
+DISP_WIDTH_MM = _conf['DISP_WIDTH_MM']
+DISP_HEIGHT_MM = _conf['DISP_HEIGHT_MM']
+DISP_WIDTH_PX = _conf['DISP_WIDTH_PX']
+DISP_HEIGHT_PX = _conf['DISP_HEIGHT_PX']
 GAZE_SAMPLE_HZ = _conf['EYETRACKER_SAMPLE_HZ']
 GAZE_BUFF_SZ = _conf['EYETRACKER_BUFF_SZ']
 GAZE_MARK_INTERVAL = _conf['EYETRACKER_MARK_INTERVAL']
@@ -44,7 +46,8 @@ class EyeTrackerGaze(object):
         
         # Constructor
         lib.eyetracker_gaze_new.argtypes = [
-            ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int]
+            ctypes.c_float, ctypes.c_float, ctypes.c_int, 
+                ctypes.c_int, ctypes.c_int, ctypes.c_int]
         lib.eyetracker_gaze_new.restype = ctypes.c_void_p
 
         # Destructor
@@ -82,7 +85,8 @@ class EyeTrackerGaze(object):
             return
 
         self._obj = self._lib.eyetracker_gaze_new(
-            DISP_WIDTH, DISP_HEIGHT, GAZE_MARK_INTERVAL, GAZE_BUFF_SZ)
+            DISP_WIDTH_MM, DISP_HEIGHT_MM, DISP_WIDTH_PX, DISP_HEIGHT_PX,
+                GAZE_MARK_INTERVAL, GAZE_BUFF_SZ)
 
     def start(self):
         """ Starts the asynchronous gaze tracking.

@@ -14,19 +14,26 @@
 using namespace std;
 
 
-#define DISP_WIDTH 3840
-#define DISP_HEIGHT 2160
+#define DISP_WIDTH_MM 698.5
+#define DISP_HEIGHT_MM 393.7
+#define DISP_WIDTH_PX 3840
+#define DISP_HEIGHT_PX 2160
 #define GAZE_MARK_INTERVAL 18
 #define GAZE_BUFF_SZ 45000
 #define GAZE_TIME 10
 
 
 int main() {
-    EyeTrackerGaze gaze = EyeTrackerGaze(
-        DISP_WIDTH, DISP_HEIGHT, GAZE_MARK_INTERVAL, GAZE_BUFF_SZ);
+    EyeTrackerGaze gaze = EyeTrackerGaze(DISP_WIDTH_MM,
+                                         DISP_HEIGHT_MM,
+                                         DISP_WIDTH_PX,
+                                         DISP_HEIGHT_PX,
+                                         GAZE_MARK_INTERVAL,
+                                         GAZE_BUFF_SZ);
 
     printf("Marking gaze point for %d seconds from device...\n", GAZE_TIME);
     gaze.print_device_info();
+    gaze.print_feature_group();
     
     gaze.start();
 
