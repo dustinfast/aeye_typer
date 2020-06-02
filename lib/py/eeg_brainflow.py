@@ -39,6 +39,8 @@ class EEGBrainflow(object):
         self.time_channel = BoardShim.get_timestamp_channel(EEG_BOARD_ID)
         self._channel_mask = [self.time_channel] + self.eeg_channels
 
+        # TODO: setserial /dev/ttyUSB0 low_latency
+        
         # Start OpenBCI_Hub and ensure stays up. If not, address likely in use
         self._bci_hub_proc = Popen([BCI_HUB_PATH], stderr=PIPE, stdout=PIPE)
         time.sleep(1)

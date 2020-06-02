@@ -78,6 +78,7 @@ Not Implemented
 
 ## TODO
 
+* Super Key -> Mouse click
 * Gaze log "fill-in", to fill in gaps where user looks down at keyboard, etc.
 * Add rawdata_to_sql
 * Data filtering: Remove all key events w/no associated EEG and/or eye data
