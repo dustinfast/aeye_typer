@@ -80,6 +80,7 @@ RUN echo "Installing 3rd party linux applications..." && \
     libxcomposite-dev \
     xinput \
     xdotool \
+    python3-tk \
     libxdo-dev \
     libsqlite3-dev \
     libyaml-cpp-dev \
