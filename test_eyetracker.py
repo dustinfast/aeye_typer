@@ -8,19 +8,23 @@ import time
 
 import pyximport; pyximport.install()
 from lib.py.eyetracker_gaze import EyeTrackerGaze
+from lib.py.onscreen_keyboard import OnscreenKeyboard
 
-
-TEST_DURATION = 10
 
 if __name__ == "__main__":
     e = EyeTrackerGaze()
+    k = OnscreenKeyboard()
     
     e.open()
     e.start()
-    print(f'Marking gaze for {TEST_DURATION} seconds...')
-
-    time.sleep(TEST_DURATION)
+    print(f'Marking gaze...')
+    k.mainloop()
     # e.to_csv('test.csv', 0)
 
     e.stop()
     e.close()
+
+
+# # TODO: From conf
+# KEYB_DISP_WIDTH = 480
+# KEYB_DISP_HEIGHT = 320
