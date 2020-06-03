@@ -8,12 +8,12 @@ import time
 
 import pyximport; pyximport.install()
 from lib.py.eyetracker_gaze import EyeTrackerGaze
-from lib.py.onscreen_keyboard import OnscreenKeyboard
+from lib.py.hud import HUD
 
 
 if __name__ == "__main__":
     e = EyeTrackerGaze()
-    k = OnscreenKeyboard()
+    k = HUD()
     
     e.open()
     e.start()
