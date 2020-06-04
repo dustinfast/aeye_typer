@@ -30,7 +30,8 @@ class EyeTrackerGaze(object):
         stderr = prep_proc.communicate()[1]
         prep_proc.wait()
 
-        if stderr:
+        # If there were build errors, quit
+        if stderr and not stderr.decode().startswith('Created symlink'):
             error(f'Eyetracker .so build failed with:\n {stderr}')
             exit()
 
