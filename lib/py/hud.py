@@ -1,4 +1,6 @@
-""" The on-screen heads-up display.
+""" The on-screen heads-up display (HUD). 
+    A HUD contains "panels", and each panel has some number of buttons on it.
+    # TODO: A HUD contains an editor window with "send" cmd.
 """
 
 __author__ = 'Dustin Fast <dustin.fast@outlook.com>'
@@ -11,7 +13,6 @@ from lib.py.hud_panel import PanelAlphaNumeric, PanelNumpad
 
 
 _conf = config()
-# TODO: use tk.Tk.winfo_screenwidth(), etc., instead from lib.app
 DISP_WIDTH = _conf['DISP_WIDTH_PX']
 DISP_HEIGHT = _conf['DISP_HEIGHT_PX']
 HUD_DISP_WIDTH = _conf['HUD_DISP_WIDTH_PX']  # TODO: Use throughout in tuples
@@ -24,33 +25,41 @@ FONT_VKEYBD_SPECIAL = ("Helvetica", 10, "bold")
 STYLE_KEYB_BTN = 'vKeyboard.TButton'
 STYLE_KEYB_BTN_SPECIAL = 'vKeyboardSpecial.TButton'
 
-HUD_LAYOUTS = (PanelAlphaNumeric, PanelNumpad)
+HUD_PANELS = (PanelAlphaNumeric, PanelNumpad)
+
 
 class HUD(tk.Tk):
     def __init__(self):
-        tk.Tk.__init__(self)
+        """ An abstraction of the main heads-up display - An always on top
+            button display.
+        """
+        super().__init__()
+        self._panel = None                 # Active cmd panel obj
+        self._panel_frame = None           # Active camd panel's parent frame
+        self._panels = HUD_PANELS       # Control panels
+        self._editor = None             # Input editor frame
+                                        # TODO: each panel has its own editor?
 
-        self._kb = None                 # Active cmd panel obj
-        self._kb_frame = None           # Active camd panel's parent frame
-        self._cmd_panels = HUD_LAYOUTS  # Control layouts
-        self._output_box = None         # Debug output frame
+        # Calculate HUD disp coords, based on screen size
+        x = (DISP_WIDTH/HUD_DISP_DIV) - (HUD_DISP_WIDTH/HUD_DISP_DIV)
+        y = (DISP_HEIGHT/HUD_DISP_DIV) - (HUD_DISP_HEIGHT/HUD_DISP_DIV)
 
-        # Setup the tk root frame
-        self._pframe = ttk.Frame(
-            self, width=HUD_DISP_WIDTH, height=HUD_DISP_HEIGHT)
-        self._pframe.grid_propagate(0)
-        self._pframe.pack(fill="both", expand=1)
-
-        # Set keyboard btn styles
+        # Set HUD height/width/coords, and make toplevel persistent
+        self.geometry('%dx%d+%d+%d' % (HUD_DISP_WIDTH, HUD_DISP_HEIGHT, x, y))
+        self.attributes('-topmost', 'true')
+        
+        # Register btn style/font associations
         ttk.Style().configure(STYLE_KEYB_BTN, font=FONT_VKEYBD)
         ttk.Style().configure(STYLE_KEYB_BTN_SPECIAL, font=FONT_VKEYBD_SPECIAL)
 
-        # Calculate & set starting disp coords, based on screen size
-        x = (DISP_WIDTH/HUD_DISP_DIV) - (HUD_DISP_WIDTH/HUD_DISP_DIV)
-        y = (DISP_HEIGHT/HUD_DISP_DIV) - (HUD_DISP_HEIGHT/HUD_DISP_DIV)
-        self.geometry('%dx%d+%d+%d' % (HUD_DISP_WIDTH, HUD_DISP_HEIGHT, x, y))
+        # TODO: Move editor pane here
+        # TODO: Add panel toggle btns
 
-        # TODO: Setup keyboardToggle btns
+        # Setup the frame that will host the panel frames
+        self._host_frame = ttk.Frame(
+            self, width=HUD_DISP_WIDTH, height=HUD_DISP_HEIGHT)
+        self._host_frame.grid_propagate(0)
+        self._host_frame.pack(fill="both", expand=1)
         
         # Show 0th keyboard
         self.set_curr_keyboard(0)
@@ -59,26 +68,27 @@ class HUD(tk.Tk):
         """ Sets the currently displayed frame.
         """
         # Denote new keyb class to use
-        new_keyb = self._cmd_panels[idx]
+        new_panel = self._panels[idx]
         
         # Destroy currently active keyboard frame, if any
-        # TODO: Destroy all, or top-level only recursively?
-        if self._kb_frame:
-            self._kb.destroy()
-            self._output_box.destroy()
-            self._kb_frame.destroy()
+        # TODO: Destroy all explicitly, or is top-level only sufficient?
+        # TODO: Do not destroy, just hide?
+        if self._panel_frame:
+            self._panel.destroy()
+            self._editor.destroy()
+            self._panel_frame.destroy()
 
-        self._kb_frame = ttk.Frame(
-            self._pframe, width=HUD_DISP_WIDTH, height=HUD_DISP_HEIGHT)
+        self._panel_frame = ttk.Frame(
+            self._host_frame, width=HUD_DISP_WIDTH, height=HUD_DISP_HEIGHT)
 
-        self._output_box = ttk.Entry(self._kb_frame)
-        self._output_box.pack(side="top")
-        self._kb_frame.pack(side="top", pady=120)
+        self._editor = ttk.Entry(self._panel_frame)
+        self._editor.pack(side="top")
+        self._panel_frame.pack(side="top", pady=120)
 
-        self._kb = new_keyb(parent=self._pframe,
-                            attach=self._output_box,
-                            x=self._kb_frame.winfo_rootx(),
-                            y=self._kb_frame.winfo_rooty(),
-                            controller=self)
+        self._panel = new_panel(parent=self._host_frame,
+                                attach=self._editor,
+                                x=self._panel_frame.winfo_rootx(),
+                                y=self._panel_frame.winfo_rooty(),
+                                controller=self)
 
-        self._kb_frame.tkraise()
+        self._panel_frame.tkraise()

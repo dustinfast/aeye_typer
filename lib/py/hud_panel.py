@@ -10,11 +10,6 @@ from lib.py.app import config
 
 
 _conf = config()
-# TODO: use tk.Tk.winfo_screenwidth(), etc., instead from lib.app
-DISP_WIDTH = _conf['DISP_WIDTH_PX']
-DISP_HEIGHT = _conf['DISP_HEIGHT_PX']
-HUD_DISP_WIDTH = _conf['HUD_DISP_WIDTH_PX']  # TODO: Use throughout in tuples
-HUD_DISP_HEIGHT = _conf['HUD_DISP_HEIGHT_PX']
 HUD_BTN_SIZE = _conf['HUD_BTN_SIZE']
 del _conf
 
