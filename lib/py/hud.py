@@ -5,8 +5,6 @@
 
 __author__ = 'Dustin Fast <dustin.fast@outlook.com>'
 
-from subprocess import Popen
-
 import tkinter as tk
 from tkinter import ttk
 
@@ -79,7 +77,15 @@ class HUD(tk.Tk):
         if self._sticky:
             self.update_idletasks()
             self.update()
-            Popen(['wmctrl', '-r', HUD_DISP_TITLE, '-b', 'add,sticky'])
+
+            # TODO: Refactor into helper module
+            import gi
+            gi.require_version('Wnck', '3.0')
+            from gi.repository import Wnck
+            screen = Wnck.Screen.get_default()
+            screen.force_update()
+            a = [w for w in screen.get_windows() if w.get_name() == HUD_DISP_TITLE][0]
+            a.stick()
 
         # Do mainloop
         self.mainloop()

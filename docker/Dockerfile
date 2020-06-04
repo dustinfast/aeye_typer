@@ -74,13 +74,12 @@ RUN echo "Installing 3rd party linux applications..." && \
     libxss-dev \
     libgconf-2-4 \
     libgtk-3-0 \
-    libcanberra-gtk-module \
     libcanberra-gtk3-module \
     compiz \
-    wmctrl \
     libxcomposite-dev \
     xinput \
-    xdotool \
+    python3-gi \
+    gir1.2-wnck-3.0 \
     python3-tk \
     libxdo-dev \
     libsqlite3-dev \
