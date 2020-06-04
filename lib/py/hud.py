@@ -9,6 +9,7 @@ import tkinter as tk
 from tkinter import ttk
 
 from lib.py.app import config
+from lib.py.win_tools import WinTools
 from lib.py.hud_panel import PanelAlphaNumeric, PanelNumpad
 
 
@@ -69,23 +70,18 @@ class HUD(tk.Tk):
         # Show 0th keyboard
         self.set_curr_keyboard(0)
 
+        # Setup the wintools helper
+        self._wintools = WinTools()
+
     def start(self):
         """ Brings up the HUD display. Should be used instead of tk.mainloop 
             because sticky attribute must be handled first.
         """
-        # Set sticky attribute, using wmctrl
+        # Set sticky attribute, iff specified
         if self._sticky:
             self.update_idletasks()
             self.update()
-
-            # TODO: Refactor into helper module
-            import gi
-            gi.require_version('Wnck', '3.0')
-            from gi.repository import Wnck
-            screen = Wnck.Screen.get_default()
-            screen.force_update()
-            a = [w for w in screen.get_windows() if w.get_name() == HUD_DISP_TITLE][0]
-            a.stick()
+            self._wintools.stick_by_name(HUD_DISP_TITLE)
 
         # Do mainloop
         self.mainloop()
