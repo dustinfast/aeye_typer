@@ -77,6 +77,7 @@ RUN echo "Installing 3rd party linux applications..." && \
     libcanberra-gtk-module \
     libcanberra-gtk3-module \
     compiz \
+    wmctrl \
     libxcomposite-dev \
     xinput \
     xdotool \

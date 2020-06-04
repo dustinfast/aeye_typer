@@ -59,7 +59,7 @@ Device installation is handled by the docker build process. To verify your BCI i
 
 ### Data Collection
 
-Start data collection with `./collect_data.py`. Keystrokes, mouse clicks, EEG signals, and gaze-point data are then logged to the paths denoted in `_config.yaml`.
+Start data collection with `./aeye_collect_data.py`. Keystrokes, mouse clicks, EEG signals, and gaze-point data are then logged to the paths denoted in `_config.yaml`.
 
 Note that data is logged in the following way # TODO: no gaze if gaze not valid, etc.
 

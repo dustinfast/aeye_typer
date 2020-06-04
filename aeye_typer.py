@@ -1,27 +1,24 @@
 #! /usr/bin/env python
-""" A script for testing the on-screen eyetracker gaze marking python interface
+""" The AI TypeR launcher.
 """
 
 __author__ = 'Dustin Fast <dustin.fast@outlook.com>'
 
-import time
-
 import pyximport; pyximport.install()
 
 from lib.py.eyetracker_gaze import EyeTrackerGaze
+from lib.py.hud import HUD
 
-DURATION_S = 5
 
 if __name__ == "__main__":
     e = EyeTrackerGaze()
+    k = HUD()
     
     e.open()
     e.start()
 
-    print(f'Marking gaze...')
-    time.sleep(DURATION_S)
-    # e.to_csv('test.csv', 0)
-    
+    k.run()
+
     e.stop()
     e.close()
 
