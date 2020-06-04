@@ -17,7 +17,7 @@ if __name__ == "__main__":
     e.open()
     e.start()
 
-    k.run()
+    k.start()
 
     e.stop()
     e.close()
