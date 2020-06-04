@@ -18,6 +18,7 @@ DISP_HEIGHT = _conf['DISP_HEIGHT_PX']
 HUD_DISP_WIDTH = _conf['HUD_DISP_WIDTH_PX']  # TODO: Use throughout in tuples
 HUD_DISP_HEIGHT = _conf['HUD_DISP_HEIGHT_PX']
 HUD_DISP_DIV = _conf['HUD_DISP_COORD_DIVISOR']
+HUD_DISP_TITLE = _conf['HUD_DISP_TITLE']
 del _conf
 
 FONT_VKEYBD = ("Helvetica", 10)
@@ -47,6 +48,7 @@ class HUD(tk.Tk):
         # Set HUD height/width/coords, and make toplevel persistent
         self.geometry('%dx%d+%d+%d' % (HUD_DISP_WIDTH, HUD_DISP_HEIGHT, x, y))
         self.attributes('-topmost', 'true')
+        self.winfo_toplevel().title(HUD_DISP_TITLE)
         
         # Register btn style/font associations
         ttk.Style().configure(STYLE_KEYB_BTN, font=FONT_VKEYBD)
