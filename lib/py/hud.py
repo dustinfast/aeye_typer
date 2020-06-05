@@ -8,7 +8,7 @@ __author__ = 'Dustin Fast <dustin.fast@outlook.com>'
 import multiprocessing as mp
 from collections import namedtuple
 
-import Xlib
+import Xlib.threaded
 import Xlib.display
 import tkinter as tk
 from tkinter import ttk
@@ -110,9 +110,11 @@ class HUD(tk.Tk):
         w = self._winmgr.prev_active_window
         
         # Set focus to that window
-        print(w)
+        print(self._winmgr.get_win_name(w))
+        self._winmgr.set_active_window(w)
 
         # Send keypress
+        # print(e)
 
     def set_curr_keyboard(self, idx):
         """ Sets the currently displayed frame.
@@ -151,31 +153,42 @@ class WinMgr(object):
     SIGNAL_REQUEST_PREV_ACTIVE_WINDOW = 1
 
     def __init__(self):
-        """ A helper class for allowing the HUD to interact with other windows.
-            Some of its functionality relies on Xlib, others on Wnck.
+        """ A helper class for allowing the HUD to interact with other windows
+            via Xlib.
         """
+        # Init XLib root/disp
         self._disp = Xlib.display.Display()
         self._root = self._disp.screen().root
         self._root.change_attributes(event_mask=Xlib.X.FocusChangeMask)
-        # self._net_wm_name = self._disp.intern_atom('_NET_WM_NAME')
+        self._net_wm_name = self._disp.intern_atom('_NET_WM_NAME')
+
+
+        # Multi-processing attributes
         self._async_proc = None
+        self._async_signal_q = None
+        self._async_output_q = None
 
     def _async_winstate_watcher(self, signal_queue, output_queue):
         """ The asynchronous window state watcher.
         """
-        net_active_window = self._disp.intern_atom('_NET_ACTIVE_WINDOW')
+        # Init local XLib root/disp, for thread safety
+        disp = Xlib.display.Display()
+        root = disp.screen().root
+        root.change_attributes(event_mask=Xlib.X.FocusChangeMask)
+        net_active_window = disp.intern_atom('_NET_ACTIVE_WINDOW')
 
-        # States tracked
+        # Window states we'll track
         active_window_id = None
         prev_active_window_id = None
         
         while True:
             # Watch for window state changes to track the curr/prev focus
             try:
-                window_id = self._root.get_full_property(
+                window_id = root.get_full_property(
                     net_active_window, Xlib.X.AnyPropertyType).value[0]
-                window = self._disp.create_resource_object('window', window_id)
+                window = disp.create_resource_object('window', window_id)
                 window.change_attributes(event_mask=Xlib.X.PropertyChangeMask)
+            # TODO: Handle X protocol Error
             except Xlib.error.XError:
                 window_id = None
             
@@ -188,8 +201,8 @@ class WinMgr(object):
                 prev_active_window_id = active_window_id
                 active_window_id = window_id
 
-            # Check the signal queue for signals to process. It is assumed
-            # that, for a signal other than STOP to be enqued, a state change
+            # Check the signal queue for any signals to process. It is assumed
+            # that for a signal other than STOP to be enqued a state change
             # has occured and is ready to be read via next_event()
             try:
                 signal = signal_queue.get_nowait()
@@ -201,7 +214,7 @@ class WinMgr(object):
                     break
 
                 # Process any "get" requests received (note above assumption)
-                self._disp.next_event()
+                disp.next_event()
 
                 if signal == self.SIGNAL_REQUEST_ACTIVE_WINDOW:
                     output_queue.put_nowait(active_window_id)
@@ -244,6 +257,7 @@ class WinMgr(object):
             If more than one window having that name is found, the attribute
             is applied to only the top-most window of that name.
         """
+        # TODO: Convert to Xlib
         # Use wnck to get the window by name and apply the attribute
         screen = Wnck.Screen.get_default()
         screen.force_update()
@@ -251,9 +265,22 @@ class WinMgr(object):
         ws = [w for w in screen.get_windows() if w.get_name() == name]
         ws[0].stick() if ws else None
 
+    def get_win_name(self, window):
+        """ Returns the window name of the given window.
+        """
+        return window.get_full_property(self._net_wm_name, 0).value
+
+    def set_active_window(self, window):
+        """ Gives focus to the given window.
+        """
+        # window = self._disp.create_resource_object('window', Xid)
+        window.set_input_focus(Xlib.X.RevertToParent, Xlib.X.CurrentTime)
+        window.configure(stack_mode=Xlib.X.Above)
+        self._disp.sync()
+
     @property
     def active_window(self):
-        """ Returns a handle to the currently active/focused window.
+        """ Returns an Xlib.Window obj for of the currently active window.
         """
         # Request currently active window ID from async queue
         try:
@@ -267,7 +294,7 @@ class WinMgr(object):
 
     @property
     def prev_active_window(self):
-        """ Returns a handle to the previously active/focused window.
+        """ Returns an Xlib.Window obj for of the previously active window.
         """
         # Request prev active window ID from async queue
         try:
