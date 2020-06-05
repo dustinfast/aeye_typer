@@ -18,11 +18,11 @@ if __name__ == "__main__":
     e = EyeTrackerGaze()
     k = HUD()
     
-    # e.open()
-    # e.start()
+    e.open()
+    e.start()
 
     k.start()
 
-    # e.stop()
-    # e.close()
+    e.stop()
+    e.close()
 

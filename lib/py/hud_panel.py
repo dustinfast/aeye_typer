@@ -123,7 +123,7 @@ class PanelAlphaNumeric(HUDPanel):
                                 style=STYLE_KEYB_BTN,
                                 text=k,
                                 width=HUD_BTN_SIZE,
-                                command=lambda k=k: self.controller.btn_to_focused_win(k)).grid(row=0, column=i)
+                                command=lambda k=k: self.controller.payload_to_focused_win(k)).grid(row=0, column=i)
 
     def _keypress_handler(self, k):
         """ Handles keyboard key presses.
@@ -137,7 +137,7 @@ class PanelAlphaNumeric(HUDPanel):
 
         # Debug catches
         elif k == 'ENTER':
-            self.controller.set_curr_keyboard(1) 
+            self.controller.set_curr_panel(1) 
 
         # All other keys get sent as keystrokes
         else:
@@ -206,7 +206,7 @@ class PanelNumpad(HUDPanel):
 
         # Catch and handle panel toggle keys
         elif k == 'ENTER':
-            self.controller.set_curr_keyboard(0)
+            self.controller.set_curr_panel(0)
 
         # All other keys get sent as keystrokes
         else:

@@ -74,11 +74,11 @@ class HUD(tk.Tk):
         self._host_frame.grid_propagate(0)
         self._host_frame.pack(fill="both", expand=1)
         
-        # Show 0th keyboard
-        self.set_curr_keyboard(0)
+        # Show 0th panel
+        self.set_curr_panel(0)
 
         # Setup the wintools helper
-        self._winmgr = _WinMgr()
+        self._winmgr = _HUDWinMgr()
 
     def start(self):
         """ Brings up the HUD display. Should be used instead of tk.mainloop 
@@ -100,34 +100,13 @@ class HUD(tk.Tk):
         self._winmgr.stop_statewatcher()
         win_mgr_proc.join()
 
-    def btn_to_focused_win(self, p):
-        """ Sends the given payload to the focused (or previously-
-            focused, since we just stole its focus by clicking a HUD button)
-            window. In the process, focus is restored to that window.
-        """
-        # TODO: self._winmgr.payload_to_prev_focused(p)
-
-        # Get prev focused window
-        w = self._winmgr.prev_active_window
-        
-        # Set focus to that window
-        # print(self._winmgr.get_win_name(w))  # debug
-        self._winmgr.set_active_window(w)
-
-        # # Send keypress
-        _keyboard = keyboard.Controller()
-        _keyboard.press(p)
-        _keyboard.release(p)
-
-    def set_curr_keyboard(self, idx):
+    def set_curr_panel(self, idx):
         """ Sets the currently displayed frame.
         """
         # Denote new keyb class to use
         new_panel = self._panels[idx]
         
-        # Destroy currently active keyboard frame, if any
-        # TODO: Destroy all explicitly, or is top-level only sufficient?
-        # TODO: Do not destroy, just hide?
+        # Destroy currently active panel, if any
         if self._panel:
             self._panel.destroy()
             self._panel_frame.destroy()
@@ -145,8 +124,12 @@ class HUD(tk.Tk):
 
         self._panel_frame.tkraise()
 
+    @property
+    def payload_to_focused_win(self):
+        return self._winmgr.payload_to_active_win
 
-class _WinMgr(object):
+
+class _HUDWinMgr(object):
     # MP queue signals
     SIGNAL_STOP = -1
     SIGNAL_REQUEST_ACTIVE_WINDOW = 0
@@ -262,6 +245,7 @@ class _WinMgr(object):
             ASSUMES: Window was open before this class was instantantiated.
         """
         # Use wnck to get the window by name and apply the attribute
+        # TODO: Re-implement with Xlib
         screen = Wnck.Screen.get_default()
         screen.force_update()
 
@@ -280,24 +264,22 @@ class _WinMgr(object):
         window.configure(stack_mode=Xlib.X.Above)
         self._disp.sync()
 
-    # def payload_to_prev_focused(self, p, verbose=True):
-    #     """ Sends the given payload to the previously active (very recently
-    #         the actually-active, but we just stole its focus by clicking a HUD
-    #         button) window. In the process, focus is restored to that window.
-    #     """
-    #     # Get prev focused window
-    #     w = self.prev_active_window
+    def payload_to_active_win(self, p, verbose=False):
+        """ Sends the given payload to the previously active (very recently
+            the actually-active, but we just stole its focus by clicking a HUD
+            button) window. In the process, focus is restored to that window.
+        """
+        # Get prev focused window
+        w = self.prev_active_window
         
-    #     # Set focus to that window
-    #     self.set_active_window(w)
+        # Set focus to that window
+        self.set_active_window(w)
 
-    #     if verbose:
-    #         print(self.get_win_name(w))
+        # print(self.get_win_name(w))  # debug
 
-    #     # Send keypress
-    #     # self._keyboard = keyboard.Controller()
-    #     # self._keyboard.press(p)
-    #     # self._keyboard.release(p)
+        # TODO: Send payload as either a key or mouse event
+        self._keyboard.press(p)  # debug
+        self._keyboard.release(p)  # debug
 
     @property
     def active_window(self):
@@ -319,7 +301,8 @@ class _WinMgr(object):
         """
         # Request prev active window ID from async queue
         try:
-            self._async_signal_q.put_nowait(self.SIGNAL_REQUEST_PREV_ACTIVE_WINDOW)
+            self._async_signal_q.put_nowait(
+                self.SIGNAL_REQUEST_PREV_ACTIVE_WINDOW)
         except AttributeError:
             warn('Requested win state but Win State Watcher not yet started.')
 
