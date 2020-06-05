@@ -50,7 +50,6 @@ class HUD(tk.Tk):
         self._panel = None              # Active cmd panel obj
         self._panel_frame = None        # Active camd panel's parent frame
         self._panels = hud_panels       # Control panels
-        self._editor = None             # Input editor frame
         self._sticky = sticky
 
         # Calculate HUD display coords, based on screen size
@@ -66,7 +65,6 @@ class HUD(tk.Tk):
         ttk.Style().configure(STYLE_KEYB_BTN, font=FONT_VKEYBD)
         ttk.Style().configure(STYLE_KEYB_BTN_SPECIAL, font=FONT_VKEYBD_SPECIAL)
 
-        # TODO: Move editor panel here
         # TODO: Add panel toggle btns
 
         # Setup the child frame that will host the panel frames
@@ -110,7 +108,7 @@ class HUD(tk.Tk):
         w = self._winmgr.prev_active_window
         
         # Set focus to that window
-        print(self._winmgr.get_win_name(w))
+        print(self._winmgr.get_win_name(w))  # debug
         self._winmgr.set_active_window(w)
 
         # Send keypress
@@ -125,20 +123,17 @@ class HUD(tk.Tk):
         # Destroy currently active keyboard frame, if any
         # TODO: Destroy all explicitly, or is top-level only sufficient?
         # TODO: Do not destroy, just hide?
-        if self._panel_frame:
+        if self._panel:
             self._panel.destroy()
-            self._editor.destroy()
             self._panel_frame.destroy()
 
         self._panel_frame = ttk.Frame(
             self._host_frame, width=HUD_DISP_WIDTH, height=HUD_DISP_HEIGHT)
 
-        self._editor = ttk.Entry(self._panel_frame)
-        self._editor.pack(side="top")
         self._panel_frame.pack(side="top", pady=120)
 
         self._panel = new_panel(parent=self._host_frame,
-                                attach=self._editor,
+                                attach=None,
                                 x=self._panel_frame.winfo_rootx(),
                                 y=self._panel_frame.winfo_rooty(),
                                 controller=self)
@@ -161,7 +156,6 @@ class WinMgr(object):
         self._root = self._disp.screen().root
         self._root.change_attributes(event_mask=Xlib.X.FocusChangeMask)
         self._net_wm_name = self._disp.intern_atom('_NET_WM_NAME')
-
 
         # Multi-processing attributes
         self._async_proc = None
@@ -256,8 +250,8 @@ class WinMgr(object):
         """ Applies the sticky attribute to the window having the given name.
             If more than one window having that name is found, the attribute
             is applied to only the top-most window of that name.
+            ASSUMES: Window was open before this class was instantantiated.
         """
-        # TODO: Convert to Xlib
         # Use wnck to get the window by name and apply the attribute
         screen = Wnck.Screen.get_default()
         screen.force_update()
@@ -273,7 +267,6 @@ class WinMgr(object):
     def set_active_window(self, window):
         """ Gives focus to the given window.
         """
-        # window = self._disp.create_resource_object('window', Xid)
         window.set_input_focus(Xlib.X.RevertToParent, Xlib.X.CurrentTime)
         window.configure(stack_mode=Xlib.X.Above)
         self._disp.sync()
