@@ -16,6 +16,7 @@ del _conf
 STYLE_KEYB_BTN = 'vKeyboard.TButton'
 STYLE_KEYB_BTN_SPECIAL = 'vKeyboardSpecial.TButton'
 
+
 class HUDPanel(ttk.Frame):
     def __init__(self, parent, attach, x, y, controller):
         ttk.Frame.__init__(self, takefocus=0)
@@ -48,7 +49,40 @@ class HUDPanel(ttk.Frame):
         self._mode_frames[0].tkraise()
 
     def _init_mode_btns(self, mode_frame):
-        raise NotImplementedError('Child class must overide _init_mode_btns.')
+        raise NotImplementedError('Child class must overide.')
+
+
+class HUDButton(object):
+    def __init__(self, text, cmd, width=1, sticky=False, payload=None):
+        """ An abstraction of a HUD Button.
+        """
+        self.text = text
+        self.command = cmd
+        self.disp_width = HUD_BTN_SIZE * width
+        self.is_sticky = sticky
+        self._payload = payload
+
+    def __str__(self):
+        return self.text
+
+    @property
+    def payload(self):
+        if self._payload:
+            return self._payload._payload
+
+    @property
+    def payload_type(self):
+        if self._payload:
+            return self._payload._type
+
+
+class HUDPayload(object):
+    def __init__(self, payload, payload_type='key'):
+        """ An abstraction of a HUD button payload, for sending to an external
+            window.
+        """
+        self._payload = payload
+        self._type = payload_type
 
 
 class PanelAlphaNumeric(HUDPanel):
@@ -87,7 +121,6 @@ class PanelAlphaNumeric(HUDPanel):
         for row in mode_frame._row_frames:
             for k_idx, k in enumerate(row.raw):
                 i = k_idx
-                # TODO: Move keypress handlers to hud class?
                 if k == 'Bksp':
                     ttk.Button(row,
                                 style=STYLE_KEYB_BTN_SPECIAL,
@@ -137,7 +170,7 @@ class PanelAlphaNumeric(HUDPanel):
 
         # Debug catches
         elif k == 'ENTER':
-            self.controller.set_curr_panel(1) 
+            self.controller.set_curr_panel(1)
 
         # All other keys get sent as keystrokes
         else:
