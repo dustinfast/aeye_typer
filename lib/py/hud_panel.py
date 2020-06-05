@@ -139,7 +139,7 @@ class PanelAlphaNumeric(HUDPanel):
         elif k == 'ENTER':
             self.controller.set_curr_keyboard(1) 
         elif k == 'BACK':
-            self.controller.test() 
+            self.controller.btn_to_focused_win(k) 
 
         # All other keys get sent as keystrokes
         else:
