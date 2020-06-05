@@ -12,6 +12,7 @@ import Xlib.threaded
 import Xlib.display
 import tkinter as tk
 from tkinter import ttk
+from pynput import keyboard, mouse
 
 import gi
 gi.require_version('Wnck', '3.0')
@@ -77,7 +78,7 @@ class HUD(tk.Tk):
         self.set_curr_keyboard(0)
 
         # Setup the wintools helper
-        self._winmgr = WinMgr()
+        self._winmgr = _WinMgr()
 
     def start(self):
         """ Brings up the HUD display. Should be used instead of tk.mainloop 
@@ -99,20 +100,24 @@ class HUD(tk.Tk):
         self._winmgr.stop_statewatcher()
         win_mgr_proc.join()
 
-    def btn_to_focused_win(self, e):
-        """ Sends the given event's payload to the focused (or previously-
+    def btn_to_focused_win(self, p):
+        """ Sends the given payload to the focused (or previously-
             focused, since we just stole its focus by clicking a HUD button)
-            window. Then restore focus to that window.
+            window. In the process, focus is restored to that window.
         """
+        # TODO: self._winmgr.payload_to_prev_focused(p)
+
         # Get prev focused window
         w = self._winmgr.prev_active_window
         
         # Set focus to that window
-        print(self._winmgr.get_win_name(w))  # debug
+        # print(self._winmgr.get_win_name(w))  # debug
         self._winmgr.set_active_window(w)
 
-        # Send keypress
-        # print(e)
+        # # Send keypress
+        _keyboard = keyboard.Controller()
+        _keyboard.press(p)
+        _keyboard.release(p)
 
     def set_curr_keyboard(self, idx):
         """ Sets the currently displayed frame.
@@ -141,7 +146,7 @@ class HUD(tk.Tk):
         self._panel_frame.tkraise()
 
 
-class WinMgr(object):
+class _WinMgr(object):
     # MP queue signals
     SIGNAL_STOP = -1
     SIGNAL_REQUEST_ACTIVE_WINDOW = 0
@@ -156,6 +161,10 @@ class WinMgr(object):
         self._root = self._disp.screen().root
         self._root.change_attributes(event_mask=Xlib.X.FocusChangeMask)
         self._net_wm_name = self._disp.intern_atom('_NET_WM_NAME')
+
+        # Init keyboard/mouse controllers
+        self._keyboard = keyboard.Controller()
+        self._mouse = mouse.Controller()
 
         # Multi-processing attributes
         self._async_proc = None
@@ -270,6 +279,25 @@ class WinMgr(object):
         window.set_input_focus(Xlib.X.RevertToParent, Xlib.X.CurrentTime)
         window.configure(stack_mode=Xlib.X.Above)
         self._disp.sync()
+
+    # def payload_to_prev_focused(self, p, verbose=True):
+    #     """ Sends the given payload to the previously active (very recently
+    #         the actually-active, but we just stole its focus by clicking a HUD
+    #         button) window. In the process, focus is restored to that window.
+    #     """
+    #     # Get prev focused window
+    #     w = self.prev_active_window
+        
+    #     # Set focus to that window
+    #     self.set_active_window(w)
+
+    #     if verbose:
+    #         print(self.get_win_name(w))
+
+    #     # Send keypress
+    #     # self._keyboard = keyboard.Controller()
+    #     # self._keyboard.press(p)
+    #     # self._keyboard.release(p)
 
     @property
     def active_window(self):
