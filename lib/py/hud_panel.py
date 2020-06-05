@@ -87,6 +87,7 @@ class PanelAlphaNumeric(HUDPanel):
         for row in mode_frame._row_frames:
             for k_idx, k in enumerate(row.raw):
                 i = k_idx
+                # TODO: Move keypress handlers to hud class?
                 if k == 'Bksp':
                     ttk.Button(row,
                                 style=STYLE_KEYB_BTN_SPECIAL,
@@ -132,9 +133,13 @@ class PanelAlphaNumeric(HUDPanel):
         if transition_to is not None:
             self._mode_frames[transition_to].tkraise()
 
-        # Catch and handle panel toggle keys
+        # TODO: Catch and handle panel toggle keys
+
+        # Debug catches
         elif k == 'ENTER':
             self.controller.set_curr_keyboard(1) 
+        elif k == 'BACK':
+            self.controller.test() 
 
         # All other keys get sent as keystrokes
         else:

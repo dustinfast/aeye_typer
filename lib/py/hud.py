@@ -9,7 +9,7 @@ import tkinter as tk
 from tkinter import ttk
 
 from lib.py.app import config
-from lib.py.win_tools import WinTools
+from lib.py.win_mgr import WinMgr
 from lib.py.hud_panel import PanelAlphaNumeric, PanelNumpad
 
 
@@ -39,6 +39,7 @@ class HUD(tk.Tk):
             :param top_level: (bool) Denotes HUD always the top-level window.
         """
         super().__init__()
+
         self._panel = None              # Active cmd panel obj
         self._panel_frame = None        # Active camd panel's parent frame
         self._panels = HUD_PANELS       # Control panels
@@ -71,20 +72,31 @@ class HUD(tk.Tk):
         self.set_curr_keyboard(0)
 
         # Setup the wintools helper
-        self._wintools = WinTools()
+        self._winmgr = WinMgr()
 
     def start(self):
         """ Brings up the HUD display. Should be used instead of tk.mainloop 
-            because sticky attribute must be handled first.
+            because sticky attribute must be handled first. Blocks.
         """
+        # Start the window manager
+        win_mgr_proc = self._winmgr.start()
+
         # Set sticky attribute, iff specified
         if self._sticky:
             self.update_idletasks()
             self.update()
-            self._wintools.stick_by_name(HUD_DISP_TITLE)
+            self._winmgr.set_sticky_byname(HUD_DISP_TITLE)
 
-        # Do mainloop
+        # Start the blocking main loop
         self.mainloop()
+
+        # Stop the focus tracker
+        self._winmgr.stop()
+        win_mgr_proc.join()
+
+    def test(self):
+        # Set focus to prev window and send keystroke
+        pass
 
     def set_curr_keyboard(self, idx):
         """ Sets the currently displayed frame.

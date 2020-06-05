@@ -11,6 +11,10 @@ from lib.py.hud import HUD
 
 
 if __name__ == "__main__":
+    # TODO: Cmd line options for...
+    #   data collection toggle
+    #   Run eye-tracker calibration
+
     e = EyeTrackerGaze()
     k = HUD()
     
@@ -18,6 +22,7 @@ if __name__ == "__main__":
     e.start()
 
     k.start()
+    # k.stop()
 
     e.stop()
     e.close()

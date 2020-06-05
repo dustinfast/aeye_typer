@@ -1,4 +1,4 @@
-# Fast AEye TypeR
+# Fast A-Eye TypeR
 
 This application is a work in progress.  
 
@@ -78,8 +78,10 @@ Not Implemented
 
 ## TODO
 
+* Hold next key-click, etc. cmds... For click/drag, etc.
 * vkEYB "EDITOR" w/ send to gaze point. Editor has diff modes (like md script modes) for highlighting/linting, etc. OR editor is a vscode editor in the tkinter frame 
-* Refactor hud_panel to include a btn class and add init btns from jason
+* Refactor hud_panel to include a btn class and add init btns from json
+* Integrate hud into vscode?
 * Remove distance outliers from click to gaze data
 * Super Key -> Mouse click
 * Gaze log "fill-in", to fill in gaps where user looks down at keyboard, etc.
