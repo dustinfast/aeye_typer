@@ -79,7 +79,7 @@ class HUD(tk.Tk):
             because sticky attribute must be handled first. Blocks.
         """
         # Start the window manager
-        win_mgr_proc = self._winmgr.start()
+        win_mgr_proc = self._winmgr.start_statewatcher()
 
         # Set sticky attribute, iff specified
         if self._sticky:
@@ -91,12 +91,17 @@ class HUD(tk.Tk):
         self.mainloop()
 
         # Stop the focus tracker
-        self._winmgr.stop()
+        self._winmgr.stop_statewatcher()
         win_mgr_proc.join()
 
     def test(self):
-        # Set focus to prev window and send keystroke
-        pass
+        # Get prev focused window (because we just stole focus from it)
+        w = self._winmgr.prev_active_window
+        
+        # Set focus to that window
+
+        # Send keypress
+
 
     def set_curr_keyboard(self, idx):
         """ Sets the currently displayed frame.
