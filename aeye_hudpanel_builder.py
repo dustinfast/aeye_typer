@@ -72,3 +72,17 @@ if __name__ == '__main__':
             print(f'\t{btn.payload}')
 
     # TODO: Write to json
+
+Device
+    SN: IS423-103109333333
+    Model: IS4_Eyetracker_4L
+    Firmware Ver: 2.41.0-f2dc56e
+    Integration Type: Peripheral
+    Runtime Build Ver: 1.13.15.0_e6a2c73
+    supports gaze point stream: True
+    supports gaze origin stream: True
+    supports eye position: False
+    supports head position: False
+    supports gaze data: True
+    supports diag image: False
+     with 'professional' feature group.

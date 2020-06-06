@@ -31,15 +31,11 @@ cd docker
 ./build.sh
 ```
 
-Tested on Ubuntu 18.04 with Docker 18.09.7
+Tested on Ubuntu 18.04, dockerized with Docker 18.09.7.
 
 ## Usage
 
-Enter the docker container with  
-
-```bash
-./run_docker_cont.sh LOCAL_APP_DATA_DIRECTORY_PATH
-```  
+Start/enter the docker container with  `./aeye_docker_start.sh LOCAL_APP_DATA_DIRECTORY_PATH`. All items below are in the context of the container.
 
 ### Device Setup 
 
@@ -59,7 +55,7 @@ Device installation is handled by the docker build process. To verify your BCI i
 
 ### Data Collection
 
-Start data collection with `./aeye_collect_data.py`. Keystrokes, mouse clicks, EEG signals, and gaze-point data are then logged to the paths denoted in `_config.yaml`.
+Start data collection with `./aeye_data_collect.py`. Keystrokes, mouse clicks, EEG signals, and gaze-point data are then logged to the paths denoted in `_config.yaml`.
 
 Note that data is logged in the following way # TODO: no gaze if gaze not valid, etc.
 
