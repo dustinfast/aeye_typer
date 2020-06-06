@@ -53,36 +53,23 @@ class HUDPanel(ttk.Frame):
 
 
 class HUDButton(object):
-    def __init__(self, text, cmd, width=1, sticky=False, payload=None):
+    def __init__(self, text, cmd=None, disp_width=1, 
+                 is_sticky=False, payload=None, payload_type=None):
         """ An abstraction of a HUD Button.
         """
         self.text = text
-        self.command = cmd
-        self.disp_width = HUD_BTN_SIZE * width
-        self.is_sticky = sticky
-        self._payload = payload
+        self.cmd = cmd
+        self.disp_width = HUD_BTN_SIZE * disp_width
+        self.is_sticky = is_sticky
+        self.payload = payload
+        self.payload_type = payload_type
 
     def __str__(self):
         return self.text
 
-    @property
-    def payload(self):
-        if self._payload:
-            return self._payload._payload
-
-    @property
-    def payload_type(self):
-        if self._payload:
-            return self._payload._type
-
-
-class HUDPayload(object):
-    def __init__(self, payload, payload_type='key'):
-        """ An abstraction of a HUD button payload, for sending to an external
-            window.
-        """
-        self._payload = payload
-        self._type = payload_type
+    @classmethod
+    def from_kwargs(cls, kwargs):
+        return cls(**kwargs)
 
 
 class PanelAlphaNumeric(HUDPanel):
@@ -118,6 +105,17 @@ class PanelAlphaNumeric(HUDPanel):
         self.pack()
 
     def _init_mode_btns(self, mode_frame):
+
+        # TODO: btn init
+        # with open(json, 'r') as f:
+        # bm = json.load(f, object_hook=HUDButton.from_kwargs)
+
+        # print('--------')
+        # for i, row in enumerate(bm):
+        #     print(f'Row: {i}')
+        #     for btn in row:
+        #         print(f'\t{btn.payload}')
+
         for row in mode_frame._row_frames:
             for k_idx, k in enumerate(row.raw):
                 i = k_idx
@@ -156,7 +154,8 @@ class PanelAlphaNumeric(HUDPanel):
                                 style=STYLE_KEYB_BTN,
                                 text=k,
                                 width=HUD_BTN_SIZE,
-                                command=lambda k=k: self.controller.payload_to_focused_win(k)).grid(row=0, column=i)
+                                command=lambda k=k: self.controller.payload_to_win(k)
+                              ).grid(row=0, column=i)
 
     def _keypress_handler(self, k):
         """ Handles keyboard key presses.
@@ -166,7 +165,7 @@ class PanelAlphaNumeric(HUDPanel):
         if transition_to is not None:
             self._mode_frames[transition_to].tkraise()
 
-        # TODO: Catch and handle panel toggle keys
+        # TODO: Catch and handle panel sticky keys
 
         # Debug catches
         elif k == 'ENTER':
@@ -237,7 +236,7 @@ class PanelNumpad(HUDPanel):
         if transition_to is not None:
             self._mode_frames[transition_to].tkraise()
 
-        # Catch and handle panel toggle keys
+        # Catch and handle panel sticky keys
         elif k == 'ENTER':
             self.controller.set_curr_panel(0)
 

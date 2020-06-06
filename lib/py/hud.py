@@ -125,7 +125,9 @@ class HUD(tk.Tk):
         self._panel_frame.tkraise()
 
     @property
-    def payload_to_focused_win(self):
+    def payload_to_win(self):
+        """ Returns a ref to the win mgrs payload_to_active_win function.
+        """
         return self._winmgr.payload_to_active_win
 
 
