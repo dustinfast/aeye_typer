@@ -17,10 +17,6 @@ from lib.py.app import config, warn
 from lib.py.hud_panel import HUDButton
 
 
-_conf = config()
-HUD_BTN_SIZE = _conf['HUD_BTN_SIZE']
-del _conf
-
 OUTPUT_DIR = 'lib/json/'
 OUTPUT_EXT = 'json'
 
@@ -81,7 +77,7 @@ if __name__ == '__main__':
         if not twice_pressed:
             curr_map_row.append(
                 HUDButton(str(key),
-                          cmd='lambda a=a: self.controller.payload_to_win(a)',
+                          cmd='self.controller.payload_to_win',
                           payload=key_id,
                           payload_type='keystroke'))
 

@@ -3,6 +3,8 @@
 
 __author__ = 'Dustin Fast <dustin.fast@outlook.com>'
 
+import json
+
 import tkinter as tk
 from tkinter import ttk
 
@@ -10,237 +12,126 @@ from lib.py.app import config
 
 
 _conf = config()
-HUD_BTN_SIZE = _conf['HUD_BTN_SIZE']
+HUD_BTN_WIDTH = _conf['HUD_BTN_WIDTH']
 del _conf
 
-STYLE_KEYB_BTN = 'vKeyboard.TButton'
-STYLE_KEYB_BTN_SPECIAL = 'vKeyboardSpecial.TButton'
+BTN_STYLE = 'vKeyboard.TButton'
+BTN_STYLE_STICKY = 'vKeyboardSpecial.TButton'
 
 
 class HUDPanel(ttk.Frame):
-    def __init__(self, parent, attach, x, y, controller):
+    def __init__(self, parent_frame, controller, x, y, btn_layout):
         ttk.Frame.__init__(self, takefocus=0)
 
-        self.attach = attach
-        self.parent = parent
+        self.parent = parent_frame
+        self.controller = controller
         self.x = x
         self.y = y
-        self.controller = controller
 
-        self._mode_frames = []    # Panel mode frames
+        self._host_frame = ttk.Frame(self.parent)
+        self._host_frame.grid(row=0, column=0, sticky="nsew")
+        self._btn_row_frames = []
 
-    def set_modes(self, panel_modes):
-        """ Inits each panel mode from the given list.
+        self._init_btns(btn_layout)
+
+        # Show the panel frame
+        self._host_frame.tkraise()
+        self.pack()
+
+    @classmethod
+    def from_json(cls, json_path, parent_frame, controller, x, y):
+        with open(json_path, 'r') as f:
+            btn_layout = json.load(f, object_hook=HUDButton.from_kwargs)
+
+        return cls(parent_frame, controller, x, y, btn_layout)
+
+    def _init_btns(self, btn_layout):
+        """ Init's the panel's buttons from the given panel layout.
         """
-        for mode in panel_modes:
-            pframe = ttk.Frame(self.parent)
-            pframe.grid(row=0, column=0, sticky="nsew")
-            pframe._row_frames = []
+        for i, panel_row in enumerate(btn_layout):
+            # Create the current row's frame
+            self._btn_row_frames.append(ttk.Frame(self._host_frame))
+            self._btn_row_frames[i].grid(row=i)
 
-            for i in range(len(mode)):
-                pframe._row_frames.append(ttk.Frame(pframe))
-                pframe._row_frames[i].grid(row=i)
-                pframe._row_frames[i].raw = mode[i]
+            # Add each button for curr row to its frame
+            for j, btn in enumerate(panel_row):
+                p = btn.payload
+                ttk.Button(
+                    self._btn_row_frames[i],
+                    style=BTN_STYLE_STICKY if btn.is_sticky else BTN_STYLE,
+                    text=btn.text,
+                    width=btn.width,
+                    command=lambda btn=btn: \
+                        self.controller._winmgr.payload_to_active_win(
+                            btn.payload, btn.payload_type)
+                ).grid(row=0, column=j)
 
-            self._init_mode_btns(pframe)
-            self._mode_frames.append(pframe)
-        
-        # Show the first mode
-        self._mode_frames[0].tkraise()
 
-    def _init_mode_btns(self, mode_frame):
-        raise NotImplementedError('Child class must overide.')
+
 
 
 class HUDButton(object):
-    def __init__(self, text, cmd=None, disp_width=1, 
+    def __init__(self, text, cmd=None, width=1,
                  is_sticky=False, payload=None, payload_type=None):
         """ An abstraction of a HUD Button.
         """
         self.text = text
         self.cmd = cmd
-        self.disp_width = HUD_BTN_SIZE * disp_width
+        self.width = HUD_BTN_WIDTH * width
         self.is_sticky = is_sticky
         self.payload = payload
-        self.payload_type = payload_type
-
-    def __str__(self):
-        return self.text
+        self.payload_type = payload_type, 
 
     @classmethod
     def from_kwargs(cls, kwargs):
         return cls(**kwargs)
 
 
+
+
 class PanelAlphaNumeric(HUDPanel):
     def __init__(self, parent, attach, x, y, controller):
         super().__init__(parent, attach, x, y, controller)
 
-        # Define panel modes w/ shape = (NUM_MODES, NUM_ROWS, NUM_KEYS_INROW)
-        panel_modes = [
-            [['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', 'Bksp'],
-             ['Sym', 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l'],
-             ['ABC', 'z', 'x', 'c', 'v', 'b', 'n', 'm', 'ENTER'],
-             ['<<<', '[ space ]', '>>>', 'BACK']
-            ],
-            [['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', 'Bksp'],
-             ['Sym', 'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L'],
-             ['abc', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', 'ENTER'],
-             ['<<<', '[ space ]', '>>>', 'BACK']
-            ],
-            [['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', 'Bksp'],
-             ['abc', '!', '"', '$', '%', '&', '/', '(', ')', '[', ']', '='],
-             ['@', '-', '_', '?', '#', '*', '{', '}', ':', ';', 'ENTER'],
-             ['<<<','+', '[ space ]', '.', ',', '>>>', 'BACK']
-            ]
-        ]
-
-        # A mapping from mode transition btns to the appropriate mode's idx
-        self._mode_transition_map = {'abc': 0,
-                                     'ABC': 1,
-                                     'Sym': 2}
-
-        # Init each panel mode
-        self.set_modes(panel_modes)
-        self.pack()
-
     def _init_mode_btns(self, mode_frame):
-
-        # TODO: btn init
-        # with open(json, 'r') as f:
-        # bm = json.load(f, object_hook=HUDButton.from_kwargs)
-
-        # print('--------')
-        # for i, row in enumerate(bm):
-        #     print(f'Row: {i}')
-        #     for btn in row:
-        #         print(f'\t{btn.payload}')
 
         for row in mode_frame._row_frames:
             for k_idx, k in enumerate(row.raw):
                 i = k_idx
                 if k == 'Bksp':
                     ttk.Button(row,
-                                style=STYLE_KEYB_BTN_SPECIAL,
+                                style=BTN_STYLE_STICKY,
                                 text=k,
                                 width=HUD_BTN_SIZE * 2,
                                 command=lambda k=k: self._keypress_handler(k)).grid(row=0, column=i)
                 elif k == 'Sym':
                     ttk.Button(row,
-                                style=STYLE_KEYB_BTN_SPECIAL,
+                                style=BTN_STYLE_STICKY,
                                 text=k,
                                 width=HUD_BTN_SIZE * 1.5,
                                 command=lambda k=k: self._keypress_handler(k)).grid(row=0, column=i)
                 elif k.lower() == 'abc':
                     ttk.Button(row,
-                                style=STYLE_KEYB_BTN_SPECIAL,
+                                style=BTN_STYLE_STICKY,
                                 text=k,
                                 width=HUD_BTN_SIZE * 1.5,
                                 command=lambda k=k: self._keypress_handler(k)).grid(row=0, column=i)
                 elif k == 'ENTER':
                     ttk.Button(row,
-                                style=STYLE_KEYB_BTN_SPECIAL,
+                                style=BTN_STYLE_STICKY,
                                 text=k,
                                 width=HUD_BTN_SIZE * 2.5,
                                 command=lambda k=k: self._keypress_handler(k)).grid(row=0, column=i)
                 elif k == '[ space ]':
                     ttk.Button(row,
-                                style=STYLE_KEYB_BTN,
+                                style=BTN_STYLE,
                                 text='     ',
                                 width=HUD_BTN_SIZE * 6,
                                 command=lambda k=k: self._keypress_handler(k)).grid(row=0, column=i)
                 else:
                     ttk.Button(row,
-                                style=STYLE_KEYB_BTN,
+                                style=BTN_STYLE,
                                 text=k,
                                 width=HUD_BTN_SIZE,
                                 command=lambda k=k: self.controller.payload_to_win(k)
                               ).grid(row=0, column=i)
-
-    def _keypress_handler(self, k):
-        """ Handles keyboard key presses.
-        """
-        # Catch and handle mode transition keys
-        transition_to = self._mode_transition_map.get(k, None)
-        if transition_to is not None:
-            self._mode_frames[transition_to].tkraise()
-
-        # TODO: Catch and handle panel sticky keys
-
-        # Debug catches
-        elif k == 'ENTER':
-            self.controller.set_curr_panel(1)
-
-        # All other keys get sent as keystrokes
-        else:
-            if self.attach:
-                self.attach.insert(tk.END, k)
-
-
-class PanelNumpad(HUDPanel):
-    def __init__(self, parent, attach, x, y, controller):
-        super().__init__(parent, attach, x, y, controller)
-
-        # Define panel modes of shape (NUM_MODES, NUM_ROWS, NUM_KEYS_INROW)
-        panel_modes = [
-            [['num', '/', '*'],
-             ['7', '8', '9'],
-             ['4', '5', '6'],
-             ['1', '2', '3'],
-             ['0', '.', 'ENTER']
-            ],
-            [['NUM', '/', '*'],
-             ['7', '^', '9'],
-             ['<', '5', '>'],
-             ['1', 'v', '3'],
-             ['0', '.', 'ENTER']
-            ]
-        ]
-
-        # A mapping from mode transition btns to the appropriate mode's idx
-        self._mode_transition_map = {'NUM': 0,
-                                     'num': 1}
-
-        # Init each panel mode
-        self.set_modes(panel_modes)
-        self.pack()
-
-    def _init_mode_btns(self, mode_frame):
-        for row in mode_frame._row_frames:
-            for k_idx, k in enumerate(row.raw):
-                i = k_idx
-                if k.lower() == 'num':
-                    ttk.Button(row,
-                                style=STYLE_KEYB_BTN_SPECIAL,
-                                text=k,
-                                width=HUD_BTN_SIZE * 1.5,
-                                command=lambda k=k: self._keypress_handler(k)).grid(row=0, column=i)
-                elif k == 'ENTER':
-                    ttk.Button(row,
-                                style=STYLE_KEYB_BTN_SPECIAL,
-                                text=k,
-                                width=HUD_BTN_SIZE,
-                                command=lambda k=k: self._keypress_handler(k)).grid(row=0, column=i)
-                else:
-                    ttk.Button(row,
-                                style=STYLE_KEYB_BTN,
-                                text=k,
-                                width=HUD_BTN_SIZE,
-                                command=lambda k=k: self._keypress_handler(k)).grid(row=0, column=i)
-
-    def _keypress_handler(self, k):
-        """ Handles keyboard key presses.
-        """
-        # Catch and handle mode transition keys
-        transition_to = self._mode_transition_map.get(k, None)
-        if transition_to is not None:
-            self._mode_frames[transition_to].tkraise()
-
-        # Catch and handle panel sticky keys
-        elif k == 'ENTER':
-            self.controller.set_curr_panel(0)
-
-        # All other keys get sent as keystrokes
-        else:
-            if self.attach:
-                self.attach.insert(tk.END, k)

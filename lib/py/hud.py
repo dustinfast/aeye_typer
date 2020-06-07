@@ -19,7 +19,7 @@ gi.require_version('Wnck', '3.0')
 from gi.repository import Wnck
 
 from lib.py.app import config, warn
-from lib.py.hud_panel import PanelAlphaNumeric, PanelNumpad
+from lib.py.hud_panel import HUDPanel
 
 
 _conf = config()
@@ -29,14 +29,15 @@ HUD_DISP_WIDTH = _conf['HUD_DISP_WIDTH_PX']
 HUD_DISP_HEIGHT = _conf['HUD_DISP_HEIGHT_PX']
 HUD_DISP_DIV = _conf['HUD_DISP_COORD_DIVISOR']
 HUD_DISP_TITLE = _conf['HUD_DISP_TITLE']
+DEFAULT_PANELS =  _conf['HUD_PANELS']
 del _conf
 
-FONT_VKEYBD = ("Helvetica", 10)
-FONT_VKEYBD_SPECIAL = ("Helvetica", 10, "bold")
-STYLE_KEYB_BTN = 'vKeyboard.TButton'
-STYLE_KEYB_BTN_SPECIAL = 'vKeyboardSpecial.TButton'
+BTN_FONT = ("Helvetica", 10)
+BTN_FONT_STICKY = ("Helvetica", 10, "bold")
+BTN_STYLE = 'vKeyboard.TButton'
+BTN_STYLE_STICKY = 'vKeyboardSpecial.TButton'
 
-DEFAULT_PANELS = (PanelAlphaNumeric, PanelNumpad)
+# TODO: Move to conf
 
 
 class HUD(tk.Tk):
@@ -50,7 +51,7 @@ class HUD(tk.Tk):
 
         self._panel = None              # Active cmd panel obj
         self._panel_frame = None        # Active camd panel's parent frame
-        self._panels = hud_panels       # Control panels
+        self._panel_paths = hud_panels  # Path to each panel's layout file
         self._sticky = sticky
 
         # Calculate HUD display coords, based on screen size
@@ -63,10 +64,10 @@ class HUD(tk.Tk):
         self.attributes('-topmost', 'true') if top_level else None
 
         # Register btn style/font associations
-        ttk.Style().configure(STYLE_KEYB_BTN, font=FONT_VKEYBD)
-        ttk.Style().configure(STYLE_KEYB_BTN_SPECIAL, font=FONT_VKEYBD_SPECIAL)
+        ttk.Style().configure(BTN_STYLE, font=BTN_FONT)
+        ttk.Style().configure(BTN_STYLE_STICKY, font=BTN_FONT_STICKY)
 
-        # TODO: Add panel toggle btns
+        # TODO: Add panel toggle btns -> self.controller.set_curr_panel(idx)
 
         # Setup the child frame that will host the panel frames
         self._host_frame = ttk.Frame(
@@ -101,10 +102,10 @@ class HUD(tk.Tk):
         win_mgr_proc.join()
 
     def set_curr_panel(self, idx):
-        """ Sets the currently displayed frame.
+        """ Sets the currently displayed frame to the requested panel
         """
-        # Denote new keyb class to use
-        new_panel = self._panels[idx]
+        # Denote request panel's layout file
+        panel_json_path = self._panel_paths[idx]
         
         # Destroy currently active panel, if any
         if self._panel:
@@ -116,19 +117,12 @@ class HUD(tk.Tk):
 
         self._panel_frame.pack(side="top", pady=120)
 
-        self._panel = new_panel(parent=self._host_frame,
-                                attach=None,
-                                x=self._panel_frame.winfo_rootx(),
-                                y=self._panel_frame.winfo_rooty(),
-                                controller=self)
-
+        self._panel = HUDPanel.from_json(panel_json_path,
+                                         parent_frame=self._host_frame,
+                                         controller=self,
+                                         x=self._panel_frame.winfo_rootx(),
+                                         y=self._panel_frame.winfo_rooty())
         self._panel_frame.tkraise()
-
-    @property
-    def payload_to_win(self):
-        """ Returns a ref to the win mgrs payload_to_active_win function.
-        """
-        return self._winmgr.payload_to_active_win
 
 
 class _HUDWinMgr(object):
@@ -266,7 +260,7 @@ class _HUDWinMgr(object):
         window.configure(stack_mode=Xlib.X.Above)
         self._disp.sync()
 
-    def payload_to_active_win(self, p, verbose=False):
+    def payload_to_active_win(self, payload, payload_type):
         """ Sends the given payload to the previously active (very recently
             the actually-active, but we just stole its focus by clicking a HUD
             button) window. In the process, focus is restored to that window.
@@ -277,11 +271,13 @@ class _HUDWinMgr(object):
         # Set focus to that window
         self.set_active_window(w)
 
-        # print(self.get_win_name(w))  # debug
+        print(self.get_win_name(w))  # debug
+        print(payload)                     # debug
 
+        # TODO: Convert keycode to ascii
         # TODO: Send payload as either a key or mouse event
-        self._keyboard.press(p)  # debug
-        self._keyboard.release(p)  # debug
+        # self._keyboard.press(p)  # debug
+        # self._keyboard.release(p)  # debug
 
     @property
     def active_window(self):
