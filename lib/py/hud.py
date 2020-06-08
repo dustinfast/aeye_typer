@@ -47,8 +47,7 @@ class HUD(tk.Tk):
         """
         super().__init__()
 
-        self._panel = None              # Active cmd panel obj
-        self._panel_frame = None        # Active camd panel's parent frame
+        self._panel = None              # Active panel's frame
         self._panel_paths = hud_panels  # Path to each panel's layout file
         self._sticky = sticky
 
@@ -108,19 +107,12 @@ class HUD(tk.Tk):
         # Destroy currently active panel, if any
         if self._panel:
             self._panel.destroy()
-            self._panel_frame.destroy()
-
-        self._panel_frame = ttk.Frame(
-            self._host_frame, width=HUD_DISP_WIDTH, height=HUD_DISP_HEIGHT)
-
-        self._panel_frame.pack(side="top", pady=120)
 
         self._panel = HUDPanel.from_json(panel_json_path,
                                          parent_frame=self._host_frame,
                                          controller=self,
-                                         x=self._panel_frame.winfo_rootx(),
-                                         y=self._panel_frame.winfo_rooty())
-        self._panel_frame.tkraise()
+                                         x=self._host_frame.winfo_rootx(),
+                                         y=self._host_frame.winfo_rooty())
 
     def handle_payload(self, payload, payload_type_id):
         """ Fires the requested action, inferred from the payload type ID.
