@@ -11,7 +11,7 @@ from collections import namedtuple
 import Xlib.threaded
 import Xlib.display
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk, LEFT
 from pynput import keyboard, mouse
 
 import gi
@@ -70,7 +70,7 @@ class HUD(tk.Tk):
         self._host_frame = ttk.Frame(
             self, width=HUD_DISP_WIDTH, height=HUD_DISP_HEIGHT)
         self._host_frame.grid_propagate(0)
-        self._host_frame.pack(fill="both", expand=1)
+        self._host_frame.pack(fill="both")
         
         # Show 0th panel
         self.set_curr_panel(0)
@@ -113,6 +113,7 @@ class HUD(tk.Tk):
                                          controller=self,
                                          x=self._host_frame.winfo_rootx(),
                                          y=self._host_frame.winfo_rooty())
+        self._panel.pack(side=LEFT)
 
     def handle_payload(self, payload, payload_type_id):
         """ Fires the requested action, inferred from the payload type ID.
