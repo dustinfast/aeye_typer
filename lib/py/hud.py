@@ -37,8 +37,6 @@ BTN_FONT_STICKY = ("Helvetica", 10, "bold")
 BTN_STYLE = 'vKeyboard.TButton'
 BTN_STYLE_STICKY = 'vKeyboardSpecial.TButton'
 
-# TODO: Move to conf
-
 
 class HUD(tk.Tk):
     def __init__(self, hud_panels=DEFAULT_PANELS, sticky=True, top_level=True):
@@ -123,6 +121,22 @@ class HUD(tk.Tk):
                                          x=self._panel_frame.winfo_rootx(),
                                          y=self._panel_frame.winfo_rooty())
         self._panel_frame.tkraise()
+
+    def handle_payload(self, payload, payload_type_id):
+        """ Fires the requested action, inferred from the payload type ID.
+        """
+        # TODO: Abstract the map
+        payload_type_handler = {
+            'keystroke': self._winmgr.payload_to_active_win
+            # TODO: if payload_type_id = 'keytoggle':
+            # TODO: if payload_type_id = 'mouse_click':
+            # TODO: if payload_type_id = 'mouse_click_hold':
+        }.get(payload_type_id, None)
+
+        if not payload_type_handler:
+            raise NotImplementedError
+
+        payload_type_handler(payload)
 
 
 class _HUDWinMgr(object):
@@ -260,7 +274,7 @@ class _HUDWinMgr(object):
         window.configure(stack_mode=Xlib.X.Above)
         self._disp.sync()
 
-    def payload_to_active_win(self, payload, payload_type):
+    def payload_to_active_win(self, payload):
         """ Sends the given payload to the previously active (very recently
             the actually-active, but we just stole its focus by clicking a HUD
             button) window. In the process, focus is restored to that window.
@@ -271,13 +285,10 @@ class _HUDWinMgr(object):
         # Set focus to that window
         self.set_active_window(w)
 
-        print(self.get_win_name(w))  # debug
-        print(payload)                     # debug
-
-        # TODO: Convert keycode to ascii
-        # TODO: Send payload as either a key or mouse event
-        # self._keyboard.press(p)  # debug
-        # self._keyboard.release(p)  # debug
+        # Convert the payload to a KeyCode obj
+        payload = self._keyboard._KeyCode.from_vk(payload)
+        self._keyboard.press(payload)
+        self._keyboard.release(payload)
 
     @property
     def active_window(self):

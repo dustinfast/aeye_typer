@@ -74,6 +74,7 @@ Not Implemented
 
 ## TODO
 
+* CTRL + G, CTRL + SHIFT + P, alt+tab, VSCode defined, etc.
 * Hold next key-click, etc. cmds... For click/drag, etc.
 * vkEYB "EDITOR" w/ send to gaze point. Editor has diff modes (like md script modes) for highlighting/linting, etc. OR editor is a vscode editor in the tkinter frame 
 * Refactor hud_panel to include a btn class and add init btns from json

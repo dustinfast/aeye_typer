@@ -11,8 +11,8 @@ HUD_DISP_TITLE: 'AEye TypeR'
 HUD_DISP_WIDTH_PX: 720
 HUD_DISP_HEIGHT_PX: 280
 HUD_DISP_COORD_DIVISOR: 1.25
-HUD_BTN_WIDTH: 6
-HUD_PANELS: ['lib/json/test0.json', 'lib/json/test1.json']
+HUD_BTN_WIDTH: 2
+HUD_PANELS: ['lib/json/keyb0.json']
 
 # EEG Device
 EEG_BOARD_ID: 0

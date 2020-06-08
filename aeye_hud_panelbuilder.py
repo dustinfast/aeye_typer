@@ -22,7 +22,11 @@ OUTPUT_EXT = 'json'
 
 
 def json_helper(obj):
-    return obj.__dict__
+    try:
+        return obj.__dict__
+    except AttributeError:
+        print(type(obj))
+        return obj
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -33,7 +37,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # Welcome msg
-    print('First, click outside of this termianl window, then press the ' +
+    print('First, click outside of this terminal window, then press the ' +
           'desired keys from left to right, top to bottom. To start a new' +
           'row, press ESC. When done, press ESC twice.\n')
     print('If a toggle key is pressed (ex: numlock), press it twice if ' +
@@ -75,11 +79,11 @@ if __name__ == '__main__':
                 key_id = key.vk
 
         if not twice_pressed:
+            # If the key wasn't pressed twice, note it as a panel btn
             curr_map_row.append(
-                HUDButton(str(key),
-                          cmd='self.controller.payload_to_win',
+                HUDButton(str(key).replace('Key.', ''),
                           payload=key_id,
-                          payload_type='keystroke'))
+                          payload_type_id='keystroke'))
 
         print(f'Button read: {key}')
 

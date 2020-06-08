@@ -62,76 +62,21 @@ class HUDPanel(ttk.Frame):
                     text=btn.text,
                     width=btn.width,
                     command=lambda btn=btn: \
-                        self.controller._winmgr.payload_to_active_win(
-                            btn.payload, btn.payload_type)
+                        self.controller.handle_payload(
+                            btn.payload, btn.payload_type_id)
                 ).grid(row=0, column=j)
 
-
-
-
-
 class HUDButton(object):
-    def __init__(self, text, cmd=None, width=1,
-                 is_sticky=False, payload=None, payload_type=None):
+    def __init__(self, text, width=1,
+                 is_sticky=False, payload=None, payload_type_id=None):
         """ An abstraction of a HUD Button.
         """
         self.text = text
-        self.cmd = cmd
         self.width = HUD_BTN_WIDTH * width
         self.is_sticky = is_sticky
         self.payload = payload
-        self.payload_type = payload_type, 
+        self.payload_type_id = payload_type_id
 
     @classmethod
     def from_kwargs(cls, kwargs):
         return cls(**kwargs)
-
-
-
-
-class PanelAlphaNumeric(HUDPanel):
-    def __init__(self, parent, attach, x, y, controller):
-        super().__init__(parent, attach, x, y, controller)
-
-    def _init_mode_btns(self, mode_frame):
-
-        for row in mode_frame._row_frames:
-            for k_idx, k in enumerate(row.raw):
-                i = k_idx
-                if k == 'Bksp':
-                    ttk.Button(row,
-                                style=BTN_STYLE_STICKY,
-                                text=k,
-                                width=HUD_BTN_SIZE * 2,
-                                command=lambda k=k: self._keypress_handler(k)).grid(row=0, column=i)
-                elif k == 'Sym':
-                    ttk.Button(row,
-                                style=BTN_STYLE_STICKY,
-                                text=k,
-                                width=HUD_BTN_SIZE * 1.5,
-                                command=lambda k=k: self._keypress_handler(k)).grid(row=0, column=i)
-                elif k.lower() == 'abc':
-                    ttk.Button(row,
-                                style=BTN_STYLE_STICKY,
-                                text=k,
-                                width=HUD_BTN_SIZE * 1.5,
-                                command=lambda k=k: self._keypress_handler(k)).grid(row=0, column=i)
-                elif k == 'ENTER':
-                    ttk.Button(row,
-                                style=BTN_STYLE_STICKY,
-                                text=k,
-                                width=HUD_BTN_SIZE * 2.5,
-                                command=lambda k=k: self._keypress_handler(k)).grid(row=0, column=i)
-                elif k == '[ space ]':
-                    ttk.Button(row,
-                                style=BTN_STYLE,
-                                text='     ',
-                                width=HUD_BTN_SIZE * 6,
-                                command=lambda k=k: self._keypress_handler(k)).grid(row=0, column=i)
-                else:
-                    ttk.Button(row,
-                                style=BTN_STYLE,
-                                text=k,
-                                width=HUD_BTN_SIZE,
-                                command=lambda k=k: self.controller.payload_to_win(k)
-                              ).grid(row=0, column=i)
