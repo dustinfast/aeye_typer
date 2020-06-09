@@ -18,7 +18,7 @@
             "text": "hello",
             "width": 2,
             "is_toggle": false,
-            "payload": "echo hello",
+            "payload": "['echo', 'hello world']",
             "payload_type": "run_external"
         }
     ],

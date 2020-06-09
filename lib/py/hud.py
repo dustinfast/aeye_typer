@@ -7,6 +7,7 @@ __author__ = 'Dustin Fast <dustin.fast@outlook.com>'
 
 import multiprocessing as mp
 from collections import namedtuple
+from subprocess import Popen, PIPE
 
 import Xlib.threaded
 import Xlib.display
@@ -143,10 +144,9 @@ class HUD(tk.Tk):
         # Infer the correct handler to call
         # TODO: Abstract the func map
         payload_type_handler = {
-            # 'run_external': self._state_mgr.payload_run_external,
             'keystroke': self._state_mgr.payload_to_active_win,
-            'key_toggle': self._state_mgr.payload_keyboard_toggle_state
-            #           ttk.Button.state(['!pressed'])
+            'key_toggle': self._state_mgr.payload_keyboard_toggle_state,
+            'run_external': self._state_mgr.payload_run_external,
             # TODO: if payload_type = 'mouseclick_hold':
             # TODO: if payload_type = 'panel_select':
         }.get(payload_type, -1)
@@ -312,33 +312,33 @@ class _HUDStateManager(object):
             the actually-active, but we just stole its focus by clicking a HUD
             button) window. In the process, focus is restored to that window.
 
-            :param kwargs: Must contain at least args 'payload'.
+            :param kwargs: Arg 'payload' is expected.
 
         """
-        # Extract kwargs
-        payload = kwargs['payload']
-
         # Return focus to previously active window
         self._return_focus()
+
+        # Extract kwarg
+        payload = kwargs['payload']
 
         # Convert the payload to a KeyCode obj
         payload = self._keyboard._KeyCode.from_vk(payload)
         self._keyboard.press(payload)
         self._keyboard.release(payload)
 
-    def payload_keyboard_toggle_state(self,**kwargs):
+    def payload_keyboard_toggle_state(self, **kwargs):
         """ Updates the keyboard controller to reflect the given toggle key
             press. E.g. To toggle shift key on/off. In the process, focus is
             returned to the previously focused window.
 
-            :param kwargs: Must contain at least args 'btn' and 'payload'.
+            :param kwargs: Args 'btn' and 'payload' are expected.
         """
+        # Return focus to previously active window
+        self._return_focus()
+        
         # Extract kwargs
         payload = kwargs['payload']
         btn_sentfrom = kwargs['btn']
-        
-        # Return focus to previously active window
-        self._return_focus()
 
         # Convert the payload to a KeyCode obj
         payload = self._keyboard._KeyCode.from_vk(payload)
@@ -361,6 +361,31 @@ class _HUDStateManager(object):
             else:
                 self._keyboard.release(payload)
                 self.hud.set_btn_vis_toggle_off(btn_sentfrom)
+
+    def payload_run_external(self, **kwargs):
+        """ Runs the external cmd given by the payload.
+
+            :param kwargs: Arg 'payload' is expected.
+        """
+        # Return focus to previously active window
+        self._return_focus()
+
+        # Extract kwarg
+        payload = kwargs['payload']
+
+        # Ensure cmd given as a list of the cmd and its args
+        cmd = eval(payload)
+        if not cmd or not isinstance(cmd, list):
+            raise ValueError(f'Invalid cmd format: {payload}')
+
+        # Run the cmd
+        proc = Popen(cmd, stderr=PIPE)
+        stderr = proc.communicate()[1]
+        proc.wait()
+
+        # If there were build errors, quit
+        if stderr and not stderr.decode().startswith('Created symlink'):
+            warn(f'Cmd "{cmd}" stderr output: \n{stderr}')
 
     @property
     def active_window(self):
