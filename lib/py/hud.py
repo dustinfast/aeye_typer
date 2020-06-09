@@ -140,6 +140,7 @@ class HUD(tk.Tk):
 
             :param btn: (hud_panel.HUDButton)
         """
+        # Infer the correct handler to call
         # TODO: Abstract the func map
         payload_type_handler = {
             'keystroke': self._winmgr.payload_to_active_win,
@@ -152,6 +153,7 @@ class HUD(tk.Tk):
         if not payload_type_handler:
             raise NotImplementedError
 
+        # Call the handler
         payload_type_handler(btn=btn, 
                              payload=payload,
                              payload_type=payload_type)
@@ -329,7 +331,6 @@ class _HUDWinMgr(object):
             returned to the previously focused window.
 
             :param kwargs: Must contain at least args 'btn' and 'payload'.
-
         """
         # Extract kwargs
         payload = kwargs['payload']
@@ -347,8 +348,9 @@ class _HUDWinMgr(object):
         elif payload.vk == 65407:
             raise NotImplementedError('Num Lock')
 
-        modifier = self._keyboard._as_modifier(payload)
         with self._keyboard.modifiers as modifiers:
+            modifier = self._keyboard._as_modifier(payload)
+            
             # If btn not previously in the down state, toggle it down
             if modifier not in [m for m in modifiers]:
                 self._keyboard.press(payload)
@@ -361,7 +363,7 @@ class _HUDWinMgr(object):
 
     @property
     def active_window(self):
-        """ Returns an Xlib.Window obj for of the currently active window.
+        """ Returns an Xlib.Window obj for the currently active window.
         """
         # Request currently active window ID from async queue
         try:
@@ -375,7 +377,7 @@ class _HUDWinMgr(object):
 
     @property
     def prev_active_window(self):
-        """ Returns an Xlib.Window obj for of the previously active window.
+        """ Returns an Xlib.Window obj for the previously active window.
         """
         # Request prev active window ID from async queue
         try:
