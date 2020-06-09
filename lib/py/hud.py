@@ -11,7 +11,7 @@ from collections import namedtuple
 import Xlib.threaded
 import Xlib.display
 import tkinter as tk
-from tkinter import ttk, LEFT
+from tkinter import ttk
 from pynput import keyboard, mouse
 
 import gi
@@ -34,8 +34,9 @@ del _conf
 
 BTN_FONT = ("Helvetica", 10)
 BTN_FONT_STICKY = ("Helvetica", 10, "bold")
-BTN_STYLE = 'vKeyboard.TButton'
-BTN_STYLE_STICKY = 'vKeyboardSpecial.TButton'
+BTN_STYLE = 'Keyboard.TButton'
+BTN_STYLE_TOGGLE = 'KeyboardSpecial.TButton'
+BTN_STYLE_SPACER = 'hidden.Keyboard.TButton'
 
 
 class HUD(tk.Tk):
@@ -60,9 +61,11 @@ class HUD(tk.Tk):
         self.geometry('%dx%d+%d+%d' % (HUD_DISP_WIDTH, HUD_DISP_HEIGHT, x, y))
         self.attributes('-topmost', 'true') if top_level else None
 
-        # Register btn style/font associations
+        # Register styles
         ttk.Style().configure(BTN_STYLE, font=BTN_FONT)
-        ttk.Style().configure(BTN_STYLE_STICKY, font=BTN_FONT_STICKY)
+        ttk.Style().configure(BTN_STYLE_TOGGLE, font=BTN_FONT_STICKY)
+        ttk.Style().configure(
+            BTN_STYLE_SPACER, relief=tk.FLAT, state=tk.DISABLED)
 
         # TODO: Add panel toggle btns -> self.controller.set_curr_panel(idx)
 
@@ -70,7 +73,8 @@ class HUD(tk.Tk):
         self._host_frame = ttk.Frame(
             self, width=HUD_DISP_WIDTH, height=HUD_DISP_HEIGHT)
         self._host_frame.grid_propagate(0)
-        self._host_frame.pack(fill="both")
+        self._host_frame.pack()
+        # self._host_frame.pack(fill="both")
         
         # Show 0th panel
         self.set_curr_panel(0)
@@ -99,7 +103,7 @@ class HUD(tk.Tk):
         win_mgr_proc.join()
 
     def set_curr_panel(self, idx):
-        """ Sets the currently displayed frame to the requested panel
+        """ Sets the currently displayed to the requested panel.
         """
         # Denote request panel's layout file
         panel_json_path = self._panel_paths[idx]
@@ -113,17 +117,18 @@ class HUD(tk.Tk):
                                          controller=self,
                                          x=self._host_frame.winfo_rootx(),
                                          y=self._host_frame.winfo_rooty())
-        self._panel.pack(side=LEFT)
+        self._panel.pack(side=tk.LEFT)
 
     def handle_payload(self, payload, payload_type_id):
         """ Fires the requested action, inferred from the payload type ID.
         """
-        # TODO: Abstract the map
+        # TODO: Abstract the func map
         payload_type_handler = {
-            'keystroke': self._winmgr.payload_to_active_win
-            # TODO: if payload_type_id = 'keytoggle':
-            # TODO: if payload_type_id = 'mouse_click':
-            # TODO: if payload_type_id = 'mouse_click_hold':
+            'keystroke': self._winmgr.payload_to_active_win,
+            'key_toggle': self._winmgr.update_keyboard_toggle_states
+            #           ttk.Button.state(['!pressed'])
+            # TODO: if payload_type_id = 'mouseclick_hold':
+            # TODO: if payload_type_id = 'panel_select':
         }.get(payload_type_id, None)
 
         if not payload_type_handler:
@@ -211,6 +216,15 @@ class _HUDWinMgr(object):
                 elif signal == self.SIGNAL_REQUEST_PREV_ACTIVE_WINDOW:
                     output_queue.put_nowait(prev_active_window_id)
 
+    def _return_focus(self):
+        """ Sets the previously active window to be the active window.
+            Intended to be used when the HUD takes focus via a HUD btn click
+            and we want to return focus to the window the HUD stole focus from.
+        """
+        # Get prev focused window, then give it focus
+        w = self.prev_active_window
+        self.set_active_window(w)
+
     def start_statewatcher(self) -> mp.Process:
         """ Starts the async window-focus watcher.
         """
@@ -272,16 +286,40 @@ class _HUDWinMgr(object):
             the actually-active, but we just stole its focus by clicking a HUD
             button) window. In the process, focus is restored to that window.
         """
-        # Get prev focused window
-        w = self.prev_active_window
-        
-        # Set focus to that window
-        self.set_active_window(w)
+        # Return focus to previously active window
+        self._return_focus()
 
         # Convert the payload to a KeyCode obj
         payload = self._keyboard._KeyCode.from_vk(payload)
         self._keyboard.press(payload)
         self._keyboard.release(payload)
+
+    def update_keyboard_toggle_states(self, payload):
+        """ Updates the keyboard controller to reflect the given toggle key
+            press. E.g. Toggles caps lock on/off. In the process, focus is
+            returned to the previously focused window.
+        """
+        # Return focus to previously active window
+        self._return_focus()
+
+        # Convert the payload to a KeyCode obj
+        payload = self._keyboard._KeyCode.from_vk(payload)
+        
+        # Ensure payload does not represent an unsupported key
+        if payload.vk == 65509:
+            raise NotImplementedError('Caps Lock')
+        elif payload.vk == 65407:
+            raise NotImplementedError('Num Lock')
+
+        modifier = self._keyboard._as_modifier(payload)
+        with self._keyboard.modifiers as modifiers:
+            # If btn not previously in the down state, toggle it down
+            if modifier not in [m for m in modifiers]:
+                self._keyboard.press(payload)
+            
+            # else, toggle it up
+            else:
+                self._keyboard.release(payload)
 
     @property
     def active_window(self):

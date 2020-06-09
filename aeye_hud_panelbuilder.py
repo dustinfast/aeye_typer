@@ -25,7 +25,6 @@ def json_helper(obj):
     try:
         return obj.__dict__
     except AttributeError:
-        print(type(obj))
         return obj
 
 if __name__ == '__main__':

@@ -15,8 +15,11 @@ _conf = config()
 HUD_BTN_WIDTH = _conf['HUD_BTN_WIDTH']
 del _conf
 
-BTN_STYLE = 'vKeyboard.TButton'
-BTN_STYLE_STICKY = 'vKeyboardSpecial.TButton'
+BTN_STYLE = 'Keyboard.TButton'
+BTN_STYLE_TOGGLE = 'KeyboardSpecial.TButton'
+BTN_SPACER_TEXT = '_spacer_'
+BTN_STYLE_SPACER = 'hidden.Keyboard.TButton'
+
 
 
 class HUDPanel(ttk.Frame):
@@ -55,25 +58,36 @@ class HUDPanel(ttk.Frame):
 
             # Add each button for curr row to its frame
             for j, btn in enumerate(panel_row):
-                p = btn.payload
-                ttk.Button(
-                    self._btn_row_frames[i],
-                    style=BTN_STYLE_STICKY if btn.is_sticky else BTN_STYLE,
-                    text=btn.text,
-                    width=btn.width,
-                    command=lambda btn=btn: \
-                        self.controller.handle_payload(
-                            btn.payload, btn.payload_type_id)
-                ).grid(row=0, column=j)
+                # If btn is a spacer, create a hidden dud btn
+                
+                if btn.text == BTN_SPACER_TEXT:
+
+                    ttk.Button(
+                        self._btn_row_frames[i],
+                        width=btn.width,
+                        style=BTN_STYLE_SPACER
+                    ).grid(row=0, column=j)
+            
+                # Else create a useable btn
+                else:
+                    ttk.Button(
+                        self._btn_row_frames[i],
+                        style=BTN_STYLE_TOGGLE if btn.is_toggle else BTN_STYLE,
+                        text=btn.text,
+                        width=btn.width,
+                        command=lambda btn=btn: \
+                            self.controller.handle_payload(
+                                btn.payload, btn.payload_type_id)
+                    ).grid(row=0, column=j)
 
 class HUDButton(object):
     def __init__(self, text, width=1,
-                 is_sticky=False, payload=None, payload_type_id=None):
+                 is_toggle=False, payload=None, payload_type_id=None):
         """ An abstraction of a HUD Button.
         """
         self.text = text
         self.width = HUD_BTN_WIDTH * width
-        self.is_sticky = is_sticky
+        self.is_toggle = is_toggle
         self.payload = payload
         self.payload_type_id = payload_type_id
 
