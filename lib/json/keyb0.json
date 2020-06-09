@@ -5,35 +5,21 @@
             "width": 2,
             "is_toggle": false,
             "payload": 97,
-            "payload_type_id": "keystroke"
+            "payload_type": "keystroke"
         },
         {
             "text": "_spacer_",
             "width": 2,
             "is_toggle": false,
             "payload": 98,
-            "payload_type_id": "keystroke"
+            "payload_type": "keystroke"
         },
         {
             "text": "_spacer_",
             "width": 2,
             "is_toggle": false,
             "payload": 98,
-            "payload_type_id": "keystroke"
-        },
-        {
-            "text": "num_lock",
-            "width": 2,
-            "is_toggle": true,
-            "payload": 65407,
-            "payload_type_id": "key_toggle"
-        },
-        {
-            "text": "capslock",
-            "width": 2,
-            "is_toggle": true,
-            "payload": 65509,
-            "payload_type_id": "key_toggle"
+            "payload_type": "keystroke"
         }
     ],
     [
@@ -42,21 +28,21 @@
             "width": 2,
             "is_toggle": true,
             "payload": 65505,
-            "payload_type_id": "key_toggle"
+            "payload_type": "key_toggle"
         },
         {
             "text": "_spacer_",
             "width": 2,
             "is_toggle": false,
             "payload": 98,
-            "payload_type_id": "keystroke"
+            "payload_type": "keystroke"
         },
         {
             "text": "alt",
             "width": 2,
             "is_toggle": true,
             "payload": 65513,
-            "payload_type_id": "key_toggle"
+            "payload_type": "key_toggle"
         }
     ],
     [
@@ -65,42 +51,42 @@
             "width": 2,
             "is_toggle": true,
             "payload": 65507,
-            "payload_type_id": "key_toggle"
+            "payload_type": "key_toggle"
         },
         {
             "text": "click_hold",
             "width": 2,
             "is_toggle": true,
             "payload": 49,
-            "payload_type_id": "mouseclick_hold"
+            "payload_type": "mouseclick_hold"
         },
         {
             "text": "2",
             "width": 2,
             "is_toggle": false,
             "payload": 50,
-            "payload_type_id": "keystroke"
+            "payload_type": "keystroke"
         },
         {
             "text": "3",
             "width": 2,
             "is_toggle": false,
             "payload": 51,
-            "payload_type_id": "keystroke"
+            "payload_type": "keystroke"
         },
         {
             "text": "4",
             "width": 2,
             "is_toggle": false,
             "payload": 52,
-            "payload_type_id": "keystroke"
+            "payload_type": "keystroke"
         },
         {
             "text": "5",
             "width": 2,
             "is_toggle": false,
             "payload": 53,
-            "payload_type_id": "keystroke"
+            "payload_type": "keystroke"
         }
     ]
 ]

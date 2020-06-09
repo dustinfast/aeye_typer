@@ -11,7 +11,7 @@ from collections import namedtuple
 import Xlib.threaded
 import Xlib.display
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk, FLAT, DISABLED, SUNKEN, ACTIVE
 from pynput import keyboard, mouse
 
 import gi
@@ -32,11 +32,14 @@ HUD_DISP_TITLE = _conf['HUD_DISP_TITLE']
 DEFAULT_PANELS =  _conf['HUD_PANELS']
 del _conf
 
+
 BTN_FONT = ("Helvetica", 10)
-BTN_FONT_STICKY = ("Helvetica", 10, "bold")
-BTN_STYLE = 'Keyboard.TButton'
-BTN_STYLE_TOGGLE = 'KeyboardSpecial.TButton'
-BTN_STYLE_SPACER = 'hidden.Keyboard.TButton'
+BTN_FONT_BOLD = ("Helvetica", 10, "bold")
+
+BTN_STYLE = 'PanelButton.TButton'
+BTN_STYLE_SPACER = 'Spacer.PanelButton.TButton'
+BTN_STYLE_TOGGLE = 'PanelButtonToggle.TButton'
+BTN_STYLE_TOGGLE_ON = 'Depressed.PanelButtonToggle.TButton'
 
 
 class HUD(tk.Tk):
@@ -50,7 +53,7 @@ class HUD(tk.Tk):
 
         self._panel = None              # Active panel's frame
         self._panel_paths = hud_panels  # Path to each panel's layout file
-        self._sticky = sticky
+        self._sticky = sticky           # Denotes HUD window stays on top
 
         # Calculate HUD display coords, based on screen size
         x = (DISP_WIDTH/HUD_DISP_DIV) - (HUD_DISP_WIDTH/HUD_DISP_DIV)
@@ -63,11 +66,14 @@ class HUD(tk.Tk):
 
         # Register styles
         ttk.Style().configure(BTN_STYLE, font=BTN_FONT)
-        ttk.Style().configure(BTN_STYLE_TOGGLE, font=BTN_FONT_STICKY)
-        ttk.Style().configure(
-            BTN_STYLE_SPACER, relief=tk.FLAT, state=tk.DISABLED)
+        ttk.Style().configure(BTN_STYLE_SPACER, relief=FLAT, state=DISABLED)
+        ttk.Style().configure(BTN_STYLE_TOGGLE, font=BTN_FONT_BOLD)
+        ttk.Style().configure(BTN_STYLE_TOGGLE_ON,
+                              font=BTN_FONT_BOLD,
+                              foreground='green',
+                              relief=SUNKEN)
 
-        # TODO: Add panel toggle btns -> self.controller.set_curr_panel(idx)
+        # TODO: Add panel toggle btns -> self.set_curr_panel(idx)
 
         # Setup the child frame that will host the panel frames
         self._host_frame = ttk.Frame(
@@ -80,7 +86,7 @@ class HUD(tk.Tk):
         self.set_curr_panel(0)
 
         # Setup the wintools helper
-        self._winmgr = _HUDWinMgr()
+        self._winmgr = _HUDWinMgr(self)
 
     def start(self):
         """ Brings up the HUD display. Should be used instead of tk.mainloop 
@@ -114,27 +120,41 @@ class HUD(tk.Tk):
 
         self._panel = HUDPanel.from_json(panel_json_path,
                                          parent_frame=self._host_frame,
-                                         controller=self,
+                                         hud=self,
                                          x=self._host_frame.winfo_rootx(),
                                          y=self._host_frame.winfo_rooty())
         self._panel.pack(side=tk.LEFT)
 
-    def handle_payload(self, payload, payload_type_id):
+    def set_btn_vis_toggle_on(self, btn):
+        """ Sets a btn as toggled on, visually.
+        """
+        btn.configure(style=BTN_STYLE_TOGGLE_ON)
+
+    def set_btn_vis_toggle_off(self, btn):
+        """ Sets a btn as toggled off, visually.
+        """
+        btn.configure(style=BTN_STYLE_TOGGLE)
+
+    def handle_payload(self, btn, payload=None, payload_type=''):
         """ Fires the requested action, inferred from the payload type ID.
+
+            :param btn: (hud_panel.HUDButton)
         """
         # TODO: Abstract the func map
         payload_type_handler = {
             'keystroke': self._winmgr.payload_to_active_win,
             'key_toggle': self._winmgr.update_keyboard_toggle_states
             #           ttk.Button.state(['!pressed'])
-            # TODO: if payload_type_id = 'mouseclick_hold':
-            # TODO: if payload_type_id = 'panel_select':
-        }.get(payload_type_id, None)
+            # TODO: if payload_type = 'mouseclick_hold':
+            # TODO: if payload_type = 'panel_select':
+        }.get(payload_type, -1)
 
         if not payload_type_handler:
             raise NotImplementedError
 
-        payload_type_handler(payload)
+        payload_type_handler(btn=btn, 
+                             payload=payload,
+                             payload_type=payload_type)
 
 
 class _HUDWinMgr(object):
@@ -143,10 +163,12 @@ class _HUDWinMgr(object):
     SIGNAL_REQUEST_ACTIVE_WINDOW = 0
     SIGNAL_REQUEST_PREV_ACTIVE_WINDOW = 1
 
-    def __init__(self):
+    def __init__(self, parent_hud):
         """ A helper class for allowing the HUD to interact with other windows
             via Xlib.
         """
+        self.hud = parent_hud
+
         # Init XLib root/disp
         self._disp = Xlib.display.Display()
         self._root = self._disp.screen().root
@@ -249,6 +271,7 @@ class _HUDWinMgr(object):
         """ Sends the kill signal to the async watcher.
         """
         try:
+            # TODO: Unset all keybd modifier toggles
             self._async_signal_q.put_nowait(self.SIGNAL_STOP)
         except AttributeError:
             warn('Received STOP but Win State Watcher not yet started.')
@@ -281,11 +304,17 @@ class _HUDWinMgr(object):
         window.configure(stack_mode=Xlib.X.Above)
         self._disp.sync()
 
-    def payload_to_active_win(self, payload):
+    def payload_to_active_win(self, **kwargs):
         """ Sends the given payload to the previously active (very recently
             the actually-active, but we just stole its focus by clicking a HUD
             button) window. In the process, focus is restored to that window.
+
+            :param kwargs: Must contain at least args 'payload'.
+
         """
+        # Extract kwargs
+        payload = kwargs['payload']
+
         # Return focus to previously active window
         self._return_focus()
 
@@ -294,11 +323,18 @@ class _HUDWinMgr(object):
         self._keyboard.press(payload)
         self._keyboard.release(payload)
 
-    def update_keyboard_toggle_states(self, payload):
+    def update_keyboard_toggle_states(self,**kwargs):
         """ Updates the keyboard controller to reflect the given toggle key
-            press. E.g. Toggles caps lock on/off. In the process, focus is
+            press. E.g. To toggle shift key on/off. In the process, focus is
             returned to the previously focused window.
+
+            :param kwargs: Must contain at least args 'btn' and 'payload'.
+
         """
+        # Extract kwargs
+        payload = kwargs['payload']
+        btn_sentfrom = kwargs['btn']
+        
         # Return focus to previously active window
         self._return_focus()
 
@@ -316,10 +352,12 @@ class _HUDWinMgr(object):
             # If btn not previously in the down state, toggle it down
             if modifier not in [m for m in modifiers]:
                 self._keyboard.press(payload)
+                self.hud.set_btn_vis_toggle_on(btn_sentfrom)
             
             # else, toggle it up
             else:
                 self._keyboard.release(payload)
+                self.hud.set_btn_vis_toggle_off(btn_sentfrom)
 
     @property
     def active_window(self):
