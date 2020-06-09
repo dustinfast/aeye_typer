@@ -37,15 +37,12 @@ class HUDPanel(ttk.Frame):
         self.x = x
         self.y = y
 
-        self._host_frame = ttk.Frame(self.parent)
-        self._host_frame.grid(row=0, column=0, sticky="nsew")
         self._btn_row_frames = []
 
         # Setup panel's buttons then show the panel frame
         self._init_btns(btn_layout)
-        self._host_frame.tkraise()
-        # self.pack()
-        # self._host_frame.pack()
+        self.grid(row=0, column=0, sticky=tk.NW)
+        self.parent.grid_propagate(0)
 
     @classmethod
     def from_json(cls, json_path, parent_frame, hud, x, y):
@@ -59,8 +56,9 @@ class HUDPanel(ttk.Frame):
         """
         for i, panel_row in enumerate(btn_layout):
             # Create the current row's frame
-            self._btn_row_frames.append(ttk.Frame(self._host_frame))
-            self._btn_row_frames[i].grid(row=i)
+            self._btn_row_frames.append(ttk.Frame(self))
+            parent_row_frame = self._btn_row_frames[i]
+            parent_row_frame.grid(row=i, sticky = tk.NW)
 
             # Add each button for curr row to its frame
             for j, btn in enumerate(panel_row):
@@ -69,7 +67,7 @@ class HUDPanel(ttk.Frame):
                 # If btn is a spacer, create a hidden dud btn
                 if btn.text == BTN_SPACER_TEXT:
                     ttk.Button(
-                        self._btn_row_frames[i],
+                        parent_row_frame,
                         width=btn_disp_width,
                         style=BTN_STYLE_SPACER
                     ).grid(row=0, column=j)
@@ -77,10 +75,10 @@ class HUDPanel(ttk.Frame):
                 # Else create a clickable btn
                 else:
                     btn.obj = ttk.Button(
-                        self._btn_row_frames[i],
+                        parent_row_frame,
                         style=BTN_STYLE_TOGGLE if btn.is_toggle else BTN_STYLE,
-                        text=btn.text,
-                        width=btn_disp_width)
+                        width=btn_disp_width,
+                        text=btn.text)
                     btn.obj.grid(row=0, column=j)
                     btn.obj.configure(command=lambda btn=btn: \
                         self.hud.handle_payload(

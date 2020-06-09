@@ -2,121 +2,114 @@
     [
         {
             "text": "Esc",
-            "width": 1,
+            "width": 3,
             "is_toggle": false,
             "payload": 65307,
             "payload_type": "keystroke"
         },
         {
             "text": "_spacer_",
-            "width": 1,
+            "width": 2,
             "is_toggle": false,
             "payload": 98,
             "payload_type": "keystroke"
         },
         {
-            "text": "f2",
-            "width": 1,
+            "text": "F1",
+            "width": 3,
             "is_toggle": false,
             "payload": 65507,
             "payload_type": "keystroke"
         },
         {
-            "text": "f2",
-            "width": 1,
+            "text": "F2",
+            "width": 3,
             "is_toggle": false,
             "payload": 65471,
             "payload_type": "keystroke"
         },
         {
-            "text": "f3",
-            "width": 1,
+            "text": "F3",
+            "width": 3,
             "is_toggle": false,
             "payload": 65472,
             "payload_type": "keystroke"
         },
         {
-            "text": "f4",
-            "width": 1,
+            "text": "F4",
+            "width": 3,
             "is_toggle": false,
             "payload": 65473,
             "payload_type": "keystroke"
         },
         {
             "text": "_spacer_",
-            "width": 1,
+            "width": 2,
             "is_toggle": false,
             "payload": 98,
             "payload_type": "keystroke"
         },
         {
-            "text": "f5",
-            "width": 1,
+            "text": "F5",
+            "width": 3,
             "is_toggle": false,
             "payload": 65474,
             "payload_type": "keystroke"
         },
         {
-            "text": "f6",
-            "width": 1,
+            "text": "F6",
+            "width": 3,
             "is_toggle": false,
             "payload": 65475,
             "payload_type": "keystroke"
         },
         {
-            "text": "f7",
-            "width": 1,
+            "text": "F7",
+            "width": 3,
             "is_toggle": false,
             "payload": 65476,
             "payload_type": "keystroke"
         },
         {
-            "text": "f8",
-            "width": 1,
+            "text": "F8",
+            "width": 3,
             "is_toggle": false,
             "payload": 65477,
             "payload_type": "keystroke"
         },
         {
             "text": "_spacer_",
-            "width": 1,
+            "width": 2,
             "is_toggle": false,
             "payload": 98,
             "payload_type": "keystroke"
         },
         {
-            "text": "f9",
-            "width": 1,
+            "text": "F9",
+            "width": 3,
             "is_toggle": false,
             "payload": 65478,
             "payload_type": "keystroke"
         },
         {
-            "text": "f10",
-            "width": 1,
+            "text": "F10",
+            "width": 3,
             "is_toggle": false,
             "payload": 65479,
             "payload_type": "keystroke"
         },
         {
-            "text": "f11",
-            "width": 1,
+            "text": "F11",
+            "width": 3,
             "is_toggle": false,
             "payload": 65480,
             "payload_type": "keystroke"
         },
         {
-            "text": "f12",
-            "width": 1,
+            "text": "F12",
+            "width": 3,
             "is_toggle": false,
             "payload": 65481,
-            "payload_type": "keystroke"
-        },
-        {
-            "text": "_spacer_",
-            "width": 5,
-            "is_toggle": false,
-            "payload": 98,
             "payload_type": "keystroke"
         }
     ],
@@ -125,7 +118,7 @@
     [
         {
             "text": "_spacer_",
-            "width": 1,
+            "width": 2,
             "is_toggle": false,
             "payload": 98,
             "payload_type": "keystroke"
@@ -137,7 +130,7 @@
         {
             "text": "`",
             "alt_text": "~",
-            "width": 1,
+            "width": 3,
             "is_toggle": false,
             "payload": 96,
             "payload_type": "keystroke"
@@ -145,7 +138,7 @@
         {
             "text": "1",
             "alt_text": "!",
-            "width": 1,
+            "width": 3,
             "is_toggle": false,
             "payload": 49,
             "payload_type": "keystroke"
@@ -153,7 +146,7 @@
         {
             "text": "2",
             "alt_text": "@",
-            "width": 1,
+            "width": 3,
             "is_toggle": false,
             "payload": 50,
             "payload_type": "keystroke"
@@ -161,7 +154,7 @@
         {
             "text": "3",
             "alt_text": "#",
-            "width": 1,
+            "width": 3,
             "is_toggle": false,
             "payload": 51,
             "payload_type": "keystroke"
@@ -169,7 +162,7 @@
         {
             "text": "4",
             "alt_text": "$",
-            "width": 1,
+            "width": 3,
             "is_toggle": false,
             "payload": 52,
             "payload_type": "keystroke"
@@ -177,7 +170,7 @@
         {
             "text": "5",
             "alt_text": "%",
-            "width": 1,
+            "width": 3,
             "is_toggle": false,
             "payload": 53,
             "payload_type": "keystroke"
@@ -185,7 +178,7 @@
         {
             "text": "6",
             "alt_text": "^",
-            "width": 1,
+            "width": 3,
             "is_toggle": false,
             "payload": 54,
             "payload_type": "keystroke"
@@ -193,7 +186,7 @@
         {
             "text": "7",
             "alt_text": "&",
-            "width": 1,
+            "width": 3,
             "is_toggle": false,
             "payload": 55,
             "payload_type": "keystroke"
@@ -201,7 +194,7 @@
         {
             "text": "8",
             "alt_text": "*",
-            "width": 1,
+            "width": 3,
             "is_toggle": false,
             "payload": 56,
             "payload_type": "keystroke"
@@ -209,7 +202,7 @@
         {
             "text": "9",
             "alt_text": "(",
-            "width": 1,
+            "width": 3,
             "is_toggle": false,
             "payload": 57,
             "payload_type": "keystroke"
@@ -217,7 +210,7 @@
         {
             "text": "0",
             "alt_text": ")",
-            "width": 1,
+            "width": 3,
             "is_toggle": false,
             "payload": 48,
             "payload_type": "keystroke"
@@ -225,7 +218,7 @@
         {
             "text": "-",
             "alt_text": "_",
-            "width": 1,
+            "width": 3,
             "is_toggle": false,
             "payload": 45,
             "payload_type": "keystroke"
@@ -233,42 +226,42 @@
         {
             "text": "=",
             "alt_text": "+",
-            "width": 1,
+            "width": 3,
             "is_toggle": false,
             "payload": 61,
             "payload_type": "keystroke"
         },
         {
             "text": "Backsp",
-            "width": 2,
+            "width": 6,
             "is_toggle": false,
             "payload": 65288,
             "payload_type": "keystroke"
         },
         {
             "text": "_spacer_",
-            "width": 1,
+            "width": 2,
             "is_toggle": false,
             "payload": 98,
             "payload_type": "keystroke"
         },
         {
             "text": "Ins",
-            "width": 1,
-            "is_toggle": true,
+            "width": 3,
+            "is_toggle": false,
             "payload": 65379,
             "payload_type": "key_toggle"
         },
         {
             "text": "Home",
-            "width": 1,
+            "width": 3,
             "is_toggle": false,
             "payload": 65360,
             "payload_type": "keystroke"
         },
         {
-            "text": "Pg Up",
-            "width": 1,
+            "text": "PgUp",
+            "width": 3,
             "is_toggle": false,
             "payload": 65365,
             "payload_type": "keystroke"
@@ -277,77 +270,77 @@
     [
         {
             "text": "Tab",
-            "width": 2,
+            "width": 4,
             "is_toggle": false,
             "payload": 65289,
             "payload_type": "keystroke"
         },
         {
             "text": "q",
-            "width": 1,
+            "width": 3,
             "is_toggle": false,
             "payload": 113,
             "payload_type": "keystroke"
         },
         {
             "text": "w",
-            "width": 1,
+            "width": 3,
             "is_toggle": false,
             "payload": 119,
             "payload_type": "keystroke"
         },
         {
             "text": "e",
-            "width": 1,
+            "width": 3,
             "is_toggle": false,
             "payload": 101,
             "payload_type": "keystroke"
         },
         {
             "text": "r",
-            "width": 1,
+            "width": 3,
             "is_toggle": false,
             "payload": 114,
             "payload_type": "keystroke"
         },
         {
             "text": "t",
-            "width": 1,
+            "width": 3,
             "is_toggle": false,
             "payload": 116,
             "payload_type": "keystroke"
         },
         {
             "text": "y",
-            "width": 1,
+            "width": 3,
             "is_toggle": false,
             "payload": 121,
             "payload_type": "keystroke"
         },
         {
             "text": "u",
-            "width": 1,
+            "width": 3,
             "is_toggle": false,
             "payload": 117,
             "payload_type": "keystroke"
         },
         {
             "text": "i",
-            "width": 1,
+            "width": 3,
             "is_toggle": false,
             "payload": 105,
             "payload_type": "keystroke"
         },
         {
             "text": "o",
-            "width": 1,
+            "width": 3,
             "is_toggle": false,
             "payload": 111,
             "payload_type": "keystroke"
         },
         {
             "text": "p",
-            "width": 1,
+            "width": 3,
             "is_toggle": false,
             "payload": 112,
             "payload_type": "keystroke"
@@ -355,7 +348,7 @@
         {
             "text": "[",
             "alt_text": "{",
-            "width": 1,
+            "width": 3,
             "is_toggle": false,
             "payload": 91,
             "payload_type": "keystroke"
@@ -363,7 +356,7 @@
         {
             "text": "]",
             "alt_text": "}",
-            "width": 1,
+            "width": 3,
             "is_toggle": false,
             "payload": 93,
             "payload_type": "keystroke"
@@ -371,41 +364,50 @@
         {
             "text": "\\",
             "alt_text": "|",
-            "width": 2,
+            "width": 5,
             "is_toggle": false,
             "payload": 92,
             "payload_type": "keystroke"
         },
         {
             "text": "_spacer_",
-            "width": 1,
+            "width": 2,
             "is_toggle": false,
             "payload": 98,
             "payload_type": "keystroke"
         },
         {
             "text": "Del",
-            "width": 1,
+            "width": 3,
             "is_toggle": false,
             "payload": 65535,
             "payload_type": "keystroke"
         },
         {
             "text": "End",
-            "width": 1,
+            "width": 3,
             "is_toggle": false,
             "payload": 65367,
             "payload_type": "keystroke"
         },
         {
             "text": "Pg Dn",
-            "width": 1,
+            "width": 3,
             "is_toggle": false,
             "payload": 65366,
             "payload_type": "keystroke"
         }
     ],
+
+
     [
+        {
+            "text": "_spacer_",
+            "width": 3,
+            "is_toggle": false,
+            "payload": 98,
+            "payload_type": "keystroke"
+        },
         {
             "text": "_spacer_",
             "width": 1,
@@ -415,180 +417,188 @@
         },
         {
             "text": "a",
-            "width": 1,
+            "width": 3,
             "is_toggle": false,
             "payload": 97,
             "payload_type": "keystroke"
         },
         {
             "text": "s",
-            "width": 1,
+            "width": 3,
             "is_toggle": false,
             "payload": 115,
             "payload_type": "keystroke"
         },
         {
             "text": "d",
-            "width": 1,
+            "width": 3,
             "is_toggle": false,
             "payload": 100,
             "payload_type": "keystroke"
         },
         {
             "text": "f",
-            "width": 1,
+            "width": 3,
             "is_toggle": false,
             "payload": 102,
             "payload_type": "keystroke"
         },
         {
             "text": "g",
-            "width": 1,
+            "width": 3,
             "is_toggle": false,
             "payload": 103,
             "payload_type": "keystroke"
         },
         {
             "text": "h",
-            "width": 1,
+            "width": 3,
             "is_toggle": false,
             "payload": 104,
             "payload_type": "keystroke"
         },
         {
             "text": "j",
-            "width": 1,
+            "width": 3,
             "is_toggle": false,
             "payload": 106,
             "payload_type": "keystroke"
         },
         {
             "text": "k",
-            "width": 1,
+            "width": 3,
             "is_toggle": false,
             "payload": 107,
             "payload_type": "keystroke"
         },
         {
             "text": "l",
-            "width": 1,
+            "width": 3,
             "is_toggle": false,
             "payload": 108,
             "payload_type": "keystroke"
         },
         {
             "text": ";",
-            "width": 1,
+            "width": 3,
             "is_toggle": false,
             "payload": 59,
             "payload_type": "keystroke"
         },
         {
-            "text": "\"\"",
-            "width": 1,
+            "text": "\"",
+            "width": 3,
             "is_toggle": false,
             "payload": 39,
             "payload_type": "keystroke"
         },
         {
             "text": "Enter",
-            "width": 2,
+            "width": 8,
             "is_toggle": false,
             "payload": 65293,
             "payload_type": "keystroke"
-        },
-        {
-            "text": "_spacer_",
-            "width": 4,
-            "is_toggle": false,
-            "payload": 98,
-            "payload_type": "keystroke"
         }
     ],
+
     [
         {
             "text": "Shift",
-            "width": 2,
+            "width": 6,
             "is_toggle": true,
             "payload": 65505,
             "payload_type": "key_toggle"
         },
         {
             "text": "z",
-            "width": 1,
+            "width": 3,
             "is_toggle": false,
             "payload": 122,
             "payload_type": "keystroke"
         },
         {
             "text": "x",
-            "width": 1,
+            "width": 3,
             "is_toggle": false,
             "payload": 120,
             "payload_type": "keystroke"
         },
         {
             "text": "c",
-            "width": 1,
+            "width": 3,
             "is_toggle": false,
             "payload": 99,
             "payload_type": "keystroke"
         },
         {
             "text": "v",
-            "width": 1,
+            "width": 3,
             "is_toggle": false,
             "payload": 118,
             "payload_type": "keystroke"
         },
         {
             "text": "b",
-            "width": 1,
+            "width": 3,
             "is_toggle": false,
             "payload": 98,
             "payload_type": "keystroke"
         },
         {
             "text": "n",
-            "width": 1,
+            "width": 3,
             "is_toggle": false,
             "payload": 110,
             "payload_type": "keystroke"
         },
         {
             "text": "m",
-            "width": 1,
+            "width": 3,
             "is_toggle": false,
             "payload": 109,
             "payload_type": "keystroke"
         },
         {
             "text": ",",
-            "width": 1,
+            "width": 3,
             "is_toggle": false,
             "payload": 44,
             "payload_type": "keystroke"
         },
         {
             "text": ".",
-            "width": 1,
+            "width": 3,
             "is_toggle": false,
             "payload": 46,
             "payload_type": "keystroke"
         },
         {
             "text": "/",
-            "width": 1,
+            "width": 3,
             "is_toggle": false,
             "payload": 47,
             "payload_type": "keystroke"
         },
         {
+            "text": "_spacer_",
+            "width": 1,
+            "is_toggle": false,
+            "payload": 98,
+            "payload_type": "keystroke"
+        },
+        {
             "text": "Shift",
-            "width": 2,
+            "width": 7,
             "is_toggle": true,
             "payload": 65506,
             "payload_type": "key_toggle"
+        },
+        {
+            "text": "_spacer_",
+            "width": 3,
+            "is_toggle": false,
+            "payload": 98,
+            "payload_type": "keystroke"
         },
         {
             "text": "_spacer_",
@@ -599,7 +609,7 @@
         },
         {
             "text": "^",
-            "width": 1,
+            "width": 3,
             "is_toggle": false,
             "payload": 65362,
             "payload_type": "keystroke"
@@ -608,84 +618,84 @@
     [
         {
             "text": "Ctrl",
-            "width": 1,
+            "width": 5,
             "is_toggle": true,
             "payload": 65507,
             "payload_type": "key_toggle"
         },
         {
             "text": "Sup",
-            "width": 1,
+            "width": 2,
             "is_toggle": false,
             "payload": 65515,
             "payload_type": "keystroke"
         },
         {
             "text": "Alt",
-            "width": 1,
+            "width": 4,
             "is_toggle": true,
             "payload": 65513,
             "payload_type": "key_toggle"
         },
         {
             "text": "Space",
-            "width": 6,
+            "width": 20,
             "is_toggle": false,
             "payload": 32,
             "payload_type": "keystroke"
         },
         {
             "text": "Alt",
-            "width": 1,
+            "width": 4,
             "is_toggle": true,
             "payload": 65514,
             "payload_type": "key_toggle"
         },
         {
-            "text": "Sup",
-            "width": 1,
+            "text": "_spacer_",
+            "width": 3,
             "is_toggle": false,
-            "payload": 65516,
+            "payload": 98,
             "payload_type": "keystroke"
         },
         {
             "text": "Menu",
-            "width": 1,
+            "width": 5,
             "is_toggle": false,
             "payload": 65383,
             "payload_type": "keystroke"
         },
         {
             "text": "Ctrl",
-            "width": 1,
+            "width": 4,
             "is_toggle": true,
             "payload": 65508,
             "payload_type": "key_toggle"
         },
         {
             "text": "_spacer_",
-            "width": 1,
+            "width": 2,
             "is_toggle": false,
             "payload": 98,
             "payload_type": "keystroke"
         },
         {
             "text": "<",
-            "width": 1,
+            "width": 3,
             "is_toggle": false,
             "payload": 65361,
             "payload_type": "keystroke"
         },
         {
             "text": "v",
-            "width": 1,
+            "width": 3,
             "is_toggle": false,
             "payload": 65364,
             "payload_type": "keystroke"
         },
         {
             "text": ">",
-            "width": 1,
+            "width": 3,
             "is_toggle": false,
             "payload": 65363,
             "payload_type": "keystroke"

@@ -79,10 +79,7 @@ class HUD(tk.Tk):
         # Setup the child frame that will host the panel frames
         self._host_frame = ttk.Frame(
             self, width=HUD_DISP_WIDTH, height=HUD_DISP_HEIGHT)
-        self._host_frame.grid_propagate(0)
-        # self._host_frame.pack()
-        self._host_frame.pack(fill="both")
-        
+
         # Show 0th panel
         self.set_curr_panel(0)
 
@@ -124,7 +121,6 @@ class HUD(tk.Tk):
                                          hud=self,
                                          x=self._host_frame.winfo_rootx(),
                                          y=self._host_frame.winfo_rooty())
-        self._panel.pack(side=tk.LEFT)
 
     def set_btn_vis_toggle_on(self, btn):
         """ Sets a btn as toggled on, visually.
