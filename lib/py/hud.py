@@ -358,6 +358,9 @@ class _HUDStateManager(object):
                 self._keyboard.release(payload)
                 self.hud.set_btn_vis_toggle_off(btn_sentfrom)
 
+            # TODO: Ensure graceful handle of alt + tab, etc.
+            # TODO: On shift, show alt_text
+
     def payload_run_external(self, **kwargs):
         """ Runs the external cmd given by the payload.
 

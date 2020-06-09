@@ -37,8 +37,6 @@ class HUDPanel(ttk.Frame):
         self.x = x
         self.y = y
 
-        self._btn_row_frames = []
-
         # Setup panel's buttons then show the panel frame
         self._init_btns(btn_layout)
         self.grid(row=0, column=0, sticky=tk.NW)
@@ -54,6 +52,8 @@ class HUDPanel(ttk.Frame):
     def _init_btns(self, btn_layout):
         """ Init's the panel's buttons from the given panel layout.
         """
+        self._btn_row_frames = []
+
         for i, panel_row in enumerate(btn_layout):
             # Create the current row's frame
             self._btn_row_frames.append(ttk.Frame(self))
@@ -70,7 +70,7 @@ class HUDPanel(ttk.Frame):
                         parent_row_frame,
                         width=btn_disp_width,
                         style=BTN_STYLE_SPACER
-                    ).grid(row=0, column=j)
+                    ).grid(row=0, column=j, ipady=4, ipadx=0)
             
                 # Else create a clickable btn
                 else:
@@ -79,7 +79,7 @@ class HUDPanel(ttk.Frame):
                         style=BTN_STYLE_TOGGLE if btn.is_toggle else BTN_STYLE,
                         width=btn_disp_width,
                         text=btn.text)
-                    btn.obj.grid(row=0, column=j)
+                    btn.obj.grid(row=0, column=j, ipady=4, ipadx=0)
                     btn.obj.configure(command=lambda btn=btn: \
                         self.hud.handle_payload(
                             btn.obj, btn.payload, btn.payload_type))
