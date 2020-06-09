@@ -15,11 +15,11 @@
             "payload_type": "keystroke"
         },
         {
-            "text": "_spacer_",
+            "text": "hello",
             "width": 2,
             "is_toggle": false,
-            "payload": 98,
-            "payload_type": "keystroke"
+            "payload": "echo hello",
+            "payload_type": "run_external"
         }
     ],
     [

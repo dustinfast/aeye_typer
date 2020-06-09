@@ -86,26 +86,26 @@ class HUD(tk.Tk):
         self.set_curr_panel(0)
 
         # Setup the wintools helper
-        self._winmgr = _HUDWinMgr(self)
+        self._state_mgr = _HUDStateManager(self)
 
     def start(self):
         """ Brings up the HUD display. Should be used instead of tk.mainloop 
             because sticky attribute must be handled first. Blocks.
         """
         # Start the window manager
-        win_mgr_proc = self._winmgr.start_statewatcher()
+        win_mgr_proc = self._state_mgr.start_statewatcher()
 
         # Set sticky attribute, iff specified
         if self._sticky:
             self.update_idletasks()
             self.update()
-            self._winmgr.set_sticky_byname(HUD_DISP_TITLE)
+            self._state_mgr.set_sticky_byname(HUD_DISP_TITLE)
 
         # Start the blocking main loop
         self.mainloop()
 
         # Stop the focus tracker
-        self._winmgr.stop_statewatcher()
+        self._state_mgr.stop_statewatcher()
         win_mgr_proc.join()
 
     def set_curr_panel(self, idx):
@@ -143,8 +143,9 @@ class HUD(tk.Tk):
         # Infer the correct handler to call
         # TODO: Abstract the func map
         payload_type_handler = {
-            'keystroke': self._winmgr.payload_to_active_win,
-            'key_toggle': self._winmgr.update_keyboard_toggle_states
+            # 'run_external': self._state_mgr.payload_run_external,
+            'keystroke': self._state_mgr.payload_to_active_win,
+            'key_toggle': self._state_mgr.payload_keyboard_toggle_state
             #           ttk.Button.state(['!pressed'])
             # TODO: if payload_type = 'mouseclick_hold':
             # TODO: if payload_type = 'panel_select':
@@ -159,7 +160,7 @@ class HUD(tk.Tk):
                              payload_type=payload_type)
 
 
-class _HUDWinMgr(object):
+class _HUDStateManager(object):
     # MP queue signals
     SIGNAL_STOP = -1
     SIGNAL_REQUEST_ACTIVE_WINDOW = 0
@@ -325,7 +326,7 @@ class _HUDWinMgr(object):
         self._keyboard.press(payload)
         self._keyboard.release(payload)
 
-    def update_keyboard_toggle_states(self,**kwargs):
+    def payload_keyboard_toggle_state(self,**kwargs):
         """ Updates the keyboard controller to reflect the given toggle key
             press. E.g. To toggle shift key on/off. In the process, focus is
             returned to the previously focused window.
