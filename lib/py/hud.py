@@ -80,8 +80,8 @@ class HUD(tk.Tk):
         self._host_frame = ttk.Frame(
             self, width=HUD_DISP_WIDTH, height=HUD_DISP_HEIGHT)
         self._host_frame.grid_propagate(0)
-        self._host_frame.pack()
-        # self._host_frame.pack(fill="both")
+        # self._host_frame.pack()
+        self._host_frame.pack(fill="both")
         
         # Show 0th panel
         self.set_curr_panel(0)

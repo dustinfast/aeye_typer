@@ -22,7 +22,6 @@ BTN_STYLE_TOGGLE_ON = 'Depressed.PanelButtonToggle.TButton'
 BTN_SPACER_TEXT = '_spacer_'
 
 
-
 class HUDPanel(ttk.Frame):
     def __init__(self, parent_frame, hud, x, y, btn_layout):
         """ An abstraction of a HUD panel -- A HUD Panel contains buttons
@@ -42,11 +41,11 @@ class HUDPanel(ttk.Frame):
         self._host_frame.grid(row=0, column=0, sticky="nsew")
         self._btn_row_frames = []
 
+        # Setup panel's buttons then show the panel frame
         self._init_btns(btn_layout)
-
-        # Show the panel frame
         self._host_frame.tkraise()
-        self.pack()
+        # self.pack()
+        # self._host_frame.pack()
 
     @classmethod
     def from_json(cls, json_path, parent_frame, hud, x, y):
@@ -65,11 +64,13 @@ class HUDPanel(ttk.Frame):
 
             # Add each button for curr row to its frame
             for j, btn in enumerate(panel_row):
+                btn_disp_width = btn.width * HUD_BTN_WIDTH
+
                 # If btn is a spacer, create a hidden dud btn
                 if btn.text == BTN_SPACER_TEXT:
                     ttk.Button(
                         self._btn_row_frames[i],
-                        width=btn.width,
+                        width=btn_disp_width,
                         style=BTN_STYLE_SPACER
                     ).grid(row=0, column=j)
             
@@ -79,20 +80,21 @@ class HUDPanel(ttk.Frame):
                         self._btn_row_frames[i],
                         style=BTN_STYLE_TOGGLE if btn.is_toggle else BTN_STYLE,
                         text=btn.text,
-                        width=btn.width)
+                        width=btn_disp_width)
                     btn.obj.grid(row=0, column=j)
                     btn.obj.configure(command=lambda btn=btn: \
                         self.hud.handle_payload(
                             btn.obj, btn.payload, btn.payload_type))
 
 class HUDButton(object):
-    def __init__(self, text, width=1,
+    def __init__(self, obj=None, text=None, alt_text=None, width=1,
                  is_toggle=False, payload=None, payload_type=None):
         """ An abstraction of a HUD Button.
         """
-        self.obj = None
+        self.obj = obj
         self.text = text
-        self.width = HUD_BTN_WIDTH * width
+        self.alt_text = alt_text
+        self.width = width
         self.is_toggle = is_toggle
         self.payload = payload
         self.payload_type = payload_type

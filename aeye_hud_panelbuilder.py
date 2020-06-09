@@ -79,12 +79,15 @@ if __name__ == '__main__':
 
         if not twice_pressed:
             # If the key wasn't pressed twice, note it as a panel btn
+            txt = str(key).replace('Key.', '').replace("'", ""),
             curr_map_row.append(
-                HUDButton(str(key).replace('Key.', '').replace("'", ""),
+                HUDButton(obj=None,
+                          text=txt,
+                          alt_text=txt,
                           payload=key_id,
-                          payload_type_id='keystroke'))
+                          payload_type='keystroke'))
 
-        print(f'Button read: {key}')
+        print(f'Button read: {key} <{key_id}>')
 
     # Map buttons from keystrokes until ESC pressed
     with keyboard.Listener(on_press=on_press) as listener:
