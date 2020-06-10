@@ -119,7 +119,7 @@ class HUD(tk.Tk):
         self.mainloop()
 
         # Stop the managers
-        # self._gaze_mgr.stop().join()
+        # TODO: self._gaze_mgr.stop().join()
         self._state_mgr.stop().join
 
     def set_curr_panel(self, idx):
@@ -151,13 +151,15 @@ class HUD(tk.Tk):
 
             :param btn: (hud_panel.HUDButton)
         """
+        # TODO: Refactor into state mgr
+
         # Infer the correct handler to call
         payload_type_handler = {
             'keystroke': self._state_mgr.payload_keystroke_to_active_win,
             'key_toggle': self._state_mgr.payload_keyboard_toggle_modifer,
             'run_external': self._state_mgr.payload_run_external,
             # TODO: if payload_type = 'mouseclick_hold':
-        }.get(payload_type, -1)
+        }.get(payload_type, None)
 
         if not payload_type_handler:
             raise NotImplementedError(f'Payload type: {payload_type}')
@@ -475,93 +477,3 @@ class _HUDStateManager(object):
         # If there were build errors, quit
         if stderr and not stderr.decode().startswith('Created symlink'):
             warn(f'Cmd "{cmd}" stderr output: \n{stderr}')
-
-class _HUDGazeManager(object):
-    def __init__(self, keybd_click_vk):
-        """ Manages the gaze interactions, including mouse-click requests at
-            the gaze point initiated by the physical mouse/keybd.
-        """
-        self._keybd_click_vk = keybd_click_vk
-
-        # Multi-processing attributes
-        self._async_proc = None
-        self._async_signal_q = None
-
-    def _async_watcher(self, signal_queue):
-        """ The asynchronous physical keyboard watcher
-        """
-        # Init Mouse
-        # TODO: mouse = Mouse.Controller()
-
-        # Init XLib
-        disp = Xlib.display.Display()
-        root = disp.screen().root
-        root.change_attributes(event_mask=Xlib.X.KeyPressMask)
-        # root.grab_key(Xlib.X.AnyKey, 
-        #               Xlib.X.AnyModifier, 
-        #               1,
-        #               Xlib.X.GrabModeAsync, 
-        #               Xlib.X.GrabModeAsync)
-
-        while True:
-            # TODO: self._keybd_click_vk
-            try:
-                root.grab_key(
-                    Xlib.X.AnyKey, 
-                    Xlib.X.AnyModifier, 
-                    1,
-                    Xlib.X.GrabModeAsync, 
-                    Xlib.X.GrabModeAsync)
-            except Xlib.error.XError:
-                pass
-            else:
-                # Watch for mouse-click requests
-                event = root.display.next_event()
-                
-                # keycode = event.detail
-                if event.type == Xlib.X.KeyPress:
-                    print('caught')
-
-            # Check the signal queue for the quit signal
-            try:
-                signal = signal_queue.get_nowait()
-            except mp.queues.Empty:
-                pass  # No news is good news
-            else:
-                # Process stop signal, iff received
-                if signal == SIGNAL_STOP:
-                    break
-
-            # Wait for next event
-            disp.next_event()
-
-    def start(self) -> mp.Process:
-        """ Starts the async watcher.
-        """
-        # If async watcher already running
-        if self._async_proc is not None and self._async_proc.is_alive():
-            warn('HUD Gaze Manager already running.')
-
-        # Else, not running -- start it
-        else:
-            ctx = mp.get_context('fork')
-            self._async_signal_q = ctx.Queue(maxsize=1)
-            self._async_proc = ctx.Process(
-                target=self._async_watcher, args=(
-                    self._async_signal_q,))
-            self._async_proc.start()
-
-        return self._async_proc
-
-    def stop(self) -> mp.Process:
-        """ Stops the async watcher.
-        """
-        # Send kill signal to the asynch watcher proc
-        try:
-            self._async_signal_q.put_nowait(SIGNAL_STOP)
-        except AttributeError:
-            warn('Received STOP but HUD Gaze Manager not yet started.')
-        except mp.queues.Full:
-            pass
-
-        return self._async_proc
