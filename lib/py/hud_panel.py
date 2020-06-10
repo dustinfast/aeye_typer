@@ -53,6 +53,7 @@ class HUDPanel(ttk.Frame):
         """ Init's the panel's buttons from the given panel layout.
         """
         self._btn_row_frames = []
+        self._btn_objs = []
 
         for i, panel_row in enumerate(btn_layout):
             # Create the current row's frame
@@ -66,11 +67,11 @@ class HUDPanel(ttk.Frame):
 
                 # If btn is a spacer, create a hidden dud btn
                 if btn.text == BTN_SPACER_TEXT:
-                    ttk.Button(
+                    btn.obj = ttk.Button(
                         parent_row_frame,
                         width=btn_disp_width,
-                        style=BTN_STYLE_SPACER
-                    ).grid(row=0, column=j, ipady=4, ipadx=0)
+                        style=BTN_STYLE_SPACER)
+                    btn.obj.grid(row=0, column=j, ipady=4, ipadx=0)
             
                 # Else create a clickable btn
                 else:
@@ -83,6 +84,39 @@ class HUDPanel(ttk.Frame):
                     btn.obj.configure(command=lambda btn=btn: \
                         self.hud.handle_payload(
                             btn.obj, btn.payload, btn.payload_type))
+
+                self._btn_objs.append(btn)
+
+    @property
+    def buttons(self):
+        """ Returns a list of the panel button widgets.
+        """
+
+    def set_btn_text(self, use_alt_text=False):
+        """ Sets each button on the panel to use either its alternate or
+            actual display text.
+        """
+        # 1D list idx in the 2D iteration below
+        obj_idx = -1
+
+        for row in self._btn_row_frames:
+            for btn_widg in row.winfo_children():
+                obj_idx += 1
+
+                # Skip spacers -- they shouldn't be updated
+                if btn_widg['style'] == BTN_STYLE_SPACER:
+                    continue
+
+                # Set alt text iff specified
+                if use_alt_text:
+                    btn_widg.configure(
+                        text=self._btn_objs[obj_idx].alternate_text)
+
+                # Else set actual text
+                else:
+                    btn_widg.configure(
+                        text=self._btn_objs[obj_idx].text)
+
 
 class HUDButton(object):
     def __init__(self, obj=None, text=None, alt_text=None, width=1,

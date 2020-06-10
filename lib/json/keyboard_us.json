@@ -402,18 +402,11 @@
 
     [
         {
-            "text": "_spacer_",
-            "width": 3,
-            "is_toggle": false,
-            "payload": 98,
-            "payload_type": "keystroke"
-        },
-        {
-            "text": "_spacer_",
-            "width": 1,
-            "is_toggle": false,
-            "payload": 98,
-            "payload_type": "keystroke"
+            "text": "CapsLck",
+            "width": 4,
+            "is_toggle": true,
+            "payload": 65509,
+            "payload_type": "key_toggle"
         },
         {
             "text": "a",

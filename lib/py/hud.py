@@ -97,7 +97,7 @@ class HUD(tk.Tk):
         if self._sticky:
             self.update_idletasks()
             self.update()
-            self._state_mgr.set_sticky_byname(HUD_DISP_TITLE)
+            self._state_mgr.set_hud_sticky()
 
         # Start the blocking main loop
         self.mainloop()
@@ -122,17 +122,15 @@ class HUD(tk.Tk):
                                          x=self._host_frame.winfo_rootx(),
                                          y=self._host_frame.winfo_rooty())
 
-    def set_btn_vis_toggle_on(self, btn):
+    def set_btn_viz_toggle(self, btn, toggle_on=False):
         """ Sets a btn as toggled on, visually.
         """
-        btn.configure(style=BTN_STYLE_TOGGLE_ON)
+        if toggle_on:
+            btn.configure(style=BTN_STYLE_TOGGLE_ON)
+        else:
+            btn.configure(style=BTN_STYLE_TOGGLE)
 
-    def set_btn_vis_toggle_off(self, btn):
-        """ Sets a btn as toggled off, visually.
-        """
-        btn.configure(style=BTN_STYLE_TOGGLE)
-
-    def handle_payload(self, btn, payload=None, payload_type=''):
+    def handle_payload(self, btn, payload=None, payload_type=None):
         """ Fires the requested action, inferred from the payload type ID.
 
             :param btn: (hud_panel.HUDButton)
@@ -141,14 +139,14 @@ class HUD(tk.Tk):
         # TODO: Abstract the func map
         payload_type_handler = {
             'keystroke': self._state_mgr.payload_to_active_win,
-            'key_toggle': self._state_mgr.payload_keyboard_toggle_state,
+            'key_toggle': self._state_mgr.payload_keyboard_toggle_modifer,
             'run_external': self._state_mgr.payload_run_external,
             # TODO: if payload_type = 'mouseclick_hold':
             # TODO: if payload_type = 'panel_select':
         }.get(payload_type, -1)
 
         if not payload_type_handler:
-            raise NotImplementedError
+            raise NotImplementedError(f'Payload type: {payload_type}')
 
         # Call the handler
         payload_type_handler(btn=btn, 
@@ -237,7 +235,7 @@ class _HUDStateManager(object):
                 elif signal == self.SIGNAL_REQUEST_PREV_ACTIVE_WINDOW:
                     output_queue.put_nowait(prev_active_window_id)
 
-    def _return_focus(self):
+    def _focus_prev_active_win(self):
         """ Sets the previously active window to be the active window.
             Intended to be used when the HUD takes focus via a HUD btn click
             and we want to return focus to the window the HUD stole focus from.
@@ -282,19 +280,24 @@ class _HUDStateManager(object):
         except mp.queues.Full:
             pass
 
-    def set_sticky_byname(self, name):
-        """ Applies the sticky attribute to the window having the given name.
-            If more than one window having that name is found, the attribute
-            is applied to only the top-most window of that name.
-            ASSUMES: Window was open before this class was instantantiated.
+    def set_hud_sticky(self):
+        """ Applies the "show on all workspaces" attribute to the HUD window.
+            If more than one HUD window having that name is found, the
+            attribute is applied to the top-most HUD window only.
+            ASSUMES: HUD window opened before this class was instantantiated.
         """
         # Use wnck to get the window by name and apply the attribute
-        # TODO: Re-implement with Xlib
         screen = Wnck.Screen.get_default()
         screen.force_update()
 
-        ws = [w for w in screen.get_windows() if w.get_name() == name]
-        ws[0].stick() if ws else None
+        ws = [w for w in screen.get_windows() if w.get_name() == HUD_DISP_TITLE]
+        
+        if ws:
+            ws[0].stick()
+        else:
+            raise Exception(f'Set sticky failed for hud: {HUD_DISP_TITLE}')
+
+        del screen
 
     def get_win_name(self, window):
         """ Returns the window name of the given window.
@@ -316,66 +319,82 @@ class _HUDStateManager(object):
             :param kwargs: Arg 'payload' is expected.
 
         """
-        # Return focus to previously active window
-        self._return_focus()
+        self._focus_prev_active_win()
 
         # Extract kwarg
-        payload = kwargs['payload']
+        payload = kwargs['payload']     # (str)
 
         # Convert the payload to a KeyCode obj
         payload = self._keyboard._KeyCode.from_vk(payload)
         self._keyboard.press(payload)
         self._keyboard.release(payload)
 
-    def payload_keyboard_toggle_state(self, **kwargs):
+    def payload_keyboard_toggle_modifer(self, **kwargs):
         """ Updates the keyboard controller to reflect the given toggle key
             press. E.g. To toggle shift key on/off. In the process, focus is
             returned to the previously focused window.
 
             :param kwargs: Args 'btn' and 'payload' are expected.
         """
-        # Return focus to previously active window
-        self._return_focus()
+        self._focus_prev_active_win()
+
+        # Convenience defs
+        vk_capslock = 65509
+        vk_numlock = 65407
         
         # Extract kwargs
-        payload = kwargs['payload']
-        btn_sentfrom = kwargs['btn']
+        payload = kwargs['payload']     # (int) Key vk code
+        btn_sentfrom = kwargs['btn']    # (HUDPanel.HUDButton) Payload sender
 
-        # Convert the payload to a KeyCode obj
-        payload = self._keyboard._KeyCode.from_vk(payload)
+        # Ensure modifier is supported
+        if payload == vk_numlock:
+            raise NotImplementedError('NumLock')
+
+        # Convert payload to KeyCode and denote capslock status
+        keycode = self._keyboard._KeyCode.from_vk(payload)
         
-        # Ensure payload does not represent an unsupported key
-        if payload.vk == 65509:
-            raise NotImplementedError('Caps Lock')
-        elif payload.vk == 65407:
-            raise NotImplementedError('Num Lock')
+        # If payload is for capslock, handle as a single-click modifier
+        if payload == vk_capslock:
+            self._keyboard.press(keycode)
+            self._keyboard.release(keycode)
+            self.hud.set_btn_viz_toggle(
+                btn_sentfrom, toggle_on=self._keyboard._caps_lock)
 
-        with self._keyboard.modifiers as modifiers:
-            modifier = self._keyboard._as_modifier(payload)
-            
-            # If btn not previously in the down state, toggle it down
-            if modifier not in [m for m in modifiers]:
-                self._keyboard.press(payload)
-                self.hud.set_btn_vis_toggle_on(btn_sentfrom)
-            
-            # else, toggle it up
-            else:
-                self._keyboard.release(payload)
-                self.hud.set_btn_vis_toggle_off(btn_sentfrom)
+        # Else, handle press/releases modifier (ex: alt, shift, etc.)
+        else:
+            with self._keyboard.modifiers as modifiers:
+                modifier = self._keyboard._as_modifier(keycode)
+
+                if not modifier:
+                    raise ValueError(f'Unsupported modifier: {keycode}')
+
+                # If btn not previously in the down state, toggle it down
+                if modifier not in [m for m in modifiers]:
+                    self._keyboard.press(keycode)
+                    self.hud.set_btn_viz_toggle(btn_sentfrom, toggle_on=True)
+
+                    # If modifer is shift key, show alternate btn texts
+                    self.hud._panel.set_btn_text(use_alt_text=True)
+                
+                # else, toggle it up
+                else:
+                    self._keyboard.release(keycode)
+                    self.hud.set_btn_viz_toggle(btn_sentfrom, toggle_on=False)
+
+                    # If modifer is shift key, revert to actual btn texts
+                    self.hud._panel.set_btn_text(use_alt_text=False)
 
             # TODO: Ensure graceful handle of alt + tab, etc.
-            # TODO: On shift, show alt_text
 
     def payload_run_external(self, **kwargs):
         """ Runs the external cmd given by the payload.
 
             :param kwargs: Arg 'payload' is expected.
         """
-        # Return focus to previously active window
-        self._return_focus()
+        self._focus_prev_active_win()
 
         # Extract kwarg
-        payload = kwargs['payload']
+        payload = kwargs['payload']     # (str) Well-formatted python list
 
         # Ensure cmd given as a list of the cmd and its args
         cmd = eval(payload)
