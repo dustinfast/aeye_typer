@@ -138,7 +138,7 @@ class HUD(tk.Tk):
         # Infer the correct handler to call
         # TODO: Abstract the func map
         payload_type_handler = {
-            'keystroke': self._state_mgr.payload_to_active_win,
+            'keystroke': self._state_mgr.payload_keystroke_to_active_win,
             'key_toggle': self._state_mgr.payload_keyboard_toggle_modifer,
             'run_external': self._state_mgr.payload_run_external,
             # TODO: if payload_type = 'mouseclick_hold':
@@ -173,6 +173,7 @@ class _HUDStateManager(object):
         self._net_wm_name = self._disp.intern_atom('_NET_WM_NAME')
 
         # Init keyboard/mouse controllers
+        self._keyboard_active_modifier_btns = []
         self._keyboard = keyboard.Controller()
         self._mouse = mouse.Controller()
 
@@ -180,6 +181,35 @@ class _HUDStateManager(object):
         self._async_proc = None
         self._async_signal_q = None
         self._async_output_q = None
+
+    @property
+    def active_window(self):
+        """ Returns an Xlib.Window obj for the currently active window.
+        """
+        # Request currently active window ID from async queue
+        try:
+            self._async_signal_q.put_nowait(self.SIGNAL_REQUEST_ACTIVE_WINDOW)
+        except AttributeError:
+            warn('Requested win state but Win State Watcher not yet started.')
+
+        # Receive ID from asyc queue and return its derived window obj
+        window_id = self._async_output_q.get()
+        return self._disp.create_resource_object('window', window_id)
+
+    @property
+    def prev_active_window(self):
+        """ Returns an Xlib.Window obj for the previously active window.
+        """
+        # Request prev active window ID from async queue
+        try:
+            self._async_signal_q.put_nowait(
+                self.SIGNAL_REQUEST_PREV_ACTIVE_WINDOW)
+        except AttributeError:
+            warn('Requested win state but Win State Watcher not yet started.')
+
+        # Receive ID from asyc queue and return its derived window obj
+        window_id = self._async_output_q.get()
+        return self._disp.create_resource_object('window', window_id)
 
     def _async_winstate_watcher(self, signal_queue, output_queue):
         """ The asynchronous window state watcher.
@@ -244,6 +274,26 @@ class _HUDStateManager(object):
         w = self.prev_active_window
         self.set_active_window(w)
 
+    def _reset_keyb_modifers(self, toggle_btnviz=True):
+        """ Resets all active keyboard modifiers, such as alt, shift, etc.,
+            but NOT capslock or numlock.
+
+            :param toggle_btnviz: (bool) Denotes active toggle button visual
+            states are also reset.
+        """
+        # Clear all modifiers
+        with self._keyboard.modifiers as modifiers:
+            for m in modifiers:
+                self._keyboard.release(m)
+
+        # Toggle-off all active modifier btns and alternate btn texts 
+        if toggle_btnviz:
+            for b in self._keyboard_active_modifier_btns:
+                self.hud.set_btn_viz_toggle(b)
+
+            self._keyboard_active_modifier_btns = []
+            self.hud._panel.set_btn_text(use_alt_text=False)
+
     def start_statewatcher(self) -> mp.Process:
         """ Starts the async window-focus watcher.
         """
@@ -268,9 +318,7 @@ class _HUDStateManager(object):
         """ Stops the async state watcher and does cleanup.
         """
         # Unset any keybd modifier toggles the user may have set
-        with self._keyboard.modifiers as modifiers:
-            for m in modifiers:
-                self._keyboard.release(m)
+        self._reset_keyb_modifers(toggle_btnviz=False)
 
         # Send kill signal to the asynch watcher proc
         try:
@@ -311,23 +359,26 @@ class _HUDStateManager(object):
         window.configure(stack_mode=Xlib.X.Above)
         self._disp.sync()
 
-    def payload_to_active_win(self, **kwargs):
+    def payload_keystroke_to_active_win(self, **kwargs):
         """ Sends the given payload to the previously active (very recently
             the actually-active, but we just stole its focus by clicking a HUD
-            button) window. In the process, focus is restored to that window.
+            button) window. In the process, focus is restored to that window
+            and any keyboard modifiers are unset.
 
             :param kwargs: Arg 'payload' is expected.
-
         """
         self._focus_prev_active_win()
 
         # Extract kwarg
         payload = kwargs['payload']     # (str)
 
-        # Convert the payload to a KeyCode obj
+        # Convert the payload to a KeyCode obj, then do keypress
         payload = self._keyboard._KeyCode.from_vk(payload)
         self._keyboard.press(payload)
         self._keyboard.release(payload)
+
+        # Clear any modifers (ex: alt, shift, etc.)
+        self._reset_keyb_modifers()
 
     def payload_keyboard_toggle_modifer(self, **kwargs):
         """ Updates the keyboard controller to reflect the given toggle key
@@ -341,6 +392,7 @@ class _HUDStateManager(object):
         # Convenience defs
         vk_capslock = 65509
         vk_numlock = 65407
+        vk_scrolllock = 65300
         
         # Extract kwargs
         payload = kwargs['payload']     # (int) Key vk code
@@ -349,6 +401,8 @@ class _HUDStateManager(object):
         # Ensure modifier is supported
         if payload == vk_numlock:
             raise NotImplementedError('NumLock')
+        elif payload == vk_scrolllock:
+            raise NotImplementedError('ScrollLock')
 
         # Convert payload to KeyCode and denote capslock status
         keycode = self._keyboard._KeyCode.from_vk(payload)
@@ -371,6 +425,7 @@ class _HUDStateManager(object):
                 # If btn not previously in the down state, toggle it down
                 if modifier not in [m for m in modifiers]:
                     self._keyboard.press(keycode)
+                    self._keyboard_active_modifier_btns.append(btn_sentfrom)
                     self.hud.set_btn_viz_toggle(btn_sentfrom, toggle_on=True)
 
                     # If modifer is shift key, show alternate btn texts
@@ -379,10 +434,13 @@ class _HUDStateManager(object):
                 # else, toggle it up
                 else:
                     self._keyboard.release(keycode)
+                    self._keyboard_active_modifier_btns.remove(btn_sentfrom)
                     self.hud.set_btn_viz_toggle(btn_sentfrom, toggle_on=False)
+
 
                     # If modifer is shift key, revert to actual btn texts
                     self.hud._panel.set_btn_text(use_alt_text=False)
+
 
             # TODO: Ensure graceful handle of alt + tab, etc.
 
@@ -409,32 +467,3 @@ class _HUDStateManager(object):
         # If there were build errors, quit
         if stderr and not stderr.decode().startswith('Created symlink'):
             warn(f'Cmd "{cmd}" stderr output: \n{stderr}')
-
-    @property
-    def active_window(self):
-        """ Returns an Xlib.Window obj for the currently active window.
-        """
-        # Request currently active window ID from async queue
-        try:
-            self._async_signal_q.put_nowait(self.SIGNAL_REQUEST_ACTIVE_WINDOW)
-        except AttributeError:
-            warn('Requested win state but Win State Watcher not yet started.')
-
-        # Receive ID from asyc queue and return its derived window obj
-        window_id = self._async_output_q.get()
-        return self._disp.create_resource_object('window', window_id)
-
-    @property
-    def prev_active_window(self):
-        """ Returns an Xlib.Window obj for the previously active window.
-        """
-        # Request prev active window ID from async queue
-        try:
-            self._async_signal_q.put_nowait(
-                self.SIGNAL_REQUEST_PREV_ACTIVE_WINDOW)
-        except AttributeError:
-            warn('Requested win state but Win State Watcher not yet started.')
-
-        # Receive ID from asyc queue and return its derived window obj
-        window_id = self._async_output_q.get()
-        return self._disp.create_resource_object('window', window_id)
