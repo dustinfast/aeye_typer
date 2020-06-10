@@ -136,13 +136,11 @@ class HUD(tk.Tk):
             :param btn: (hud_panel.HUDButton)
         """
         # Infer the correct handler to call
-        # TODO: Abstract the func map
         payload_type_handler = {
             'keystroke': self._state_mgr.payload_keystroke_to_active_win,
             'key_toggle': self._state_mgr.payload_keyboard_toggle_modifer,
             'run_external': self._state_mgr.payload_run_external,
             # TODO: if payload_type = 'mouseclick_hold':
-            # TODO: if payload_type = 'panel_select':
         }.get(payload_type, -1)
 
         if not payload_type_handler:

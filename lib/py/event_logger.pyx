@@ -416,7 +416,7 @@ class AsyncGazeEventLogger(EventLogger):
                 info(f'Wrote gaze log sz {s}to {path}')
 
         # Start the eyetrackers asynchronous data stream
-        self.eyetracker.open()  # TODO: Necessary?
+        self.eyetracker.open()
         self.eyetracker.start()
         signal = None
 
