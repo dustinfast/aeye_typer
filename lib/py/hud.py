@@ -440,8 +440,14 @@ class _HUDStateManager(object):
                 # else, send key release
                 else:
                     toggle_down = False
-                    self._keyboard.release(keycode)
-                    self._keyboard_active_modifier_btns.remove(sender)
+                    try:
+                        self._keyboard_active_modifier_btns.remove(sender)
+                    except ValueError:
+                        # Will occur if, say, l_shift set but r_shift clicked
+                        warn('Attempted to unset a modifier that was not set.')
+                        return
+                    else:
+                        self._keyboard.release(keycode)
 
                 # Update btn state according to new toggle state
                 self.hud.set_btn_viz_toggle(sender, toggle_on=toggle_down)

@@ -583,7 +583,7 @@
             "text": "Shift",
             "width": 7,
             "is_toggle": true,
-            "payload": 65506,
+            "payload": 65505,
             "payload_type": "key_toggle"
         },
         {
@@ -641,7 +641,7 @@
             "text": "Alt",
             "width": 4,
             "is_toggle": true,
-            "payload": 65514,
+            "payload": 65513,
             "payload_type": "key_toggle"
         },
         {
@@ -662,7 +662,7 @@
             "text": "Ctrl",
             "width": 4,
             "is_toggle": true,
-            "payload": 65508,
+            "payload": 65507,
             "payload_type": "key_toggle"
         },
         {
