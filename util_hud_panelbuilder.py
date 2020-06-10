@@ -1,8 +1,7 @@
 #! /usr/bin/env python
-""" A module for building a HUD panel layout via keyboard strokes and writing
-    the result to JSON. Note that the layout produced contains buttons having
-    default names/functionality, therefore the user may wish to tweak the
-    resulting JSON.
+""" A utility for building a HUD panel layout file (JSON) via keyboard strokes.
+    The layout produced contains buttons having default names/functionality,
+    therefore the user may wish to tweak the resulting JSON.
 """
 
 __author__ = 'Dustin Fast <dustin.fast@outlook.com>'
@@ -36,10 +35,9 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # Welcome msg
-    print('First, click outside of this terminal window, then press the ' +
-          'desired keys from left to right, top to bottom. To start a new' +
-          'row, press ESC. When done, press ESC twice.\n')
-    print('If a toggle key is pressed (ex: numlock), press it twice if ' +
+    print('Press the desired keys from left to right, top to bottom. ' +
+          'To start a new row, press ESC. When done, press ESC twice.\n\n' +
+          'If a toggle key is pressed (ex: capslock), press it twice if ' +
           'the toggle is not a desired effect.\n')
 
     # Btn-mapping containers
@@ -91,15 +89,13 @@ if __name__ == '__main__':
 
     # Map buttons from keystrokes until ESC pressed
     with keyboard.Listener(on_press=on_press) as listener:
-        listener.join()
-
-    # Buttons have now been recorded and we're no longer recording keystrokes...
+        listener.join()  # Stop listening/mapping btns
 
     # Write resulting layout to json, prompting to overwrite iff exists
     outfile = Path(OUTPUT_DIR, f'{args.panel_name}.{OUTPUT_EXT}')
 
     if outfile.exists():
-        warn(f'File already exists: {outfile}')   # debug
+        warn(f'File already exists: {outfile}')
 
         if input('Overwrite [y|N]? ') !='y':
             print('Done. Results not written.')
@@ -110,7 +106,6 @@ if __name__ == '__main__':
                   indent=4,
                   default=json_helper,
                   separators=(',', ': '))
-
     
     print(f'Done. Wrote results to {outfile}.')
 
