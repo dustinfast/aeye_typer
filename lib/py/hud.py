@@ -267,10 +267,15 @@ class _HUDStateManager(object):
         return self._async_proc
 
     def stop_statewatcher(self) -> None:
-        """ Sends the kill signal to the async watcher.
+        """ Stops the async state watcher and does cleanup.
         """
+        # Unset any keybd modifier toggles the user may have set
+        with self._keyboard.modifiers as modifiers:
+            for m in modifiers:
+                self._keyboard.release(m)
+
+        # Send kill signal to the asynch watcher proc
         try:
-            # TODO: Unset all keybd modifier toggles
             self._async_signal_q.put_nowait(self.SIGNAL_STOP)
         except AttributeError:
             warn('Received STOP but Win State Watcher not yet started.')

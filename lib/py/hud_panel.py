@@ -58,7 +58,7 @@ class HUDPanel(ttk.Frame):
             # Create the current row's frame
             self._btn_row_frames.append(ttk.Frame(self))
             parent_row_frame = self._btn_row_frames[i]
-            parent_row_frame.grid(row=i, sticky = tk.NW)
+            parent_row_frame.grid(row=i, sticky=tk.NW)
 
             # Add each button for curr row to its frame
             for j, btn in enumerate(panel_row):
