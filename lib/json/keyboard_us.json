@@ -617,11 +617,11 @@
             "payload_type": "key_toggle"
         },
         {
-            "text": "Sup",
+            "text": "Hold",
             "width": 2,
-            "is_toggle": false,
+            "is_toggle": true,
             "payload": 65515,
-            "payload_type": "keystroke"
+            "payload_type": "key_toggle"
         },
         {
             "text": "Alt",
@@ -645,10 +645,10 @@
             "payload_type": "key_toggle"
         },
         {
-            "text": "_spacer_",
+            "text": "Sup",
             "width": 3,
             "is_toggle": false,
-            "payload": 98,
+            "payload": 65516,
             "payload_type": "keystroke"
         },
         {

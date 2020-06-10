@@ -88,34 +88,34 @@ class HUDPanel(ttk.Frame):
                 self._btn_objs.append(btn)
 
     @property
-    def buttons(self):
+    def button_widgets(self):
         """ Returns a list of the panel button widgets.
         """
+        widgets = []
+        for row in self._btn_row_frames:
+            for btn_widg in row.winfo_children():
+                widgets.append(btn_widg)
+
+        return widgets
 
     def set_btn_text(self, use_alt_text=False):
         """ Sets each button on the panel to use either its alternate or
-            actual display text.
+            actual display text. Note that this is not thread-safe.
         """
-        # 1D list idx in the 2D iteration below
-        obj_idx = -1
+        for i, btn_widg in enumerate(self.button_widgets):
+            # Skip spacers -- they shouldn't be updated
+            if btn_widg['style'] == BTN_STYLE_SPACER:
+                continue
 
-        for row in self._btn_row_frames:
-            for btn_widg in row.winfo_children():
-                obj_idx += 1
+            # Set alt text iff specified
+            if use_alt_text:
+                btn_widg.configure(
+                    text=self._btn_objs[i].alternate_text)
 
-                # Skip spacers -- they shouldn't be updated
-                if btn_widg['style'] == BTN_STYLE_SPACER:
-                    continue
-
-                # Set alt text iff specified
-                if use_alt_text:
-                    btn_widg.configure(
-                        text=self._btn_objs[obj_idx].alternate_text)
-
-                # Else set actual text
-                else:
-                    btn_widg.configure(
-                        text=self._btn_objs[obj_idx].text)
+            # Else set actual text
+            else:
+                btn_widg.configure(
+                    text=self._btn_objs[i].text)
 
 
 class HUDButton(object):

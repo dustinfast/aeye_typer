@@ -172,10 +172,12 @@ class _HUDStateManager(object):
         self._root.change_attributes(event_mask=Xlib.X.FocusChangeMask)
         self._net_wm_name = self._disp.intern_atom('_NET_WM_NAME')
 
-        # Init keyboard/mouse controllers
-        self._keyboard_active_modifier_btns = []
-        self._keyboard = keyboard.Controller()
+        # Init keyboard/mouse controllers and containers
+        # TODO: Refactor into HUDKeyboardManager
         self._mouse = mouse.Controller()
+        self._keyboard = keyboard.Controller()
+        self._keyboard_active_modifier_btns = []
+        self._keyboard_hold_modifiers = False
 
         # Multi-processing attributes
         self._async_proc = None
@@ -377,8 +379,9 @@ class _HUDStateManager(object):
         self._keyboard.press(payload)
         self._keyboard.release(payload)
 
-        # Clear any modifers (ex: alt, shift, etc.)
-        self._reset_keyb_modifers()
+        # Clear any modifers (ex: alt, shift, etc.) iff not hold set
+        if not self._keyboard_hold_modifiers:
+            self._reset_keyb_modifers()
 
     def payload_keyboard_toggle_modifer(self, **kwargs):
         """ Updates the keyboard controller to reflect the given toggle key
@@ -393,10 +396,11 @@ class _HUDStateManager(object):
         vk_capslock = 65509
         vk_numlock = 65407
         vk_scrolllock = 65300
+        vk_hold_mods = 65515
         
         # Extract kwargs
         payload = kwargs['payload']     # (int) Key vk code
-        btn_sentfrom = kwargs['btn']    # (HUDPanel.HUDButton) Payload sender
+        sender = kwargs['btn']    # (HUDPanel.HUDButton) Payload sender
 
         # Ensure modifier is supported
         if payload == vk_numlock:
@@ -412,8 +416,15 @@ class _HUDStateManager(object):
             self._keyboard.press(keycode)
             self._keyboard.release(keycode)
             self.hud.set_btn_viz_toggle(
-                btn_sentfrom, toggle_on=self._keyboard._caps_lock)
+                sender, toggle_on=self._keyboard._caps_lock)
 
+        # Else, if payload is the hold-modifer btn
+        elif payload == vk_hold_mods:
+            toggle_down = not self._keyboard_hold_modifiers
+            self._keyboard_hold_modifiers = toggle_down
+            self.hud.set_btn_viz_toggle(sender, toggle_on=toggle_down)
+            self._reset_keyb_modifers() if not toggle_down else None
+            
         # Else, handle press/releases modifier (ex: alt, shift, etc.)
         else:
             with self._keyboard.modifiers as modifiers:
@@ -422,24 +433,22 @@ class _HUDStateManager(object):
                 if not modifier:
                     raise ValueError(f'Unsupported modifier: {keycode}')
 
-                # If btn not previously in the down state, toggle it down
+                # If btn not previously in the down state, send keypress
                 if modifier not in [m for m in modifiers]:
+                    toggle_down = True
                     self._keyboard.press(keycode)
-                    self._keyboard_active_modifier_btns.append(btn_sentfrom)
-                    self.hud.set_btn_viz_toggle(btn_sentfrom, toggle_on=True)
+                    self._keyboard_active_modifier_btns.append(sender)
 
-                    # If modifer is shift key, show alternate btn texts
-                    self.hud._panel.set_btn_text(use_alt_text=True)
-                
-                # else, toggle it up
+                # else, send key release
                 else:
+                    toggle_down = False
                     self._keyboard.release(keycode)
-                    self._keyboard_active_modifier_btns.remove(btn_sentfrom)
-                    self.hud.set_btn_viz_toggle(btn_sentfrom, toggle_on=False)
+                    self._keyboard_active_modifier_btns.remove(sender)
 
-
-                    # If modifer is shift key, revert to actual btn texts
-                    self.hud._panel.set_btn_text(use_alt_text=False)
+                # Update btn state according to new toggle state
+                self.hud.set_btn_viz_toggle(sender, toggle_on=toggle_down)
+                if modifier == self._keyboard._Key.shift:
+                    self.hud._panel.set_btn_text(use_alt_text=toggle_down)
 
 
             # TODO: Ensure graceful handle of alt + tab, etc.
