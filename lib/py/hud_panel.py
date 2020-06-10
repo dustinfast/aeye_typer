@@ -100,3 +100,8 @@ class HUDButton(object):
     @classmethod
     def from_kwargs(cls, kwargs):
         return cls(**kwargs)
+
+    @property
+    def alternate_text(self):
+        return self.alt_text if self.alt_text else self.text
+            
