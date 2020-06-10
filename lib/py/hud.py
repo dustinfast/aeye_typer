@@ -347,11 +347,6 @@ class _HUDStateManager(object):
 
         del screen
 
-    def get_win_name(self, window):
-        """ Returns the window name of the given window.
-        """
-        return window.get_full_property(self._net_wm_name, 0).value
-
     def set_active_window(self, window):
         """ Gives focus to the given window.
         """
