@@ -473,6 +473,7 @@
         },
         {
             "text": ";",
+            "alt_text": ":",
             "width": 3,
             "is_toggle": false,
             "payload": 59,
@@ -480,6 +481,7 @@
         },
         {
             "text": "\"",
+            "alt_text": "'",
             "width": 3,
             "is_toggle": false,
             "payload": 39,
@@ -553,6 +555,7 @@
         },
         {
             "text": ",",
+            "alt_text": "<",
             "width": 3,
             "is_toggle": false,
             "payload": 44,
@@ -560,6 +563,7 @@
         },
         {
             "text": ".",
+            "alt_text": ">",
             "width": 3,
             "is_toggle": false,
             "payload": 46,
@@ -567,6 +571,7 @@
         },
         {
             "text": "/",
+            "alt_text": "?",
             "width": 3,
             "is_toggle": false,
             "payload": 47,

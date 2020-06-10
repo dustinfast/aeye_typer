@@ -4,7 +4,7 @@
 
 __author__ = 'Dustin Fast <dustin.fast@outlook.com>'
 
-
+import time
 import multiprocessing as mp
 from collections import namedtuple
 from subprocess import Popen, PIPE
@@ -50,10 +50,11 @@ VK_SCROLLLOCK = 65300
 VK_MODLOCK = 65515
 VK_CLICKREQ = 65516
 
-# Multiproccessing queue signals
+# Multiproccessing attribites
 SIGNAL_STOP = -1
 SIGNAL_REQUEST_ACTIVE_WINDOW = 0
 SIGNAL_REQUEST_PREV_ACTIVE_WINDOW = 1
+ASYNC_STIME = .005
 
 
 class HUD(tk.Tk):
@@ -226,7 +227,7 @@ class _HUDStateManager(object):
         disp = Xlib.display.Display()
         root = disp.screen().root
         root.change_attributes(event_mask=Xlib.X.FocusChangeMask)
-        net_active_window = disp.intern_atom('_NET_ACTIVE_WINDOW')
+        prop_atom = disp.intern_atom('_NET_ACTIVE_WINDOW')
 
         # Window states we'll track
         active_window_id = None
@@ -234,23 +235,19 @@ class _HUDStateManager(object):
         
         while True:
             # Watch for window state changes to track the curr/prev focus
-            try:
-                window_id = root.get_full_property(
-                    net_active_window, Xlib.X.AnyPropertyType).value[0]
+            window_id = root.get_full_property(
+                prop_atom, Xlib.X.AnyPropertyType).value[0]
+            
+            if window_id:
                 window = disp.create_resource_object('window', window_id)
                 window.change_attributes(event_mask=Xlib.X.PropertyChangeMask)
-            # TODO: Handle X protocol Error
-            except Xlib.error.XError:
-                window_id = None
-            
-            # Denote currently/previously active windows
-            if not window_id:
-                pass
-            elif not active_window_id:
-                active_window_id = window_id
-            elif window_id != active_window_id:
-                prev_active_window_id = active_window_id
-                active_window_id = window_id
+                
+                # Denote the currently/previously active windows
+                if not active_window_id:
+                    active_window_id = window_id
+                elif window_id != active_window_id:
+                    prev_active_window_id = active_window_id
+                    active_window_id = window_id
 
             # Check the signal queue for any signals to process. It is assumed
             # that for a signal other than STOP to be enqued a state change
@@ -258,7 +255,7 @@ class _HUDStateManager(object):
             try:
                 signal = signal_queue.get_nowait()
             except mp.queues.Empty:
-                pass  # No news is good news
+                time.sleep(ASYNC_STIME)
             else:
                 # Process stop signal, iff received
                 if signal == SIGNAL_STOP:
@@ -479,3 +476,92 @@ class _HUDStateManager(object):
         if stderr and not stderr.decode().startswith('Created symlink'):
             warn(f'Cmd "{cmd}" stderr output: \n{stderr}')
 
+class _HUDGazeManager(object):
+    def __init__(self, keybd_click_vk):
+        """ Manages the gaze interactions, including mouse-click requests at
+            the gaze point initiated by the physical mouse/keybd.
+        """
+        self._keybd_click_vk = keybd_click_vk
+
+        # Multi-processing attributes
+        self._async_proc = None
+        self._async_signal_q = None
+
+    def _async_watcher(self, signal_queue):
+        """ The asynchronous physical keyboard watcher
+        """
+        # Init Mouse
+        # TODO: mouse = Mouse.Controller()
+
+        # Init XLib
+        disp = Xlib.display.Display()
+        root = disp.screen().root
+        root.change_attributes(event_mask=Xlib.X.KeyPressMask)
+        # root.grab_key(Xlib.X.AnyKey, 
+        #               Xlib.X.AnyModifier, 
+        #               1,
+        #               Xlib.X.GrabModeAsync, 
+        #               Xlib.X.GrabModeAsync)
+
+        while True:
+            # TODO: self._keybd_click_vk
+            try:
+                root.grab_key(
+                    Xlib.X.AnyKey, 
+                    Xlib.X.AnyModifier, 
+                    1,
+                    Xlib.X.GrabModeAsync, 
+                    Xlib.X.GrabModeAsync)
+            except Xlib.error.XError:
+                pass
+            else:
+                # Watch for mouse-click requests
+                event = root.display.next_event()
+                
+                # keycode = event.detail
+                if event.type == Xlib.X.KeyPress:
+                    print('caught')
+
+            # Check the signal queue for the quit signal
+            try:
+                signal = signal_queue.get_nowait()
+            except mp.queues.Empty:
+                pass  # No news is good news
+            else:
+                # Process stop signal, iff received
+                if signal == SIGNAL_STOP:
+                    break
+
+            # Wait for next event
+            disp.next_event()
+
+    def start(self) -> mp.Process:
+        """ Starts the async watcher.
+        """
+        # If async watcher already running
+        if self._async_proc is not None and self._async_proc.is_alive():
+            warn('HUD Gaze Manager already running.')
+
+        # Else, not running -- start it
+        else:
+            ctx = mp.get_context('fork')
+            self._async_signal_q = ctx.Queue(maxsize=1)
+            self._async_proc = ctx.Process(
+                target=self._async_watcher, args=(
+                    self._async_signal_q,))
+            self._async_proc.start()
+
+        return self._async_proc
+
+    def stop(self) -> mp.Process:
+        """ Stops the async watcher.
+        """
+        # Send kill signal to the asynch watcher proc
+        try:
+            self._async_signal_q.put_nowait(SIGNAL_STOP)
+        except AttributeError:
+            warn('Received STOP but HUD Gaze Manager not yet started.')
+        except mp.queues.Full:
+            pass
+
+        return self._async_proc
