@@ -1,4 +1,4 @@
-""" Button layout handlers for the on-screen display.
+""" Abstractions for the HUD panel and panel-button elements.
 """
 
 __author__ = 'Dustin Fast <dustin.fast@outlook.com>'
@@ -15,6 +15,7 @@ _conf = config()
 HUD_BTN_WIDTH = _conf['HUD_BTN_WIDTH']
 del _conf
 
+# HUD styles
 BTN_STYLE = 'PanelButton.TButton'
 BTN_STYLE_SPACER = 'Spacer.PanelButton.TButton'
 BTN_STYLE_TOGGLE = 'PanelButtonToggle.TButton'

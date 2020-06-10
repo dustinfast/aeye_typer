@@ -13,7 +13,8 @@ import Xlib.threaded
 import Xlib.display
 import tkinter as tk
 from tkinter import ttk, FLAT, DISABLED, SUNKEN, ACTIVE
-from pynput import keyboard, mouse
+from pynput import keyboard as Keyboard
+from pynput import mouse as Mouse
 
 import gi
 gi.require_version('Wnck', '3.0')
@@ -23,6 +24,7 @@ from lib.py.app import config, warn
 from lib.py.hud_panel import HUDPanel
 
 
+# App config elements
 _conf = config()
 DISP_WIDTH = _conf['DISP_WIDTH_PX']
 DISP_HEIGHT = _conf['DISP_HEIGHT_PX']
@@ -33,14 +35,25 @@ HUD_DISP_TITLE = _conf['HUD_DISP_TITLE']
 DEFAULT_PANELS =  _conf['HUD_PANELS']
 del _conf
 
-
+# HUD styles
 BTN_FONT = ("Helvetica", 10)
 BTN_FONT_BOLD = ("Helvetica", 10, "bold")
-
 BTN_STYLE = 'PanelButton.TButton'
 BTN_STYLE_SPACER = 'Spacer.PanelButton.TButton'
 BTN_STYLE_TOGGLE = 'PanelButtonToggle.TButton'
 BTN_STYLE_TOGGLE_ON = 'Depressed.PanelButtonToggle.TButton'
+
+# VKey codes, for convenience
+VK_CAPSLOCK = 65509
+VK_NUMLOCK = 65407
+VK_SCROLLLOCK = 65300
+VK_MODLOCK = 65515
+VK_CLICKREQ = 65516
+
+# Multiproccessing queue signals
+SIGNAL_STOP = -1
+SIGNAL_REQUEST_ACTIVE_WINDOW = 0
+SIGNAL_REQUEST_PREV_ACTIVE_WINDOW = 1
 
 
 class HUD(tk.Tk):
@@ -85,13 +98,15 @@ class HUD(tk.Tk):
 
         # Setup the wintools helper
         self._state_mgr = _HUDStateManager(self)
+        # TODO: self._gaze_mgr = _HUDGazeManager(VK_CLICKREQ)
 
     def start(self):
         """ Brings up the HUD display. Should be used instead of tk.mainloop 
             because sticky attribute must be handled first. Blocks.
         """
-        # Start the window manager
-        win_mgr_proc = self._state_mgr.start_statewatcher()
+        # Start the managers
+        self._state_mgr.start()
+        # TODO: self._gaze_mgr.start()
 
         # Set sticky attribute, iff specified
         if self._sticky:
@@ -102,9 +117,9 @@ class HUD(tk.Tk):
         # Start the blocking main loop
         self.mainloop()
 
-        # Stop the focus tracker
-        self._state_mgr.stop_statewatcher()
-        win_mgr_proc.join()
+        # Stop the managers
+        # self._gaze_mgr.stop().join()
+        self._state_mgr.stop().join
 
     def set_curr_panel(self, idx):
         """ Sets the currently displayed to the requested panel.
@@ -153,14 +168,10 @@ class HUD(tk.Tk):
 
 
 class _HUDStateManager(object):
-    # MP queue signals
-    SIGNAL_STOP = -1
-    SIGNAL_REQUEST_ACTIVE_WINDOW = 0
-    SIGNAL_REQUEST_PREV_ACTIVE_WINDOW = 1
-
     def __init__(self, parent_hud):
-        """ A helper class for allowing the HUD to interact with other windows
-            via Xlib.
+        """ The HUD state manager - Faciliates interaction with external
+            applications by tracking virtual keyboard states and the currently
+            active window. Also handles payload delivery.
         """
         self.hud = parent_hud
 
@@ -171,9 +182,7 @@ class _HUDStateManager(object):
         self._net_wm_name = self._disp.intern_atom('_NET_WM_NAME')
 
         # Init keyboard/mouse controllers and containers
-        # TODO: Refactor into HUDKeyboardManager
-        self._mouse = mouse.Controller()
-        self._keyboard = keyboard.Controller()
+        self._keyboard = Keyboard.Controller()
         self._keyboard_active_modifier_btns = []
         self._keyboard_hold_modifiers = False
 
@@ -188,7 +197,7 @@ class _HUDStateManager(object):
         """
         # Request currently active window ID from async queue
         try:
-            self._async_signal_q.put_nowait(self.SIGNAL_REQUEST_ACTIVE_WINDOW)
+            self._async_signal_q.put_nowait(SIGNAL_REQUEST_ACTIVE_WINDOW)
         except AttributeError:
             warn('Requested win state but Win State Watcher not yet started.')
 
@@ -202,8 +211,7 @@ class _HUDStateManager(object):
         """
         # Request prev active window ID from async queue
         try:
-            self._async_signal_q.put_nowait(
-                self.SIGNAL_REQUEST_PREV_ACTIVE_WINDOW)
+            self._async_signal_q.put_nowait(SIGNAL_REQUEST_PREV_ACTIVE_WINDOW)
         except AttributeError:
             warn('Requested win state but Win State Watcher not yet started.')
 
@@ -253,16 +261,16 @@ class _HUDStateManager(object):
                 pass  # No news is good news
             else:
                 # Process stop signal, iff received
-                if signal == self.SIGNAL_STOP:
+                if signal == SIGNAL_STOP:
                     break
 
                 # Process any "get" requests received (note above assumption)
                 disp.next_event()
 
-                if signal == self.SIGNAL_REQUEST_ACTIVE_WINDOW:
+                if signal == SIGNAL_REQUEST_ACTIVE_WINDOW:
                     output_queue.put_nowait(active_window_id)
 
-                elif signal == self.SIGNAL_REQUEST_PREV_ACTIVE_WINDOW:
+                elif signal == SIGNAL_REQUEST_PREV_ACTIVE_WINDOW:
                     output_queue.put_nowait(prev_active_window_id)
 
     def _focus_prev_active_win(self):
@@ -294,12 +302,12 @@ class _HUDStateManager(object):
             self._keyboard_active_modifier_btns = []
             self.hud._panel.set_btn_text(use_alt_text=False)
 
-    def start_statewatcher(self) -> mp.Process:
+    def start(self) -> mp.Process:
         """ Starts the async window-focus watcher.
         """
         # If async watcher already running
         if self._async_proc is not None and self._async_proc.is_alive():
-            warn('Win State Watcher already running.')
+            warn('HUD State Manager already running.')
 
         # Else, not running -- start it
         else:
@@ -314,7 +322,7 @@ class _HUDStateManager(object):
 
         return self._async_proc
 
-    def stop_statewatcher(self) -> None:
+    def stop(self) -> mp.Process:
         """ Stops the async state watcher and does cleanup.
         """
         # Unset any keybd modifier toggles the user may have set
@@ -322,11 +330,13 @@ class _HUDStateManager(object):
 
         # Send kill signal to the asynch watcher proc
         try:
-            self._async_signal_q.put_nowait(self.SIGNAL_STOP)
+            self._async_signal_q.put_nowait(SIGNAL_STOP)
         except AttributeError:
-            warn('Received STOP but Win State Watcher not yet started.')
+            warn('Received STOP but HUD State Manager not yet started.')
         except mp.queues.Full:
             pass
+
+        return self._async_proc
 
     def set_hud_sticky(self):
         """ Applies the "show on all workspaces" attribute to the HUD window.
@@ -385,34 +395,28 @@ class _HUDStateManager(object):
         """
         self._focus_prev_active_win()
 
-        # Convenience defs
-        vk_capslock = 65509
-        vk_numlock = 65407
-        vk_scrolllock = 65300
-        vk_hold_mods = 65515
-        
         # Extract kwargs
         payload = kwargs['payload']     # (int) Key vk code
         sender = kwargs['btn']    # (HUDPanel.HUDButton) Payload sender
 
         # Ensure modifier is supported
-        if payload == vk_numlock:
+        if payload == VK_NUMLOCK:
             raise NotImplementedError('NumLock')
-        elif payload == vk_scrolllock:
+        elif payload == VK_SCROLLLOCK:
             raise NotImplementedError('ScrollLock')
 
         # Convert payload to KeyCode and denote capslock status
         keycode = self._keyboard._KeyCode.from_vk(payload)
         
         # If payload is for capslock, handle as a single-click modifier
-        if payload == vk_capslock:
+        if payload == VK_CAPSLOCK:
             self._keyboard.press(keycode)
             self._keyboard.release(keycode)
             self.hud.set_btn_viz_toggle(
                 sender, toggle_on=self._keyboard._caps_lock)
 
         # Else, if payload is the hold-modifer btn
-        elif payload == vk_hold_mods:
+        elif payload == VK_MODLOCK:
             toggle_down = not self._keyboard_hold_modifiers
             self._keyboard_hold_modifiers = toggle_down
             self.hud.set_btn_viz_toggle(sender, toggle_on=toggle_down)
@@ -449,7 +453,6 @@ class _HUDStateManager(object):
                 if modifier == self._keyboard._Key.shift:
                     self.hud._panel.set_btn_text(use_alt_text=toggle_down)
 
-
             # TODO: Ensure graceful handle of alt + tab, etc.
 
     def payload_run_external(self, **kwargs):
@@ -475,3 +478,4 @@ class _HUDStateManager(object):
         # If there were build errors, quit
         if stderr and not stderr.decode().startswith('Created symlink'):
             warn(f'Cmd "{cmd}" stderr output: \n{stderr}')
+
