@@ -21,6 +21,7 @@ using namespace std;
 #define GAZE_MARK_INTERVAL 18
 #define GAZE_BUFF_SZ 45000
 #define GAZE_TIME 10
+#define GAZE_SMOOTHOVER 4
 
 
 int main() {
@@ -29,7 +30,8 @@ int main() {
                                          DISP_WIDTH_PX,
                                          DISP_HEIGHT_PX,
                                          GAZE_MARK_INTERVAL,
-                                         GAZE_BUFF_SZ);
+                                         GAZE_BUFF_SZ,
+                                         GAZE_SMOOTHOVER);
 
     printf("Marking gaze point for %d seconds from device...\n", GAZE_TIME);
     gaze.print_device_info();
@@ -39,8 +41,8 @@ int main() {
 
     for (int i = 0; i < GAZE_TIME; i++) {
         boost::this_thread::sleep_for(boost::chrono::seconds{1});
-        // gaze.gaze_to_csv("test.csv", 0);
     }
+    // gaze.gaze_to_csv("test.csv", 5);
 
     gaze.stop();
 

@@ -7,10 +7,9 @@ __author__ = 'Dustin Fast <dustin.fast@outlook.com>'
 import time
 
 import pyximport; pyximport.install()
-
 from lib.py.eyetracker_gaze import EyeTrackerGaze
 
-DURATION_S = 5
+DURATION_S = 1
 
 if __name__ == "__main__":
     e = EyeTrackerGaze()
@@ -21,6 +20,7 @@ if __name__ == "__main__":
     print(f'Marking gaze...')
     time.sleep(DURATION_S)
     # e.to_csv('test.csv', 0)
+    e.gaze_coords()
     
     e.stop()
     e.close()

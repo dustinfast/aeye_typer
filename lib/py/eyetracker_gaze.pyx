@@ -1,3 +1,4 @@
+#cython: language_level=3
 """ A ctypes wrapper for the EyeTrackerGaze CPP module.
 """
 
@@ -18,7 +19,15 @@ GAZE_SAMPLE_HZ = _conf['EYETRACKER_SAMPLE_HZ']
 GAZE_BUFF_SZ = _conf['EYETRACKER_BUFF_SZ']
 GAZE_MARK_INTERVAL = _conf['EYETRACKER_MARK_INTERVAL']
 GAZE_PREP_PATH = _conf['EYETRACKER_PREP_SCRIPT_PATH']
+GAZE_SMOOTH_OVER = _conf['EYETRACKER_SMOOTH_OVER']
 del _conf
+
+
+class gaze_point(ctypes.Structure):
+    _fields_ = [
+        ('n_samples', ctypes.c_int), 
+        ('x', ctypes.c_int), 
+        ('y', ctypes.c_int)]
 
 
 class EyeTrackerGaze(object):
@@ -46,7 +55,7 @@ class EyeTrackerGaze(object):
         # Constructor
         lib.eyetracker_gaze_new.argtypes = [
             ctypes.c_float, ctypes.c_float, ctypes.c_int, 
-                ctypes.c_int, ctypes.c_int, ctypes.c_int]
+                ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int]
         lib.eyetracker_gaze_new.restype = ctypes.c_void_p
 
         # Destructor
@@ -70,6 +79,14 @@ class EyeTrackerGaze(object):
         lib.eyetracker_gaze_data_sz.argtypes = [ctypes.c_void_p]
         lib.eyetracker_gaze_data_sz.restype = ctypes.c_int
 
+        # GazePoint
+        lib.eyetracker_gaze_point.argtypes = [ctypes.c_void_p]
+        lib.eyetracker_gaze_point.restype = ctypes.c_void_p
+
+        # GazePoint
+        lib.eyetracker_gaze_point_free.argtypes = [ctypes.c_void_p]
+        lib.eyetracker_gaze_point_free.restype = ctypes.c_void_p
+
         return lib
 
     def _ensure_device_opened(self):
@@ -85,7 +102,7 @@ class EyeTrackerGaze(object):
 
         self._obj = self._lib.eyetracker_gaze_new(
             DISP_WIDTH_MM, DISP_HEIGHT_MM, DISP_WIDTH_PX, DISP_HEIGHT_PX,
-                GAZE_MARK_INTERVAL, GAZE_BUFF_SZ)
+                GAZE_MARK_INTERVAL, GAZE_BUFF_SZ, GAZE_SMOOTH_OVER)
 
     def start(self):
         """ Starts the asynchronous gaze tracking.
@@ -123,3 +140,21 @@ class EyeTrackerGaze(object):
         """
         self._ensure_device_opened()
         return self._lib.eyetracker_gaze_data_sz(self._obj)
+
+    def gaze_coords(self):
+        """ Returns the current gaze point in display coords.
+        """
+        self._ensure_device_opened()
+        
+        # Instantiate a gaze_point ptr from the c obj's address
+        ptr = self._lib.eyetracker_gaze_point(self._obj)
+        gp = gaze_point.from_address(ptr)
+
+        # Denote the gaze_point contexts
+        x = gp.x
+        y = gp.y
+
+        # Free the ptr mem on the c side
+        self._lib.eyetracker_gaze_point_free(ptr)
+        
+        return x, y
