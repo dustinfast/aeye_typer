@@ -45,7 +45,7 @@ Device: Tobii 4L
 
 Device installation is handled by the docker build process. To verify installation, run `test_eyetracker.py`. 
 
-The eyetracker must now be calibrated with `tobiiproeyetrackermanager`.
+The eyetracker must now be calibrated with `./aeye_typer --calibrate`.
 
 #### EEG Installation
 
