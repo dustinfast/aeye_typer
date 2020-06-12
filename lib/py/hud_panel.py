@@ -82,7 +82,7 @@ class HUDPanel(ttk.Frame):
                         text=btn.text)
                     btn.obj.grid(row=0, column=j, ipady=4, ipadx=0)
                     btn.obj.configure(command=lambda btn=btn: \
-                        self.hud.handle_payload(
+                        self.hud.payload_handler(
                             btn.obj, btn.payload, btn.payload_type))
 
                 self._btn_objs.append(btn)

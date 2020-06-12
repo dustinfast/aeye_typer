@@ -60,7 +60,7 @@ ASYNC_STIME = .005
 
 class HUD(tk.Tk):
     def __init__(self, hud_panels=DEFAULT_PANELS):
-        """ An abstraction of the main heads-up display.
+        """ An abstraction of the heads-up display.
 
         """
         super().__init__()
@@ -72,11 +72,11 @@ class HUD(tk.Tk):
         x = (DISP_WIDTH/HUD_DISP_DIV_X) - (HUD_DISP_WIDTH/HUD_DISP_DIV_X)
         y = (DISP_HEIGHT/HUD_DISP_DIV_Y) - (HUD_DISP_HEIGHT/HUD_DISP_DIV_Y)
 
-        # Set HUD title/height/width/coords as well as top-window persistence
+        # Set HUD title/height/width/coords/top-window-persistence
         self.winfo_toplevel().title(HUD_DISP_TITLE)
         self.attributes('-type', 'splash')
-        self.geometry('%dx%d+%d+%d' % (HUD_DISP_WIDTH, HUD_DISP_HEIGHT, x, y))
         self.attributes('-topmost', 'true')
+        self.geometry('%dx%d+%d+%d' % (HUD_DISP_WIDTH, HUD_DISP_HEIGHT, x, y))
 
         # Register styles
         ttk.Style().configure(BTN_STYLE, font=BTN_FONT)
@@ -87,7 +87,7 @@ class HUD(tk.Tk):
                               foreground='green',
                               relief=SUNKEN)
 
-        # TODO: Add panel toggle btns -> self.set_curr_panel(idx)
+        # TODO: Add json panel toggle btns -> self.set_curr_panel(idx)
 
         # Setup the child frame that will host the panel frames
         self._host_frame = ttk.Frame(
@@ -101,10 +101,9 @@ class HUD(tk.Tk):
         # TODO: self._gaze_mgr = _HUDGazeManager(VK_CLICKREQ)
 
     def _quit(self, **kwargs):
-        """ Quits the hud window main loop.
+        """ Quits the hud window by exiting tk.mainloop.
 
-            :param kwargs: Unused. Allowed for compatibility with calls from
-            handle_payload.
+            :param kwargs: Unused. For compatibility with payload_handler calls.
         """
         self.quit()
 
@@ -116,7 +115,7 @@ class HUD(tk.Tk):
         self._state_mgr.start()
         # TODO: self._gaze_mgr.start()
 
-        # Set sticky attribute so the hud is on all workspaces
+        # Set sticky attribute so, hud appears on all workspaces
         self.update_idletasks()
         self.update()
         self._state_mgr.set_hud_sticky()
@@ -152,7 +151,7 @@ class HUD(tk.Tk):
         else:
             btn.configure(style=BTN_STYLE_TOGGLE)
 
-    def handle_payload(self, btn, payload=None, payload_type=None):
+    def payload_handler(self, btn, payload=None, payload_type=None):
         """ Fires the requested action, inferred from the payload type ID.
 
             :param btn: (hud_panel.HUDButton)

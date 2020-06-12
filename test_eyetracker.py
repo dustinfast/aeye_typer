@@ -20,7 +20,6 @@ if __name__ == "__main__":
     print(f'Marking gaze...')
     time.sleep(DURATION_S)
     # e.to_csv('test.csv', 0)
-    e.gaze_coords()
     
     e.stop()
     e.close()
