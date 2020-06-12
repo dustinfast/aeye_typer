@@ -38,10 +38,9 @@ class HUDPanel(ttk.Frame):
         self.x = x
         self.y = y
 
-        # Setup panel's buttons then show the panel frame
+        # Setup panel buttons then show the panel frame
+        self.grid(row=0, column=0)
         self._init_btns(btn_layout)
-        self.grid(row=0, column=0, sticky=tk.NW)
-        self.parent.grid_propagate(0)
 
     @classmethod
     def from_json(cls, json_path, parent_frame, hud, x, y):

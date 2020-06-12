@@ -58,17 +58,14 @@ ASYNC_STIME = .005
 
 
 class HUD(tk.Tk):
-    def __init__(self, hud_panels=DEFAULT_PANELS, sticky=True, top_level=True):
+    def __init__(self, hud_panels=DEFAULT_PANELS):
         """ An abstraction of the main heads-up display.
 
-            :param sticky: (bool) Denotes HUD persistence across workspaces.
-            :param top_level: (bool) Denotes HUD always the top-level window.
         """
         super().__init__()
 
         self._panel = None              # Active panel's frame
         self._panel_paths = hud_panels  # Path to each panel's layout file
-        self._sticky = sticky           # Denotes HUD window stays on top
 
         # Calculate HUD display coords, based on screen size
         x = (DISP_WIDTH/HUD_DISP_DIV) - (HUD_DISP_WIDTH/HUD_DISP_DIV)
@@ -76,8 +73,9 @@ class HUD(tk.Tk):
 
         # Set HUD title/height/width/coords as well as top-window persistence
         self.winfo_toplevel().title(HUD_DISP_TITLE)
+        self.attributes('-type', 'splash')
         self.geometry('%dx%d+%d+%d' % (HUD_DISP_WIDTH, HUD_DISP_HEIGHT, x, y))
-        self.attributes('-topmost', 'true') if top_level else None
+        self.attributes('-topmost', 'true')
 
         # Register styles
         ttk.Style().configure(BTN_STYLE, font=BTN_FONT)
@@ -101,6 +99,14 @@ class HUD(tk.Tk):
         self._state_mgr = _HUDStateManager(self)
         # TODO: self._gaze_mgr = _HUDGazeManager(VK_CLICKREQ)
 
+    def _quit(self, **kwargs):
+        """ Quits the hud window main loop.
+
+            :param kwargs: Unused. Allowed for compatibility with calls from
+            handle_payload.
+        """
+        self.quit()
+
     def start(self):
         """ Brings up the HUD display. Should be used instead of tk.mainloop 
             because sticky attribute must be handled first. Blocks.
@@ -109,11 +115,10 @@ class HUD(tk.Tk):
         self._state_mgr.start()
         # TODO: self._gaze_mgr.start()
 
-        # Set sticky attribute, iff specified
-        if self._sticky:
-            self.update_idletasks()
-            self.update()
-            self._state_mgr.set_hud_sticky()
+        # Set sticky attribute so the hud is on all workspaces
+        self.update_idletasks()
+        self.update()
+        self._state_mgr.set_hud_sticky()
 
         # Start the blocking main loop
         self.mainloop()
@@ -151,13 +156,20 @@ class HUD(tk.Tk):
 
             :param btn: (hud_panel.HUDButton)
         """
-        # TODO: Refactor into state mgr
-
         # Infer the correct handler to call
         payload_type_handler = {
+            # Close the HUD
+            'hud_quit': self._quit,
+
+            # Send a keystroke to the active window
             'keystroke': self._state_mgr.payload_keystroke_to_active_win,
+
+            # Toggle a keyboard modifier on/off (e.g.: shift, alt, etc.)
             'key_toggle': self._state_mgr.payload_keyboard_toggle_modifer,
+
+            # Run an external command
             'run_external': self._state_mgr.payload_run_external,
+            
             # TODO: if payload_type = 'mouseclick_hold':
         }.get(payload_type, None)
 

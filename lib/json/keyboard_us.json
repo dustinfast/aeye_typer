@@ -11,8 +11,8 @@
             "text": "_spacer_",
             "width": 2,
             "is_toggle": false,
-            "payload": 98,
-            "payload_type": "keystroke"
+            "payload": null,
+            "payload_type": null
         },
         {
             "text": "F1",
@@ -46,8 +46,8 @@
             "text": "_spacer_",
             "width": 2,
             "is_toggle": false,
-            "payload": 98,
-            "payload_type": "keystroke"
+            "payload": null,
+            "payload_type": null
         },
         {
             "text": "F5",
@@ -81,8 +81,8 @@
             "text": "_spacer_",
             "width": 2,
             "is_toggle": false,
-            "payload": 98,
-            "payload_type": "keystroke"
+            "payload": null,
+            "payload_type": null
         },
         {
             "text": "F9",
@@ -111,6 +111,20 @@
             "is_toggle": false,
             "payload": 65481,
             "payload_type": "keystroke"
+        },
+        {
+            "text": "_spacer_",
+            "width": 14,
+            "is_toggle": false,
+            "payload": null,
+            "payload_type": null
+        },
+        {
+            "text": "Quit",
+            "width": 5,
+            "is_toggle": false,
+            "payload": null,
+            "payload_type": "hud_quit"
         }
     ],
 
@@ -120,8 +134,8 @@
             "text": "_spacer_",
             "width": 2,
             "is_toggle": false,
-            "payload": 98,
-            "payload_type": "keystroke"
+            "payload": null,
+            "payload_type": null
         }
     ],
 
@@ -242,8 +256,8 @@
             "text": "_spacer_",
             "width": 2,
             "is_toggle": false,
-            "payload": 98,
-            "payload_type": "keystroke"
+            "payload": null,
+            "payload_type": null
         },
         {
             "text": "Ins",
@@ -373,8 +387,8 @@
             "text": "_spacer_",
             "width": 2,
             "is_toggle": false,
-            "payload": 98,
-            "payload_type": "keystroke"
+            "payload": null,
+            "payload_type": null
         },
         {
             "text": "Del",
@@ -581,8 +595,8 @@
             "text": "_spacer_",
             "width": 1,
             "is_toggle": false,
-            "payload": 98,
-            "payload_type": "keystroke"
+            "payload": null,
+            "payload_type": null
         },
         {
             "text": "Shift",
@@ -595,15 +609,15 @@
             "text": "_spacer_",
             "width": 3,
             "is_toggle": false,
-            "payload": 98,
-            "payload_type": "keystroke"
+            "payload": null,
+            "payload_type": null
         },
         {
             "text": "_spacer_",
             "width": 2,
             "is_toggle": false,
-            "payload": 98,
-            "payload_type": "keystroke"
+            "payload": null,
+            "payload_type": null
         },
         {
             "text": "^",
@@ -674,8 +688,8 @@
             "text": "_spacer_",
             "width": 2,
             "is_toggle": false,
-            "payload": 98,
-            "payload_type": "keystroke"
+            "payload": null,
+            "payload_type": null
         },
         {
             "text": "<",
