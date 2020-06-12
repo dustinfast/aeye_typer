@@ -77,6 +77,12 @@ typedef struct custom_gaze_data {
 
 	    } custom_gaze_data_t;
 
+typedef struct gaze_point {
+        int n_samples;
+        int x_coord;
+        int y_coord;
+	    } gaze_point_t;
+
 typedef boost::circular_buffer<shared_ptr<custom_gaze_data_t>> circ_buff;
 
 void do_gaze_data_subscribe(tobii_device_t*, void*);
@@ -91,6 +97,7 @@ class EyeTrackerGaze : public EyeTracker {
     public:
         int m_mark_count;
         int m_mark_freq;
+        int m_smooth_over;
         Display *m_disp;
         Window m_overlay;
 
@@ -103,8 +110,9 @@ class EyeTrackerGaze : public EyeTracker {
         int gaze_data_sz();
         int disp_x_from_normed_x(float);
         int disp_y_from_normed_y(float);
-    
-        EyeTrackerGaze(float, float, int, int, int, int);
+        gaze_point_t* get_gazepoint();
+
+        EyeTrackerGaze(float, float, int, int, int, int, int);
         ~EyeTrackerGaze();
 
     protected:
@@ -125,12 +133,14 @@ EyeTrackerGaze::EyeTrackerGaze(float disp_width_mm,
                                int disp_width_px,
                                int disp_height_px,
                                int mark_freq,
-                               int buff_sz) {
+                               int buff_sz,
+                               int smooth_over) {
         // Init members from args
         m_disp_width = disp_width_px;
         m_disp_height = disp_height_px;
         m_mark_freq = mark_freq;
         m_buff_sz = buff_sz;
+        m_smooth_over = smooth_over;
 
         // Calibrate gaze tracker's disp area
         set_display(disp_width_mm, disp_height_mm, MOUNT_OFFSET_MM);
@@ -327,7 +337,8 @@ void EyeTrackerGaze::print_gaze_data() {
 
 }
 
-// Returns the current number of gaze points in the gaze data buffer
+// Returns the current number of gaze points in the gaze data buffer.
+// Note: The caller of this func is responsible for calling mutex lock/unlock.
 int EyeTrackerGaze::gaze_data_sz() {
     return m_gaze_buff->size();
 }
@@ -342,16 +353,49 @@ int EyeTrackerGaze::disp_y_from_normed_y(float y_normed) {
     return y_normed * m_disp_height;
 }
 
+// Returns the current smoothed display gazepoint
+gaze_point_t* EyeTrackerGaze::get_gazepoint() {
+    int avg_x = 0;
+    int avg_y = 0;
+    int buff_sz = 0;
+    int n_samples = 0;
+
+    // Average the gaze pt from (at most) the m_smooth_over latest samples
+    m_async_mutex->lock();
+    buff_sz = gaze_data_sz();
+    n_samples = min(buff_sz, m_smooth_over);
+    
+    for (int j = buff_sz - n_samples; j < buff_sz; j++)  {
+        auto cgd = *m_gaze_buff->at(j); 
+        avg_x += cgd.combined_gazepoint_x;
+        avg_y += cgd.combined_gazepoint_y;
+    }
+
+    m_async_mutex->unlock();
+
+    if (n_samples > 0) {
+        avg_x = avg_x / n_samples;
+        avg_y = avg_y / n_samples; 
+    }
+
+    gaze_point_t *gp = new(gaze_point_t);
+    gp->n_samples = n_samples;
+    gp->x_coord = avg_x;
+    gp->y_coord = avg_y;
+
+    return gp;
+
+}
 
 /////////////////////////////////////////////////////////////////////////////
 // Extern wrapper exposing EyeTrackerGaze(), start(), stop(), & gaze_to_csv()
 extern "C" {
     EyeTrackerGaze* eyetracker_gaze_new(
         float disp_width_mm, float disp_height_mm, int disp_width_px, 
-            int disp_height_px, int mark_freq, int buff_sz) {
+            int disp_height_px, int mark_freq, int buff_sz, int smooth_over) {
                 return new EyeTrackerGaze(
                     disp_width_mm, disp_height_mm, disp_width_px,
-                        disp_height_px, mark_freq, buff_sz
+                        disp_height_px, mark_freq, buff_sz, smooth_over
                 );
     }
 
@@ -373,6 +417,14 @@ extern "C" {
 
     int eyetracker_gaze_data_sz(EyeTrackerGaze* gaze) {
         return gaze->gaze_data_sz();
+    }
+
+    gaze_point_t* eyetracker_gaze_point(EyeTrackerGaze* gaze) {
+        return gaze->get_gazepoint();
+    }
+
+    void eyetracker_gaze_point_free(gaze_point_t *gp) {
+        delete gp;
     }
 }
 
@@ -503,13 +555,18 @@ static void cb_gaze_data(tobii_gaze_data_t const *gaze_data, void *user_data) {
         // Else, reset the gaze mark count & update marker position
         gaze->m_mark_count = 0;
 
+        // Get and annotate the smoothed gaze point
+        gaze_point_t *gp = gaze->get_gazepoint();
+
         XMoveWindow(
             gaze->m_disp,
             gaze->m_overlay, 
-            x_gazepoint,
-            y_gazepoint);
-        
+            gp->x_coord,
+            gp->y_coord);
+
         XFlush(gaze->m_disp);
+
+        delete gp;
     }
     else {
         // printf("Gaze point not valid.");  // Debug
