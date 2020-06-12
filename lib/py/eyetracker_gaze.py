@@ -1,6 +1,4 @@
-#! /usr/bin/env python
-#cython: language_level=3
-""" A ctypes wrapper for the EyeTrackerGaze CPP class.
+""" A ctypes wrapper for the EyeTrackerGaze CPP module.
 """
 
 __author__ = 'Dustin Fast <dustin.fast@outlook.com>'
