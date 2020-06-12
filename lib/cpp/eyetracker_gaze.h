@@ -31,7 +31,6 @@ using namespace std;
 #define GAZE_MARKER_HEIGHT 20
 #define GAZE_MARKER_BORDER 0
 #define GAZE_MARKER_BORDER 0
-#define GAZE_MIN_SAMPLE_FOR_RATE_CALC 200
 #define MOUNT_OFFSET_MM 0.0
 
 typedef struct custom_gaze_data {
@@ -102,7 +101,6 @@ class EyeTrackerGaze : public EyeTracker {
         void enque_gaze_data(shared_ptr<custom_gaze_data_t>);
         void print_gaze_data();
         int gaze_data_sz();
-        int sample_rate();
         int disp_x_from_normed_x(float);
         int disp_y_from_normed_y(float);
     
@@ -332,32 +330,6 @@ void EyeTrackerGaze::print_gaze_data() {
 // Returns the current number of gaze points in the gaze data buffer
 int EyeTrackerGaze::gaze_data_sz() {
     return m_gaze_buff->size();
-}
-
-// Returns the sample rate in hz, calculated from the contents of the buffer.
-// If the buffer is not full enough to calculate, returns -1.
-int EyeTrackerGaze::sample_rate() {
-    int sample_count = gaze_data_sz();
-
-    if (sample_count < GAZE_MIN_SAMPLE_FOR_RATE_CALC) {
-        printf("WARN: Eyetracker hz queried but sample count insufficient.");
-        return -1;
-    }
-
-    // Earliest and latest sample times, in microseconds
-    m_async_mutex->lock();
-    auto cgd_first = *m_gaze_buff->at(0); 
-    auto cgd_last = *m_gaze_buff->at(sample_count-1); 
-    m_async_mutex->unlock();
-
-    long unsigned int t1 = cgd_first.unixtime_us;
-    long unsigned int t2 = cgd_last.unixtime_us;
-
-    // Sample rate, in hz
-    double t_diff = (t2 - t1) * .000001;
-    double sample_rate = sample_count / t_diff;
-
-    return sample_rate;
 }
 
 // Given a normalized gaze point's x coord, returns the x in display coords.
