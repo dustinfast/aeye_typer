@@ -339,7 +339,7 @@ class _HUDState(object):
         return self._async_proc
 
     def stop(self) -> mp.Process:
-        """ Stops the async state watcher and eyetracker, and performs cleanup.
+        """ Stops the async focus watcher and eyetracker, and performs cleanup.
         """
         # Unset any keybd modifier toggles the user may have set
         self._reset_keyb_modifers(toggle_btnviz=False)
@@ -393,6 +393,11 @@ class _HUDState(object):
             :param kwargs: Arg 'payload' is expected.
         """
         self._focus_prev_active_win()
+        
+        # TODO: Annotate gaze data
+        print(self._gazepoint.gaze_coords())
+        print(self.hud._panel.get_btn_centroid(kwargs['btn']))
+
 
         # Extract kwarg
         payload = kwargs['payload']     # (str)

@@ -98,6 +98,14 @@ class HUDPanel(ttk.Frame):
 
         return widgets
 
+    def get_btn_centroid(self, btn):
+        """ Returns the center of the given ttk.Button's pixel-wise x/y coords.
+        """
+        x = btn.winfo_rootx() + int(btn.winfo_reqwidth() / 2)
+        y = btn.winfo_rooty() + int(btn.winfo_reqheight() / 2)
+
+        return x, y
+
     def set_btn_text(self, use_alt_text=False):
         """ Sets each button on the panel to use either its alternate or
             actual display text. Note that this is not thread-safe.
@@ -112,7 +120,7 @@ class HUDPanel(ttk.Frame):
                 btn_widg.configure(
                     text=self._btn_objs[i].alternate_text)
 
-            # Else set actual text
+            # Else set primary text
             else:
                 btn_widg.configure(
                     text=self._btn_objs[i].text)
