@@ -30,7 +30,8 @@ DISP_WIDTH = _conf['DISP_WIDTH_PX']
 DISP_HEIGHT = _conf['DISP_HEIGHT_PX']
 HUD_DISP_WIDTH = _conf['HUD_DISP_WIDTH_PX']
 HUD_DISP_HEIGHT = _conf['HUD_DISP_HEIGHT_PX']
-HUD_DISP_DIV = _conf['HUD_DISP_COORD_DIVISOR']
+HUD_DISP_DIV_X = _conf['HUD_DISP_COORD_DIVISOR_X']
+HUD_DISP_DIV_Y = _conf['HUD_DISP_COORD_DIVISOR_Y']
 HUD_DISP_TITLE = _conf['HUD_DISP_TITLE']
 DEFAULT_PANELS =  _conf['HUD_PANELS']
 del _conf
@@ -68,8 +69,8 @@ class HUD(tk.Tk):
         self._panel_paths = hud_panels  # Path to each panel's layout file
 
         # Calculate HUD display coords, based on screen size
-        x = (DISP_WIDTH/HUD_DISP_DIV) - (HUD_DISP_WIDTH/HUD_DISP_DIV)
-        y = (DISP_HEIGHT/HUD_DISP_DIV) - (HUD_DISP_HEIGHT/HUD_DISP_DIV)
+        x = (DISP_WIDTH/HUD_DISP_DIV_X) - (HUD_DISP_WIDTH/HUD_DISP_DIV_X)
+        y = (DISP_HEIGHT/HUD_DISP_DIV_Y) - (HUD_DISP_HEIGHT/HUD_DISP_DIV_Y)
 
         # Set HUD title/height/width/coords as well as top-window persistence
         self.winfo_toplevel().title(HUD_DISP_TITLE)
