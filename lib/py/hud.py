@@ -15,6 +15,7 @@ import tkinter as tk
 from tkinter import ttk, FLAT, DISABLED, SUNKEN, ACTIVE
 from pynput import keyboard as Keyboard
 from pynput import mouse as Mouse
+import pyximport; pyximport.install()
 
 import gi
 gi.require_version('Wnck', '3.0')
@@ -22,6 +23,7 @@ from gi.repository import Wnck
 
 from lib.py.app import config, warn
 from lib.py.hud_panel import HUDPanel
+from lib.py.eyetracker_gaze import EyeTrackerGaze
 
 
 # App config elements
@@ -61,7 +63,6 @@ ASYNC_STIME = .005
 class HUD(tk.Tk):
     def __init__(self, hud_panels=DEFAULT_PANELS):
         """ An abstraction of the heads-up display.
-
         """
         super().__init__()
 
@@ -97,8 +98,7 @@ class HUD(tk.Tk):
         self.set_curr_panel(0)
 
         # Setup the wintools helper
-        self._state_mgr = _HUDStateManager(self)
-        # TODO: self._gaze_mgr = _HUDGazeManager(VK_CLICKREQ)
+        self._state = _HUDState(self)
 
     def _quit(self, **kwargs):
         """ Quits the hud window by exiting tk.mainloop.
@@ -112,20 +112,18 @@ class HUD(tk.Tk):
             because sticky attribute must be handled first. Blocks.
         """
         # Start the managers
-        self._state_mgr.start()
-        # TODO: self._gaze_mgr.start()
+        self._state.start()
 
         # Set sticky attribute so, hud appears on all workspaces
         self.update_idletasks()
         self.update()
-        self._state_mgr.set_hud_sticky()
+        self._state.set_hud_sticky()
 
         # Start the blocking main loop
         self.mainloop()
 
         # Stop the managers
-        # TODO: self._gaze_mgr.stop().join()
-        self._state_mgr.stop().join
+        self._state.stop().join
 
     def set_curr_panel(self, idx):
         """ Sets the currently displayed to the requested panel.
@@ -162,13 +160,13 @@ class HUD(tk.Tk):
             'hud_quit': self._quit,
 
             # Send a keystroke to the active window
-            'keystroke': self._state_mgr.payload_keystroke_to_active_win,
+            'keystroke': self._state.payload_keystroke_to_active_win,
 
             # Toggle a keyboard modifier on/off (e.g.: shift, alt, etc.)
-            'key_toggle': self._state_mgr.payload_keyboard_toggle_modifer,
+            'key_toggle': self._state.payload_keyboard_toggle_modifer,
 
             # Run an external command
-            'run_external': self._state_mgr.payload_run_external,
+            'run_external': self._state.payload_run_external,
             
             # TODO: if payload_type = 'mouseclick_hold':
         }.get(payload_type, None)
@@ -182,11 +180,12 @@ class HUD(tk.Tk):
                              payload_type=payload_type)
 
 
-class _HUDStateManager(object):
+class _HUDState(object):
     def __init__(self, parent_hud):
-        """ The HUD state manager - Faciliates interaction with external
-            applications by tracking virtual keyboard states and the currently
-            active window. Also handles payload delivery.
+        """ An abstraction of the HUD's state, including elements of its
+            environment -- Faciliates interaction with external applications
+            by tracking virtual keyboard states/clicks, the currently active
+            window in order to handle payload delivery, and the users gaze.
         """
         self.hud = parent_hud
 
@@ -196,10 +195,11 @@ class _HUDStateManager(object):
         self._root.change_attributes(event_mask=Xlib.X.FocusChangeMask)
         self._net_wm_name = self._disp.intern_atom('_NET_WM_NAME')
 
-        # Init keyboard/mouse controllers and containers
+        # Init eyetracker/keyboard/mouse controllers
         self._keyboard = Keyboard.Controller()
         self._keyboard_active_modifier_btns = []
         self._keyboard_hold_modifiers = False
+        self._gazepoint = EyeTrackerGaze()
 
         # Multi-processing attributes
         self._async_proc = None
@@ -314,7 +314,7 @@ class _HUDStateManager(object):
             self.hud._panel.set_btn_text(use_alt_text=False)
 
     def start(self) -> mp.Process:
-        """ Starts the async window-focus watcher.
+        """ Starts the async window-focus watcher and the eyetracker.
         """
         # If async watcher already running
         if self._async_proc is not None and self._async_proc.is_alive():
@@ -322,6 +322,7 @@ class _HUDStateManager(object):
 
         # Else, not running -- start it
         else:
+            # Start the state watcher
             ctx = mp.get_context('fork')
             self._async_signal_q = ctx.Queue(maxsize=1)
             self._async_output_q = ctx.Queue(maxsize=1)
@@ -331,10 +332,14 @@ class _HUDStateManager(object):
                     self._async_signal_q, self._async_output_q))
             self._async_proc.start()
 
+            # Start the eyetracker
+            self._gazepoint.open()
+            self._gazepoint.start()
+
         return self._async_proc
 
     def stop(self) -> mp.Process:
-        """ Stops the async state watcher and does cleanup.
+        """ Stops the async state watcher and eyetracker, and performs cleanup.
         """
         # Unset any keybd modifier toggles the user may have set
         self._reset_keyb_modifers(toggle_btnviz=False)
@@ -346,6 +351,10 @@ class _HUDStateManager(object):
             warn('Received STOP but HUD State Manager not yet started.')
         except mp.queues.Full:
             pass
+        else:
+            # Stop the eyetracker
+            self._gazepoint.stop()
+            self._gazepoint.close()
 
         return self._async_proc
 

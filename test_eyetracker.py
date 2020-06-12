@@ -7,6 +7,7 @@ __author__ = 'Dustin Fast <dustin.fast@outlook.com>'
 import time
 
 import pyximport; pyximport.install()
+
 from lib.py.eyetracker_gaze import EyeTrackerGaze
 
 DURATION_S = 1
