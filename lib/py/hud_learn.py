@@ -4,6 +4,7 @@
 __author__ = 'Dustin Fast <dustin.fast@outlook.com>'
 
 import os
+import pickle
 from time import sleep
 from pathlib import Path
 
@@ -69,6 +70,15 @@ class HUDLearn(object):
 
         return str(Path(logdir, f'{DATA_SESSION_NAME}.csv'))
 
+    @property
+    def modelfile_path(self):
+        # Setup and denote the log file path
+        logdir =  Path(LOG_RAW_ROOTDIR, LOG_HUD_SUBDIR)
+        if not logdir.exists():
+            os.makedirs(logdir)
+
+        return str(Path(logdir, f'{DATA_SESSION_NAME}.pkl'))
+
     def start(self):
         """ Starts the async handlers. Returns ref to the async process.
         """
@@ -133,8 +143,9 @@ class _HUDTrain(object):
         """
         self.hud_learn = hud_learn
 
-        self._logpath = self.hud_learn.datafile_path
         self._is_alive = False
+        self._logpath = self.hud_learn.datafile_path
+        self._modelpath = self.hud_learn.modelfile_path
 
     @property
     def proc(self):
@@ -166,7 +177,7 @@ class _HUDTrain(object):
             as constructed by _HUDDataCollect.
         """
         print('Training... You may continue to use the HUD during this time.')
-        self._isalive = True
+        self._is_alive = True
 
         self._do_acc_train()
         # self._do_typer_train()
@@ -177,7 +188,7 @@ class _HUDTrain(object):
         self._isalive = False
         return self.join
 
-    def _do_acc_train(self, show_results=True):
+    def _do_acc_train(self, show_results=False):
         # Extract data
         df = self.dataset_df
 
@@ -185,16 +196,21 @@ class _HUDTrain(object):
         y = df[[c for c in df.columns if c.startswith('y_')]].values[:, :-1]
         X[:, -2:] = normalize(X[:, -2:])  # Leftmost 2 features need normed
 
+        # Do traintest split, then fit
         X_train, X_test, y_train, y_test = train_test_split(
             X, y, train_size=0.8, random_state=RAND_SEED)
 
         clf = MultiOutputRegressor(
             Ridge(random_state=RAND_SEED)).fit(X_train, y_train)
 
+        # Save model to file
+        with open(self._modelpath, 'wb') as f:
+            pickle.dump(clf, f)
+
+        # Plot and show validation results, iff specified
         if not show_results:
             return
 
-        # Plot and show validation results
         y_hat = clf.predict(X_train)
         import matplotlib.pyplot as plt
         plt.figure()
