@@ -32,6 +32,7 @@ def seed_rand(seed=None):
         random.seed(seed)
         np.random.seed(seed)
 
+
 def info(s):
     """ Prints the given string to stdout, formatted as an info str.
     """
