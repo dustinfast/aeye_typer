@@ -1,5 +1,4 @@
 """ The on-screen heads-up display (HUD). 
-    A HUD contains "panels", and each panel has some number of buttons on it.
 """
 
 __author__ = 'Dustin Fast <dustin.fast@outlook.com>'
@@ -14,7 +13,6 @@ import tkinter as tk
 from tkinter import ttk, FLAT, DISABLED, SUNKEN, ACTIVE
 from pynput import mouse as Mouse
 from pynput import keyboard as Keyboard
-import pyximport; pyximport.install()
 
 import gi
 gi.require_version('Wnck', '3.0')
@@ -22,7 +20,7 @@ from gi.repository import Wnck
 
 from lib.py.app import config, warn
 from lib.py.hud_panel import HUDPanel
-from lib.py.eyetracker_gaze import EyeTrackerGaze
+from lib.py.hud_learn import HUDLearn
 
 
 # App config elements
@@ -38,12 +36,15 @@ HUD_DEFAULT_PANELS =  _conf['HUD_PANELS']
 del _conf
 
 # HUD styles
-BTN_FONT = ("Helvetica", 10)
-BTN_FONT_BOLD = ("Helvetica", 10, "bold")
+HUD_STYLE_INFER = 'Infer.TFrame'
+HUD_STYLE_TRAIN = 'Train.TFrame'
+HUD_STYLE_COLLECT = 'Collect.TFrame'
 BTN_STYLE = 'PanelButton.TButton'
 BTN_STYLE_SPACER = 'Spacer.PanelButton.TButton'
 BTN_STYLE_TOGGLE = 'PanelButtonToggle.TButton'
 BTN_STYLE_TOGGLE_ON = 'Depressed.PanelButtonToggle.TButton'
+BTN_FONT_BOLD = ("Helvetica", 10, "bold")
+BTN_FONT = ("Helvetica", 10)
 
 # VKey codes, for convenience
 VK_CAPSLOCK = 65509
@@ -60,12 +61,17 @@ ASYNC_STIME = .005
 
 
 class HUD(tk.Tk):
-    def __init__(self, hud_panels=HUD_DEFAULT_PANELS):
-        """ An abstraction of the heads-up display.
+    def __init__(self, hud_panels=HUD_DEFAULT_PANELS, mode='infer'):
+        """ An abstraction of the heads-up display. A HUD contains a number of
+            panels, and each panel has some number of buttons on it.
+            Only one panel may be visible at a time.
+
+            :param hud_panels: (lst) The panels (as layout file paths) to use.
+            :param mode: (str) Either 'collect', 'train', or 'infer'.
         """
         super().__init__()
 
-        self._panel = None              # Active panel's frame
+        self.active_panel = None        # Active panel's frame
         self._panel_paths = hud_panels  # Path to each panel's layout file
 
         # Calculate HUD display coords, based on screen size
@@ -89,7 +95,17 @@ class HUD(tk.Tk):
 
         # TODO: Add json panel toggle btns -> self.set_curr_panel(idx)
 
-        # Setup the child frame that will host the panel frames
+        # TODO: Styles for each mode. i.e. red for collect, etc.
+        # ttk.Style().configure(HUD_STYLE_INFER, background='black')
+        # ttk.Style().configure(HUD_STYLE_TRAIN, background='green')
+        # ttk.Style().configure(HUD_STYLE_COLLECT, foreround='red')
+        # style = {
+        #     'infer'     : HUD_STYLE_INFER,
+        #     'train'     : HUD_STYLE_TRAIN,
+        #     'collect'   : HUD_STYLE_COLLECT
+        # }.get(mode, None)
+
+        # Setup child frame for hosting the active panel frame.
         self._host_frame = ttk.Frame(
             self, width=HUD_DISP_WIDTH, height=HUD_DISP_HEIGHT)
 
@@ -97,8 +113,8 @@ class HUD(tk.Tk):
         self.set_curr_panel(0)
 
         # Setup the wintools helper
-        self._state = _HUDState(self)
-
+        self._state = _HUDState(self, mode)
+ 
     def _quit(self, **kwargs):
         """ Quits the hud window by exiting tk.mainloop.
 
@@ -131,22 +147,23 @@ class HUD(tk.Tk):
         panel_json_path = self._panel_paths[idx]
         
         # Destroy currently active panel, if any
-        if self._panel:
-            self._panel.destroy()
+        if self.active_panel:
+            self.active_panel.destroy()
 
-        self._panel = HUDPanel.from_json(panel_json_path,
-                                         parent_frame=self._host_frame,
-                                         hud=self,
-                                         x=self._host_frame.winfo_rootx(),
-                                         y=self._host_frame.winfo_rooty())
+        self.active_panel = HUDPanel.from_json(
+            panel_json_path,
+            parent_frame=self._host_frame,
+            hud=self,
+            x=self._host_frame.winfo_rootx(),
+            y=self._host_frame.winfo_rooty())
 
     def set_btn_viz_toggle(self, btn, toggle_on=False):
         """ Sets a btn as toggled on, visually.
         """
         if toggle_on:
-            btn.configure(style=BTN_STYLE_TOGGLE_ON)
+            btn.widget.configure(style=BTN_STYLE_TOGGLE_ON)
         else:
-            btn.configure(style=BTN_STYLE_TOGGLE)
+            btn.widget.configure(style=BTN_STYLE_TOGGLE)
 
     def payload_handler(self, btn, payload=None, payload_type=None):
         """ Fires the requested action, inferred from the payload type ID.
@@ -165,7 +182,7 @@ class HUD(tk.Tk):
             'key_toggle': self._state.payload_keyboard_toggle_modifer,
 
             # Run an external command
-            'run_external': self._state.payload_run_external,
+            'run_external': self._state.payload_run_external
             
             # TODO: if payload_type = 'mouseclick_hold':
         }.get(payload_type, None)
@@ -174,17 +191,20 @@ class HUD(tk.Tk):
             raise NotImplementedError(f'Payload type: {payload_type}')
 
         # Call the handler
+        # TODO: Depending on mode, some handlers should be disabled
         payload_type_handler(btn=btn, 
                              payload=payload,
                              payload_type=payload_type)
 
-
 class _HUDState(object):
-    def __init__(self, parent_hud):
+    def __init__(self, parent_hud, mode):
         """ An abstraction of the HUD's state, including elements of its
             environment -- Faciliates interaction with external applications
             by tracking virtual keyboard states/clicks, the currently active
             window in order to handle payload delivery, and the users gaze.
+
+            :param parent_hud: (HUD) The parent HUD obj.
+            :param mode: (str) Either 'collect', 'train', or 'infer'.
         """
         self.hud = parent_hud
 
@@ -194,9 +214,12 @@ class _HUDState(object):
         self._root.change_attributes(event_mask=Xlib.X.FocusChangeMask)
         self._net_wm_name = self._disp.intern_atom('_NET_WM_NAME')
 
-        # Init eyetracker/keyboard/mouse controllers
+        # Init keyboard/mouse/ml controllers
+        self._learn = HUDLearn(self, mode)
         self._mouse = Mouse.Controller()
         self._keyboard = Keyboard.Controller()
+
+        # Keyboard modifer state containers
         self._keyboard_active_modifier_btns = []
         self._keyboard_hold_modifiers = False
 
@@ -310,10 +333,10 @@ class _HUDState(object):
                 self.hud.set_btn_viz_toggle(b)
 
             self._keyboard_active_modifier_btns = []
-            self.hud._panel.set_btn_text(use_alt_text=False)
+            self.hud.active_panel.set_btn_text(use_alt_text=False)
 
     def start(self) -> mp.Process:
-        """ Starts the async window-focus watcher and the eyetracker.
+        """ Starts the async window-focus watcher and the ml/eyetracker module.
         """
         # If async watcher already running
         if self._async_proc is not None and self._async_proc.is_alive():
@@ -331,6 +354,9 @@ class _HUDState(object):
                     self._async_signal_q, self._async_output_q))
             self._async_proc.start()
 
+            # Start the ml/eyetracker modules
+            self._learn.start()
+
         return self._async_proc
 
     def stop(self) -> mp.Process:
@@ -346,6 +372,8 @@ class _HUDState(object):
             warn('Received STOP but HUD State Manager not yet started.')
         except mp.queues.Full:
             pass
+        else:
+            self._learn.stop().join()
 
         return self._async_proc
 
@@ -429,7 +457,7 @@ class _HUDState(object):
         # Extract kwargs
         payload = kwargs['payload']     # (int) Key vk code
         sender = kwargs['btn']    # (HUDPanel.HUDButton) Payload sender
-
+        
         # Ensure modifier is supported
         if payload == VK_NUMLOCK:
             raise NotImplementedError('NumLock')
@@ -482,7 +510,7 @@ class _HUDState(object):
                 # Update btn state according to new toggle state
                 self.hud.set_btn_viz_toggle(sender, toggle_on=toggle_down)
                 if modifier == self._keyboard._Key.shift:
-                    self.hud._panel.set_btn_text(use_alt_text=toggle_down)
+                    self.hud.active_panel.set_btn_text(use_alt_text=toggle_down)
 
             # TODO: Ensure graceful handle of alt + tab, etc.
 

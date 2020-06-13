@@ -33,6 +33,7 @@ EYETRACKER_PREP_SCRIPT_PATH: /opt/app/src/lib/sh/prep_eyetracker_gaze.sh
 # Event Logging
 EVENTLOG_RAW_ROOTDIR: /opt/app/data/event_logs/raw      # Raw log data (.csv)
 EVENTLOG_SAMPLED_ROOTDIR: /opt/app/data/event_logs/sampled  # Parsed log data (.sqlite)
+EVENTLOG_HUD_SUBDIR: hud                                # Subdir in raw and sampled dirs
 EVENTLOG_EEG_SUBDIR: eeg                                # Subdir in raw and sampled dirs
 EVENTLOG_GAZE_SUBDIR: gaze                              # Subdir in raw and sampled dirs
 EVENTLOG_KEYB_SUBDIR: keyboard                          # Subdir in raw and sampled dirs

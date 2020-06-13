@@ -21,11 +21,11 @@ if __name__ == "__main__":
                         action='store_true',
                         default=False,
                         help=arg_help_str)
-    arg_flags = ('-m', '--ml')
-    arg_help_str = 'Runs in machine learning mode.'
+    arg_flags = ('-m', '--mode')
+    arg_help_str = 'HUD mode... Either collect, train, or infer (default).'
     parser.add_argument(*arg_flags,
-                        action='store_true',
-                        default=False,
+                        type=str,
+                        default='infer',
                         help=arg_help_str)
 
     args = parser.parse_args()
@@ -33,4 +33,4 @@ if __name__ == "__main__":
     if args.calibrate:
         proc = Popen([CMD_CALIBRATE])
     else:
-        HUD().start()
+        HUD(mode=args.mode).start()

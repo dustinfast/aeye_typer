@@ -4,6 +4,7 @@
 __author__ = 'Dustin Fast <dustin.fast@outlook.com>'
 
 import json
+from collections import OrderedDict
 
 import tkinter as tk
 from tkinter import ttk
@@ -53,7 +54,8 @@ class HUDPanel(ttk.Frame):
         """ Init's the panel's buttons from the given panel layout.
         """
         self._btn_row_frames = []
-        self._btn_objs = []
+        self._hud_btns = []
+        self._payload_to_btn = {}   # { payload: HUDBtn }
 
         for i, panel_row in enumerate(btn_layout):
             # Create the current row's frame
@@ -67,25 +69,26 @@ class HUDPanel(ttk.Frame):
 
                 # If btn is a spacer, create a hidden dud btn
                 if btn.text == BTN_SPACER_TEXT:
-                    btn.obj = ttk.Button(
+                    btn.widget = ttk.Button(
                         parent_row_frame,
                         width=btn_disp_width,
                         style=BTN_STYLE_SPACER)
-                    btn.obj.grid(row=0, column=j, ipady=4, ipadx=0)
+                    btn.widget.grid(row=0, column=j, ipady=4, ipadx=0)
             
                 # Else create a clickable btn
                 else:
-                    btn.obj = ttk.Button(
+                    btn.widget = ttk.Button(
                         parent_row_frame,
                         style=BTN_STYLE_TOGGLE if btn.is_toggle else BTN_STYLE,
                         width=btn_disp_width,
                         text=btn.text)
-                    btn.obj.grid(row=0, column=j, ipady=4, ipadx=0)
-                    btn.obj.configure(command=lambda btn=btn: \
+                    btn.widget.grid(row=0, column=j, ipady=4, ipadx=0)
+                    btn.widget.configure(command=lambda btn=btn: \
                         self.hud.payload_handler(
-                            btn.obj, btn.payload, btn.payload_type))
+                            btn, btn.payload, btn.payload_type))
 
-                self._btn_objs.append(btn)
+                self._hud_btns.append(btn)
+                self._payload_to_btn[btn.payload] = btn
 
     @property
     def button_widgets(self):
@@ -98,13 +101,11 @@ class HUDPanel(ttk.Frame):
 
         return widgets
 
-    def get_btn_centroid(self, btn):
-        """ Returns the center of the given ttk.Button's pixel-wise x/y coords.
+    def btn_frompayload(self, payload):
+        """ Returns the button having the given payload. If multiple buttons
+            have that payload, only the first is returned.
         """
-        x = btn.winfo_rootx() + int(btn.winfo_reqwidth() / 2)
-        y = btn.winfo_rooty() + int(btn.winfo_reqheight() / 2)
-
-        return x, y
+        return self._payload_to_btn[payload]
 
     def set_btn_text(self, use_alt_text=False):
         """ Sets each button on the panel to use either its alternate or
@@ -118,20 +119,20 @@ class HUDPanel(ttk.Frame):
             # Set alt text iff specified
             if use_alt_text:
                 btn_widg.configure(
-                    text=self._btn_objs[i].alternate_text)
+                    text=self._hud_btns[i].alternate_text)
 
             # Else set primary text
             else:
                 btn_widg.configure(
-                    text=self._btn_objs[i].text)
+                    text=self._hud_btns[i].text)
 
 
 class HUDButton(object):
-    def __init__(self, obj=None, text=None, alt_text=None, width=1,
+    def __init__(self, widget=None, text=None, alt_text=None, width=1,
                  is_toggle=False, payload=None, payload_type=None):
         """ An abstraction of a HUD Button.
         """
-        self.obj = obj
+        self.widget = widget
         self.text = text
         self.alt_text = alt_text
         self.width = width
@@ -146,4 +147,19 @@ class HUDButton(object):
     @property
     def alternate_text(self):
         return self.alt_text if self.alt_text else self.text
+
+    @property
+    def centroid(self):
+        """ The center of the button, in on-screen coords. Result is cached
+            after first call.
+        """
+        try:
+            return self._centroid
+        except AttributeError:
+            obj = self.widget
+            self._centroid = (
+                obj.winfo_rootx() + int(obj.winfo_reqwidth() / 2),
+                obj.winfo_rooty() + int(obj.winfo_reqheight() / 2))
+            return self._centroid
+
             

@@ -384,7 +384,6 @@ gaze_point_t* EyeTrackerGaze::get_gazepoint() {
     gp->y_coord = avg_y;
 
     return gp;
-
 }
 
 /////////////////////////////////////////////////////////////////////////////

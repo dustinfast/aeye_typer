@@ -79,7 +79,7 @@ if __name__ == '__main__':
             # If the key wasn't pressed twice, note it as a panel btn
             txt = str(key).replace('Key.', '').replace("'", "")
             curr_map_row.append(
-                HUDButton(obj=None,
+                HUDButton(widget=None,
                           text=txt,
                           alt_text=None,
                           payload=key_id,
