@@ -563,17 +563,16 @@ static void cb_gaze_data(tobii_gaze_data_t const *data, void *user_data) {
         gaze->m_mark_count = 0;
 
         // Get and annotate the smoothed gaze point
-        gaze_point_t *gp = gaze->get_gazepoint();
+        // gaze_point_t *gp = gaze->get_gazepoint();
+        // delete gp;
 
         XMoveWindow(
             gaze->m_disp,
             gaze->m_overlay, 
-            gp->x_coord,
-            gp->y_coord);
+            x_gazepoint,
+            y_gazepoint);
 
         XFlush(gaze->m_disp);
-
-        delete gp;
     }
     else {
         // printf("Gaze point not valid.");  // Debug
