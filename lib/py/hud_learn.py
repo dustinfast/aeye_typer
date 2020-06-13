@@ -211,12 +211,12 @@ class _HUDTrain(object):
         if not show_results:
             return
 
-        y_hat = clf.predict(X_train)
+        y_hat = clf.predict(X_test)
         import matplotlib.pyplot as plt
         plt.figure()
-        plt.scatter(y_train[:, 0], y_train[:, 1], c="green", label="y")
+        plt.scatter(y_test[:, 0], y_test[:, 1], c="green", label="y")
         plt.scatter(y_hat[:, 0], y_hat[:, 1], c="red",
-            label="y_pred (score=%.2f)" % clf.score(X_train, y_train))
+            label="y_pred (score=%.2f)" % clf.score(X_test, y_test))
         plt.xlim([1500, 3840])
         plt.ylim([2160, 1500])
         plt.xlabel("gaze_x")
