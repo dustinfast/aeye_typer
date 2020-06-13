@@ -67,7 +67,7 @@ class EyeTrackerGaze(object):
 
         # Data to csv
         lib.eye_gaze_data_tocsv.argtypes = [
-            ctypes.c_void_p, ctypes.c_char_p, ctypes.c_int]
+            ctypes.c_void_p, ctypes.c_char_p, ctypes.c_int, ctypes.c_char_p]
         lib.eye_gaze_data_tocsv.restype = ctypes.c_int
 
         # Start
@@ -128,15 +128,25 @@ class EyeTrackerGaze(object):
         self._lib.eye_gaze_destructor(self._obj)
         self._obj = None
 
-    def to_csv(self, file_path, num_points=0):
+    def to_csv(self, file_path, num_points=0, label=''):
         """ Writes up to the last n gaze data points to the given file path,
             creating it if exists else appending to it.
             If n == 0, all data points in the buffer are written.
+            ASSUMES: After first call to this function, subsequent calls
+            are for the same file_path (for perf reasons)
         """
+        # Decode and cache the file_path.
+        try:
+            csv_path = self._csv_path
+        except AttributeError:
+            self._csv_path = bytes(file_path, encoding="ascii")
+            csv_path = self._csv_path
+
         self._ensure_device_opened()
         self._lib.eye_gaze_data_tocsv(self._obj, 
-                                      bytes(file_path, encoding="ascii"),
-                                      num_points)
+                                      csv_path,
+                                      num_points,
+                                      bytes(label, encoding="ascii"))
 
     def gaze_data_sz(self):
         """ Returns the number of gaze point samples in the eyetracker's buff.

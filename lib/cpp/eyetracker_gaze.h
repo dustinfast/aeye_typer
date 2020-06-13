@@ -103,7 +103,7 @@ class EyeTrackerGaze : public EyeTracker {
 
         void start();
         void stop();
-        int gaze_data_tocsv(const char*, int);
+        int gaze_data_tocsv(const char*, int, const char*);
         bool is_gaze_valid();
         void enque_gaze_data(shared_ptr<gaze_data_t>);
         void print_gaze_data();
@@ -237,8 +237,10 @@ void EyeTrackerGaze::stop() {
 
 // Writes the gaze data to the given csv file path, creating it if exists 
 // else appending to it. If n is given, writes only the most recent n samples.
-// Returns an int representing the number of samples written.
-int EyeTrackerGaze::gaze_data_tocsv(const char *file_path, int n=0) {
+// Returns an int representing the number of samples written. If label given,
+// appends the given cstring to each csv row written.
+int EyeTrackerGaze::gaze_data_tocsv(
+    const char *file_path, int n=0, const char *label=NULL) {
     // Copy circ buff contents then (effectively) clear it
     m_async_mutex->lock();
     shared_ptr<circ_buff> gaze_buff = m_gaze_buff;
@@ -261,7 +263,7 @@ int EyeTrackerGaze::gaze_data_tocsv(const char *file_path, int n=0) {
 
     // Write the gaze data to file asynchronously
     m_async_writer = make_shared<boost::thread>(
-        [file_path, gaze_buff, n]() {
+        [file_path, gaze_buff, n, label]() {
             ofstream f, f2;
             f.open(file_path, fstream::in | fstream::out | fstream::app);
 
@@ -304,7 +306,12 @@ int EyeTrackerGaze::gaze_data_tocsv(const char *file_path, int n=0) {
                     cgd.right_gazepoint_normed_x << ", " <<
                     cgd.right_gazepoint_normed_y << ", " <<
                     cgd.combined_gazepoint_x << ", " <<
-                    cgd.combined_gazepoint_y << "\n";
+                    cgd.combined_gazepoint_y;
+                    
+                if (label != NULL)
+                    f << ", " << label;
+                
+                f << "\n";
             }
 
             f.close();
@@ -402,8 +409,9 @@ extern "C" {
         gaze->~EyeTrackerGaze();
     }
 
-    int eye_gaze_data_tocsv(EyeTrackerGaze* gaze, const char *file_path, int n) {
-        return gaze->gaze_data_tocsv(file_path, n);
+    int eye_gaze_data_tocsv(
+        EyeTrackerGaze* gaze, const char *file_path, int n, const char *label) {
+            return gaze->gaze_data_tocsv(file_path, n, label);
     }
 
     void eye_gaze_start(EyeTrackerGaze* gaze) {

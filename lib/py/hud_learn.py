@@ -102,6 +102,7 @@ class _HUDDataCollect(object):
             key_id).centroid
 
         print(btn_xy)  # debug
+        self.hud_learn._gazepoint.to_csv('test.csv', label='x, y, 1990')
         print()
 
         # Write to log
