@@ -39,7 +39,8 @@ SIGNAL_STOP = False
 
 class EventLogger(object):
     def __init__(self, logname, notes, verbose):
-        """ An event logger parent class.
+        """ An event logger parent class. Contains logfile paths/attributes.
+            # TODO: Refactor as EventLog?
         """
         assert(isinstance(logname, str))
         assert(isinstance(notes, (str, type(None))))

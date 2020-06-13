@@ -9,8 +9,8 @@ import multiprocessing as mp
 from collections import namedtuple
 from subprocess import Popen, PIPE
 
-import Xlib.threaded
 import Xlib.display
+import Xlib.threaded
 import tkinter as tk
 from tkinter import ttk, FLAT, DISABLED, SUNKEN, ACTIVE
 from pynput import keyboard as Keyboard
@@ -196,6 +196,7 @@ class _HUDState(object):
         self._net_wm_name = self._disp.intern_atom('_NET_WM_NAME')
 
         # Init eyetracker/keyboard/mouse controllers
+        # TODO: self._mouse = Mouse.Controller(), for payload_type mouse_hold
         self._keyboard = Keyboard.Controller()
         self._keyboard_active_modifier_btns = []
         self._keyboard_hold_modifiers = False
@@ -394,7 +395,8 @@ class _HUDState(object):
         """
         self._focus_prev_active_win()
         
-        # TODO: Annotate gaze data
+        # TODO: If ml mode, annotate gaze data, fired on physical keystroke
+        # with users gaze at centroid
         print(self._gazepoint.gaze_coords())
         print(self.hud._panel.get_btn_centroid(kwargs['btn']))
 
