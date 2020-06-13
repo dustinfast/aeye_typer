@@ -37,10 +37,9 @@ del _conf
 SIGNAL_EVENT = True
 SIGNAL_STOP = False
 
-class EventLogger(object):
+class EventLog(object):
     def __init__(self, logname, notes, verbose):
-        """ An event logger parent class. Contains logfile paths/attributes.
-            # TODO: Refactor as EventLog?
+        """ An abstraction of an event log. Contains log file paths/attributes.
         """
         assert(isinstance(logname, str))
         assert(isinstance(notes, (str, type(None))))
@@ -119,7 +118,7 @@ class EventLogger(object):
         raise NotImplementedError  # Child classes must override
     
 
-class AsyncEEGEventLogger(EventLogger, EEGBrainflow):
+class AsyncEEGEventLogger(EventLog, EEGBrainflow):
     _LOG_EEG_FNAME_TEMPLATE = '%Y-%m-%d--%H-%M.csv'
 
     def __init__(self, name, notes, writeback=5, writeafter=5, verbose=True):
@@ -127,7 +126,7 @@ class AsyncEEGEventLogger(EventLogger, EEGBrainflow):
             before and after the occurance of receipt of an event signal.
         """
         EEGBrainflow.__init__(self)
-        EventLogger.__init__(self, name, notes, verbose)
+        EventLog.__init__(self, name, notes, verbose)
 
         assert(writeback > 0 and writeafter > 0)
 
@@ -357,7 +356,7 @@ class AsyncEEGEventLogger(EventLogger, EEGBrainflow):
                 pass # No need to flood queue with event signals
 
 
-class AsyncGazeEventLogger(EventLogger):
+class AsyncGazeEventLogger(EventLog):
     _LOG_GAZE_FNAME_TEMPLATE = '%Y-%m-%d--%H-%M.csv'
 
     def __init__(self, name, notes, writeback=5, writeafter=5, verbose=True):
@@ -365,7 +364,7 @@ class AsyncGazeEventLogger(EventLogger):
             before and after the occurance of receipt of an event signal.
         """
         assert(writeback > 0 and writeafter > 0)
-        EventLogger.__init__(self, name, notes, verbose)
+        EventLog.__init__(self, name, notes, verbose)
 
         self.eyetracker = EyeTrackerGaze()
         self.sample_rate = self.eyetracker.sample_rate
@@ -538,7 +537,7 @@ class AsyncGazeEventLogger(EventLogger):
                 pass # No need to flood queue with event signals
 
 
-class AsyncInputEventLogger(EventLogger):
+class AsyncInputEventLogger(EventLog):
     _DF_MAXROWS = 2500
 
     _LOG_KEYS_FNAME_TEMPLATE = 'keys-%Y-%m-%d--%H.csv'
