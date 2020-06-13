@@ -195,11 +195,10 @@ class _HUDState(object):
         self._net_wm_name = self._disp.intern_atom('_NET_WM_NAME')
 
         # Init eyetracker/keyboard/mouse controllers
-        # TODO: self._mouse = Mouse.Controller(), for payload_type mouse_hold
+        self._mouse = Mouse.Controller()
         self._keyboard = Keyboard.Controller()
         self._keyboard_active_modifier_btns = []
         self._keyboard_hold_modifiers = False
-        self._gazepoint = EyeTrackerGaze()
 
         # Multi-processing attributes
         self._async_proc = None
@@ -332,10 +331,6 @@ class _HUDState(object):
                     self._async_signal_q, self._async_output_q))
             self._async_proc.start()
 
-            # Start the eyetracker
-            self._gazepoint.open()
-            self._gazepoint.start()
-
         return self._async_proc
 
     def stop(self) -> mp.Process:
@@ -351,12 +346,28 @@ class _HUDState(object):
             warn('Received STOP but HUD State Manager not yet started.')
         except mp.queues.Full:
             pass
-        else:
-            # Stop the eyetracker
-            self._gazepoint.stop()
-            self._gazepoint.close()
 
         return self._async_proc
+
+    def do_mouse_press(self, x, y, button=None):
+        """ Performs a mouse btn press at the given on-screen cooridnates. The
+            mouse cursor is moved to that location in the process.
+
+            :param button: (pynput.mouse.Button): The mouse-button to press. If
+            None, the left mouse button is assumed.
+        """
+        self._mouse.position = (x, y)
+        self._mouse.press(Mouse.Button.left)
+
+    def do_mouse_release(self, x, y, button=None):
+        """ Performs a mouse btn release at the given on-screen coords. The
+            mouse cursor is moved to that location in the process.
+
+            :param button: (pynput.mouse.Button): The mouse-button to press. If
+            None, the left mouse button is assumed.
+        """
+        self._mouse.position = (x, y)
+        self._mouse.release(Mouse.Button.left)
 
     def set_hud_sticky(self):
         """ Applies the "show on all workspaces" attribute to the HUD window.
