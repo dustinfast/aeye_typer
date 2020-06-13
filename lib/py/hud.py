@@ -4,17 +4,16 @@
 
 __author__ = 'Dustin Fast <dustin.fast@outlook.com>'
 
-import time
+from time import sleep
 import multiprocessing as mp
-from collections import namedtuple
 from subprocess import Popen, PIPE
 
 import Xlib.display
 import Xlib.threaded
 import tkinter as tk
 from tkinter import ttk, FLAT, DISABLED, SUNKEN, ACTIVE
-from pynput import keyboard as Keyboard
 from pynput import mouse as Mouse
+from pynput import keyboard as Keyboard
 import pyximport; pyximport.install()
 
 import gi
@@ -35,7 +34,7 @@ HUD_DISP_HEIGHT = _conf['HUD_DISP_HEIGHT_PX']
 HUD_DISP_DIV_X = _conf['HUD_DISP_COORD_DIVISOR_X']
 HUD_DISP_DIV_Y = _conf['HUD_DISP_COORD_DIVISOR_Y']
 HUD_DISP_TITLE = _conf['HUD_DISP_TITLE']
-DEFAULT_PANELS =  _conf['HUD_PANELS']
+HUD_DEFAULT_PANELS =  _conf['HUD_PANELS']
 del _conf
 
 # HUD styles
@@ -61,7 +60,7 @@ ASYNC_STIME = .005
 
 
 class HUD(tk.Tk):
-    def __init__(self, hud_panels=DEFAULT_PANELS):
+    def __init__(self, hud_panels=HUD_DEFAULT_PANELS):
         """ An abstraction of the heads-up display.
         """
         super().__init__()
@@ -270,7 +269,7 @@ class _HUDState(object):
             try:
                 signal = signal_queue.get_nowait()
             except mp.queues.Empty:
-                time.sleep(ASYNC_STIME)
+                sleep(ASYNC_STIME)
             else:
                 # Process stop signal, iff received
                 if signal == SIGNAL_STOP:
@@ -395,12 +394,6 @@ class _HUDState(object):
         """
         self._focus_prev_active_win()
         
-        # TODO: If ml mode, annotate gaze data, fired on physical keystroke
-        # with users gaze at centroid
-        print(self._gazepoint.gaze_coords())
-        print(self.hud._panel.get_btn_centroid(kwargs['btn']))
-
-
         # Extract kwarg
         payload = kwargs['payload']     # (str)
 
