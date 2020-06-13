@@ -1,6 +1,6 @@
 /////////////////////////////////////////////////////////////////////////////
 // A class for annotating gaze status from the eyetracker in real time.
-// When the gaze point is valid (i.e. a user is present) custom_gaze_data
+// When the gaze point is valid (i.e. a user is present) gaze_data
 // objects are pushed to a circular buffer and the predicted gaze point is
 // annotated on the screen.
 // Extern "C" wrappers are defined for select functions.
@@ -33,7 +33,7 @@ using namespace std;
 #define GAZE_MARKER_BORDER 0
 #define MOUNT_OFFSET_MM 0.0
 
-typedef struct custom_gaze_data {
+typedef struct gaze_data {
         int64_t unixtime_us;
 
         float left_pupildiameter_mm;
@@ -75,7 +75,7 @@ typedef struct custom_gaze_data {
         int combined_gazepoint_x;
         int combined_gazepoint_y;
 
-	    } custom_gaze_data_t;
+	    } gaze_data_t;
 
 typedef struct gaze_point {
         int n_samples;
@@ -83,7 +83,7 @@ typedef struct gaze_point {
         int y_coord;
 	    } gaze_point_t;
 
-typedef boost::circular_buffer<shared_ptr<custom_gaze_data_t>> circ_buff;
+typedef boost::circular_buffer<shared_ptr<gaze_data_t>> circ_buff;
 
 void do_gaze_data_subscribe(tobii_device_t*, void*);
 static void cb_gaze_data(tobii_gaze_data_t const*, void*);
@@ -103,9 +103,9 @@ class EyeTrackerGaze : public EyeTracker {
 
         void start();
         void stop();
-        int gaze_to_csv(const char*, int);
+        int gaze_data_tocsv(const char*, int);
         bool is_gaze_valid();
-        void enque_gaze_data(shared_ptr<custom_gaze_data_t>);
+        void enque_gaze_data(shared_ptr<gaze_data_t>);
         void print_gaze_data();
         int gaze_data_sz();
         int disp_x_from_normed_x(float);
@@ -238,7 +238,7 @@ void EyeTrackerGaze::stop() {
 // Writes the gaze data to the given csv file path, creating it if exists 
 // else appending to it. If n is given, writes only the most recent n samples.
 // Returns an int representing the number of samples written.
-int EyeTrackerGaze::gaze_to_csv(const char *file_path, int n=0) {
+int EyeTrackerGaze::gaze_data_tocsv(const char *file_path, int n=0) {
     // Copy circ buff contents then (effectively) clear it
     m_async_mutex->lock();
     shared_ptr<circ_buff> gaze_buff = m_gaze_buff;
@@ -315,7 +315,7 @@ int EyeTrackerGaze::gaze_to_csv(const char *file_path, int n=0) {
 }
 
 // Enques gaze data into the circular buffer
-void EyeTrackerGaze::enque_gaze_data(shared_ptr<custom_gaze_data_t> cgd) {
+void EyeTrackerGaze::enque_gaze_data(shared_ptr<gaze_data_t> cgd) {
     m_async_mutex->lock();
     m_gaze_buff->push_back(cgd);
     m_async_mutex->unlock();
@@ -387,9 +387,9 @@ gaze_point_t* EyeTrackerGaze::get_gazepoint() {
 }
 
 /////////////////////////////////////////////////////////////////////////////
-// Extern wrapper exposing EyeTrackerGaze(), start(), stop(), & gaze_to_csv()
+// Extern wrapper exposing a subset of EyeTrackerGaze()'s methods
 extern "C" {
-    EyeTrackerGaze* eyetracker_gaze_new(
+    EyeTrackerGaze* eye_gaze_new(
         float disp_width_mm, float disp_height_mm, int disp_width_px, 
             int disp_height_px, int mark_freq, int buff_sz, int smooth_over) {
                 return new EyeTrackerGaze(
@@ -398,31 +398,31 @@ extern "C" {
                 );
     }
 
-    void eyetracker_gaze_destructor(EyeTrackerGaze* gaze) {
+    void eye_gaze_destructor(EyeTrackerGaze* gaze) {
         gaze->~EyeTrackerGaze();
     }
 
-    int eyetracker_gaze_to_csv(EyeTrackerGaze* gaze, const char *file_path, int n) {
-        return gaze->gaze_to_csv(file_path, n);
+    int eye_gaze_data_tocsv(EyeTrackerGaze* gaze, const char *file_path, int n) {
+        return gaze->gaze_data_tocsv(file_path, n);
     }
 
-    void eyetracker_gaze_start(EyeTrackerGaze* gaze) {
+    void eye_gaze_start(EyeTrackerGaze* gaze) {
         gaze->start();
     }
 
-    void eyetracker_gaze_stop(EyeTrackerGaze* gaze) {
+    void eye_gaze_stop(EyeTrackerGaze* gaze) {
         gaze->stop();
     }
 
-    int eyetracker_gaze_data_sz(EyeTrackerGaze* gaze) {
+    int eye_gaze_data_sz(EyeTrackerGaze* gaze) {
         return gaze->gaze_data_sz();
     }
 
-    gaze_point_t* eyetracker_gaze_point(EyeTrackerGaze* gaze) {
+    gaze_point_t* eye_gaze_point(EyeTrackerGaze* gaze) {
         return gaze->get_gazepoint();
     }
 
-    void eyetracker_gaze_point_free(gaze_point_t *gp) {
+    void eye_gaze_point_free(gaze_point_t *gp) {
         delete gp;
     }
 }
@@ -455,92 +455,92 @@ void do_gaze_data_subscribe(tobii_device_t *device, void *gaze) {
 // data into EyeTrackerGazes' circular buffer. Also creates a shaded window
 // overlay denoting the gaze point on the screen.
 // ASSUMES: user_data is a ptr to an object of type EyeTrackerGaze.
-static void cb_gaze_data(tobii_gaze_data_t const *gaze_data, void *user_data) {
+static void cb_gaze_data(tobii_gaze_data_t const *data, void *user_data) {
     EyeTrackerGaze *gaze = static_cast<EyeTrackerGaze*>(user_data);
 
-    if(gaze_data->left.gaze_point_validity == TOBII_VALIDITY_VALID ==
-    gaze_data->right.gaze_point_validity) {
+    if(data->left.gaze_point_validity == TOBII_VALIDITY_VALID ==
+    data->right.gaze_point_validity) {
         
         // Convert gaze point to screen coords
         int left_gazepoint_x = gaze->disp_x_from_normed_x(
-            gaze_data->left.gaze_point_on_display_normalized_xy[0]);
+            data->left.gaze_point_on_display_normalized_xy[0]);
         int left_gazepoint_y = gaze->disp_y_from_normed_y(
-            gaze_data->left.gaze_point_on_display_normalized_xy[1]);
+            data->left.gaze_point_on_display_normalized_xy[1]);
             
         int right_gazepoint_x = gaze->disp_x_from_normed_x(
-            gaze_data->right.gaze_point_on_display_normalized_xy[0]);
+            data->right.gaze_point_on_display_normalized_xy[0]);
         int right_gazepoint_y = gaze->disp_y_from_normed_y(
-            gaze_data->right.gaze_point_on_display_normalized_xy[1]);
+            data->right.gaze_point_on_display_normalized_xy[1]);
 
         int x_gazepoint = (left_gazepoint_x + right_gazepoint_x) / 2;
         int y_gazepoint = (left_gazepoint_y + right_gazepoint_y) / 2;
 
         // Convert timestamp from device time to system clock time
         int64_t timestamp_us = gaze->devicetime_to_systime(
-            gaze_data->timestamp_system_us);
+            data->timestamp_system_us);
 
         // Copy gaze data then enque it in the EyeTrackerGaze buff
-        shared_ptr<custom_gaze_data_t> cgd = make_shared<custom_gaze_data_t>();
+        shared_ptr<gaze_data_t> cgd = make_shared<gaze_data_t>();
 
         cgd->unixtime_us = timestamp_us;
-        cgd->left_pupildiameter_mm = gaze_data->left.pupil_diameter_mm;
-        cgd->right_pupildiameter_mm = gaze_data->right.pupil_diameter_mm;
+        cgd->left_pupildiameter_mm = data->left.pupil_diameter_mm;
+        cgd->right_pupildiameter_mm = data->right.pupil_diameter_mm;
         cgd->left_eyeposition_normed_x = 
-            gaze_data->left.eye_position_in_track_box_normalized_xyz[0];
+            data->left.eye_position_in_track_box_normalized_xyz[0];
 		cgd->left_eyeposition_normed_y = 
-            gaze_data->left.eye_position_in_track_box_normalized_xyz[1];
+            data->left.eye_position_in_track_box_normalized_xyz[1];
 		cgd->left_eyeposition_normed_z = 
-            gaze_data->left.eye_position_in_track_box_normalized_xyz[2];
+            data->left.eye_position_in_track_box_normalized_xyz[2];
 		cgd->right_eyeposition_normed_x = 
-            gaze_data->right.eye_position_in_track_box_normalized_xyz[0];
+            data->right.eye_position_in_track_box_normalized_xyz[0];
 		cgd->right_eyeposition_normed_y = 
-            gaze_data->right.eye_position_in_track_box_normalized_xyz[1];
+            data->right.eye_position_in_track_box_normalized_xyz[1];
 		cgd->right_eyeposition_normed_z = 
-            gaze_data->right.eye_position_in_track_box_normalized_xyz[2];
+            data->right.eye_position_in_track_box_normalized_xyz[2];
         cgd->left_eyecenter_mm_x = 
-            gaze_data->left.eyeball_center_from_eye_tracker_mm_xyz[0];
+            data->left.eyeball_center_from_eye_tracker_mm_xyz[0];
 		cgd->left_eyecenter_mm_y = 
-            gaze_data->left.eyeball_center_from_eye_tracker_mm_xyz[1];
+            data->left.eyeball_center_from_eye_tracker_mm_xyz[1];
 		cgd->left_eyecenter_mm_z = 
-            gaze_data->left.eyeball_center_from_eye_tracker_mm_xyz[2];
+            data->left.eyeball_center_from_eye_tracker_mm_xyz[2];
 		cgd->right_eyecenter_mm_x = 
-            gaze_data->right.eyeball_center_from_eye_tracker_mm_xyz[0];
+            data->right.eyeball_center_from_eye_tracker_mm_xyz[0];
 		cgd->right_eyecenter_mm_y = 
-            gaze_data->right.eyeball_center_from_eye_tracker_mm_xyz[1];
+            data->right.eyeball_center_from_eye_tracker_mm_xyz[1];
 		cgd->right_eyecenter_mm_z = 
-            gaze_data->right.eyeball_center_from_eye_tracker_mm_xyz[2];
+            data->right.eyeball_center_from_eye_tracker_mm_xyz[2];
         cgd->left_gazeorigin_mm_x = 
-            gaze_data->left.gaze_origin_from_eye_tracker_mm_xyz[0];
+            data->left.gaze_origin_from_eye_tracker_mm_xyz[0];
 		cgd->left_gazeorigin_mm_y = 
-            gaze_data->left.gaze_origin_from_eye_tracker_mm_xyz[1];
+            data->left.gaze_origin_from_eye_tracker_mm_xyz[1];
 		cgd->left_gazeorigin_mm_z = 
-            gaze_data->left.gaze_origin_from_eye_tracker_mm_xyz[2];
+            data->left.gaze_origin_from_eye_tracker_mm_xyz[2];
 		cgd->right_gazeorigin_mm_x = 
-            gaze_data->right.gaze_origin_from_eye_tracker_mm_xyz[0];
+            data->right.gaze_origin_from_eye_tracker_mm_xyz[0];
 		cgd->right_gazeorigin_mm_y = 
-            gaze_data->right.gaze_origin_from_eye_tracker_mm_xyz[1];
+            data->right.gaze_origin_from_eye_tracker_mm_xyz[1];
 		cgd->right_gazeorigin_mm_z = 
-            gaze_data->right.gaze_origin_from_eye_tracker_mm_xyz[2];
+            data->right.gaze_origin_from_eye_tracker_mm_xyz[2];
         cgd->left_gazepoint_mm_x = 
-            gaze_data->left.gaze_point_from_eye_tracker_mm_xyz[0];
+            data->left.gaze_point_from_eye_tracker_mm_xyz[0];
 		cgd->left_gazepoint_mm_y = 
-            gaze_data->left.gaze_point_from_eye_tracker_mm_xyz[1];
+            data->left.gaze_point_from_eye_tracker_mm_xyz[1];
 		cgd->left_gazepoint_mm_z = 
-            gaze_data->left.gaze_point_from_eye_tracker_mm_xyz[2];
+            data->left.gaze_point_from_eye_tracker_mm_xyz[2];
 		cgd->right_gazepoint_mm_x = 
-            gaze_data->right.gaze_point_from_eye_tracker_mm_xyz[0];
+            data->right.gaze_point_from_eye_tracker_mm_xyz[0];
 		cgd->right_gazepoint_mm_y = 
-            gaze_data->right.gaze_point_from_eye_tracker_mm_xyz[1];
+            data->right.gaze_point_from_eye_tracker_mm_xyz[1];
 		cgd->right_gazepoint_mm_z = 
-            gaze_data->right.gaze_point_from_eye_tracker_mm_xyz[2];
+            data->right.gaze_point_from_eye_tracker_mm_xyz[2];
         cgd->left_gazepoint_normed_x = 
-            gaze_data->left.gaze_point_on_display_normalized_xy[0];
+            data->left.gaze_point_on_display_normalized_xy[0];
 		cgd->left_gazepoint_normed_y = 
-            gaze_data->left.gaze_point_on_display_normalized_xy[1];
+            data->left.gaze_point_on_display_normalized_xy[1];
 		cgd->right_gazepoint_normed_x = 
-            gaze_data->right.gaze_point_on_display_normalized_xy[0];
+            data->right.gaze_point_on_display_normalized_xy[0];
 		cgd->right_gazepoint_normed_y = 
-            gaze_data->right.gaze_point_on_display_normalized_xy[1];
+            data->right.gaze_point_on_display_normalized_xy[1];
         cgd->combined_gazepoint_x = x_gazepoint;
         cgd->combined_gazepoint_y = y_gazepoint;
 

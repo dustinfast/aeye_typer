@@ -56,39 +56,39 @@ class EyeTrackerGaze(object):
         lib = ctypes.cdll.LoadLibrary(lib_path)
         
         # Constructor
-        lib.eyetracker_gaze_new.argtypes = [
+        lib.eye_gaze_new.argtypes = [
             ctypes.c_float, ctypes.c_float, ctypes.c_int, 
                 ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int]
-        lib.eyetracker_gaze_new.restype = ctypes.c_void_p
+        lib.eye_gaze_new.restype = ctypes.c_void_p
 
         # Destructor
-        lib.eyetracker_gaze_destructor.argtypes = [ctypes.c_void_p]
-        lib.eyetracker_gaze_destructor.restype = ctypes.c_void_p
+        lib.eye_gaze_destructor.argtypes = [ctypes.c_void_p]
+        lib.eye_gaze_destructor.restype = ctypes.c_void_p
 
         # Data to csv
-        lib.eyetracker_gaze_to_csv.argtypes = [
+        lib.eye_gaze_data_tocsv.argtypes = [
             ctypes.c_void_p, ctypes.c_char_p, ctypes.c_int]
-        lib.eyetracker_gaze_to_csv.restype = ctypes.c_int
+        lib.eye_gaze_data_tocsv.restype = ctypes.c_int
 
         # Start
-        lib.eyetracker_gaze_start.argtypes = [ctypes.c_void_p]
-        lib.eyetracker_gaze_start.restype = ctypes.c_void_p
+        lib.eye_gaze_start.argtypes = [ctypes.c_void_p]
+        lib.eye_gaze_start.restype = ctypes.c_void_p
 
         # Stop
-        lib.eyetracker_gaze_stop.argtypes = [ctypes.c_void_p]
-        lib.eyetracker_gaze_stop.restype = ctypes.c_void_p
+        lib.eye_gaze_stop.argtypes = [ctypes.c_void_p]
+        lib.eye_gaze_stop.restype = ctypes.c_void_p
 
         # Gaze data sz
-        lib.eyetracker_gaze_data_sz.argtypes = [ctypes.c_void_p]
-        lib.eyetracker_gaze_data_sz.restype = ctypes.c_int
+        lib.eye_gaze_data_sz.argtypes = [ctypes.c_void_p]
+        lib.eye_gaze_data_sz.restype = ctypes.c_int
 
         # GazePoint
-        lib.eyetracker_gaze_point.argtypes = [ctypes.c_void_p]
-        lib.eyetracker_gaze_point.restype = ctypes.c_void_p
+        lib.eye_gaze_point.argtypes = [ctypes.c_void_p]
+        lib.eye_gaze_point.restype = ctypes.c_void_p
 
-        # GazePoint
-        lib.eyetracker_gaze_point_free.argtypes = [ctypes.c_void_p]
-        lib.eyetracker_gaze_point_free.restype = ctypes.c_void_p
+        # GazePoint mem free
+        lib.eye_gaze_point_free.argtypes = [ctypes.c_void_p]
+        lib.eye_gaze_point_free.restype = ctypes.c_void_p
 
         return lib
 
@@ -103,7 +103,7 @@ class EyeTrackerGaze(object):
             warn('Device already open.')
             return
 
-        self._obj = self._lib.eyetracker_gaze_new(
+        self._obj = self._lib.eye_gaze_new(
             DISP_WIDTH_MM, DISP_HEIGHT_MM, DISP_WIDTH_PX, DISP_HEIGHT_PX,
                 GAZE_MARK_INTERVAL, GAZE_BUFF_SZ, GAZE_SMOOTH_OVER)
 
@@ -111,13 +111,13 @@ class EyeTrackerGaze(object):
         """ Starts the asynchronous gaze tracking.
         """
         self._ensure_device_opened()
-        self._lib.eyetracker_gaze_start(self._obj)
+        self._lib.eye_gaze_start(self._obj)
 
     def stop(self):
         """ Stops the asynchronous gaze tracking.
         """
         self._ensure_device_opened()
-        self._lib.eyetracker_gaze_stop(self._obj)
+        self._lib.eye_gaze_stop(self._obj)
         
     def close(self):
         """ Closes the device.
@@ -125,7 +125,7 @@ class EyeTrackerGaze(object):
         if self._obj is None:
             error('Device not open.')
 
-        self._lib.eyetracker_gaze_destructor(self._obj)
+        self._lib.eye_gaze_destructor(self._obj)
         self._obj = None
 
     def to_csv(self, file_path, num_points=0):
@@ -134,15 +134,15 @@ class EyeTrackerGaze(object):
             If n == 0, all data points in the buffer are written.
         """
         self._ensure_device_opened()
-        self._lib.eyetracker_gaze_to_csv(self._obj, 
-                                        bytes(file_path, encoding="ascii"),
-                                        num_points)
+        self._lib.eye_gaze_data_tocsv(self._obj, 
+                                      bytes(file_path, encoding="ascii"),
+                                      num_points)
 
     def gaze_data_sz(self):
         """ Returns the number of gaze point samples in the eyetracker's buff.
         """
         self._ensure_device_opened()
-        return self._lib.eyetracker_gaze_data_sz(self._obj)
+        return self._lib.eye_gaze_data_sz(self._obj)
 
     def gaze_coords(self):
         """ Returns the current gaze point in display coords.
@@ -150,7 +150,7 @@ class EyeTrackerGaze(object):
         self._ensure_device_opened()
         
         # Instantiate a gaze_point ptr from the c obj's address
-        ptr = self._lib.eyetracker_gaze_point(self._obj)
+        ptr = self._lib.eye_gaze_point(self._obj)
         gp = gaze_point.from_address(ptr)
 
         # Denote the gaze_point contexts
@@ -159,7 +159,7 @@ class EyeTrackerGaze(object):
         y = gp.y
 
         # Free the ptr mem on the c side
-        self._lib.eyetracker_gaze_point_free(ptr)
+        self._lib.eye_gaze_point_free(ptr)
 
         if n <= 0:
             warn('Gaze point received from zero samples')
