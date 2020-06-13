@@ -21,6 +21,7 @@ LOG_RAW_ROOTDIR = _conf['EVENTLOG_RAW_ROOTDIR']
 LOG_HUD_SUBDIR = _conf['EVENTLOG_HUD_SUBDIR']
 del _conf
 
+NOW = datetime.now().strftime('%Y-%m-%d-%H-%M')
 
 class HUDLearn(object):
     def __init__(self, hud_state, mode):
@@ -46,6 +47,15 @@ class HUDLearn(object):
             raise ValueError(f'Unsupported mode: {mode}')
 
         self._handler = handler(self)
+
+    @property
+    def datafile_path(self):
+        # Setup and denote the log file path
+        logdir =  Path(LOG_RAW_ROOTDIR, LOG_HUD_SUBDIR)
+        if not logdir.exists():
+            os.makedirs(logdir)
+
+        return str(Path(logdir, f'{NOW}.csv'))
 
     def start(self):
         """ Starts the async handlers. Returns ref to the async process.
@@ -86,16 +96,7 @@ class _HUDDataCollect(object):
         """
         self.hud_learn = hud_learn
         self._keyb_listener = Keyboard.Listener(on_press=self._on_keypress)
-
-        # Setup and denote the log file path
-        logdir =  Path(LOG_RAW_ROOTDIR, LOG_HUD_SUBDIR)
-        if not logdir.exists():
-            os.makedirs(logdir)
-
-        self._logpath = str(
-            Path(logdir, datetime.now().strftime('%Y-%m-%d--%H-%M.csv')))
-
-        print(f'"{self._logpath}"')
+        self._logpath = self.hud_learn.datafile_path
 
     @property
     def async_proc(self):
