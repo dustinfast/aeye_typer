@@ -17,7 +17,7 @@ from pynput.keyboard import Key
 from pynput import mouse, keyboard
 from brainflow.data_filter import DataFilter
 
-from lib.py.app import config, info, info_ok, warn, error
+from lib.py.app import key_to_id, config, info, info_ok, warn, error
 from lib.py.eeg_brainflow import EEGBrainflow
 from lib.py.eyetracker_gaze import EyeTrackerGaze
 
@@ -626,17 +626,8 @@ class AsyncInputEventLogger(EventLog):
         t_stamp = time.time()
         self._do_callbacks()
 
-        # Convert the Key obj to its ascii value
-        try:
-            key_id = ord(key.char.lower())
+        key_id = key_to_id(key)
         
-        # OR, convert the Key object to it's x11 code
-        except AttributeError:
-            try:
-                key_id = key.value.vk
-            except AttributeError:
-                key_id = key.vk
-
         # Update the df and (iff needed) write to file
         idx = self._append_df_row(self._df_keylog,
                                   self._df_keylog_idx,

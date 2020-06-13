@@ -32,7 +32,21 @@ def seed_rand(seed=None):
         random.seed(seed)
         np.random.seed(seed)
 
+def key_to_id(key):
+    """ Returns the key ID of the given Key obj.
+    """
+    # Convert the Key obj to its ascii value
+    try:
+        key_id = ord(key.char.lower())
+    
+    # OR, convert the Key object to it's x11 code
+    except AttributeError:
+        try:
+            key_id = key.value.vk
+        except AttributeError:
+            key_id = key.vk
 
+    return key_id
 def info(s):
     """ Prints the given string to stdout, formatted as an info str.
     """
