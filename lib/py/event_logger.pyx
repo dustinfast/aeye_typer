@@ -38,7 +38,7 @@ SIGNAL_EVENT = True
 SIGNAL_STOP = False
 
 class EventLog(object):
-    def __init__(self, logname, notes, verbose):
+    def __init__(self, logname, notes=None, verbose=True):
         """ An abstraction of an event log. Contains log file paths/attributes.
         """
         assert(isinstance(logname, str))

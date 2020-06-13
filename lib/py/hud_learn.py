@@ -3,20 +3,22 @@
 
 __author__ = 'Dustin Fast <dustin.fast@outlook.com>'
 
+import os
 from time import sleep
+from pathlib import Path
 from datetime import datetime
 
 from pynput import keyboard as Keyboard
 import pyximport; pyximport.install()
 
-from lib.py.app import key_to_id, config, info, warn
-from lib.py.event_logger import EventLog
 from lib.py.eyetracker_gaze import EyeTrackerGaze
+from lib.py.app import key_to_id, config, info, warn
 
 
 # App config elements
 _conf = config()
-HUD_LOG_SUBDIR = _conf['EVENTLOG_HUD_SUBDIR']
+LOG_RAW_ROOTDIR = _conf['EVENTLOG_RAW_ROOTDIR']
+LOG_HUD_SUBDIR = _conf['EVENTLOG_HUD_SUBDIR']
 del _conf
 
 
@@ -30,7 +32,7 @@ class HUDLearn(object):
         """
         self.hud_state = hud_state
 
-        self._gazepoint = EyeTrackerGaze()
+        self.gazepoint = EyeTrackerGaze()
         self._handler = None
 
         # Determine handler to use, based on the given mode
@@ -51,8 +53,8 @@ class HUDLearn(object):
         if self._handler.async_proc.is_alive():
             warn('HUDLearn received START but is already running.')
         else:
-            self._gazepoint.open()
-            self._gazepoint.start()
+            self.gazepoint.open()
+            self.gazepoint.start()
             self._handler.async_proc.start()
             sleep(1)  # Give the threads time to spin up
         
@@ -64,8 +66,8 @@ class HUDLearn(object):
         if not self._handler.async_proc.is_alive():
             warn('Keyboard watcher received STOP but is not running.')
         else:
-            self._gazepoint.stop()
-            self._gazepoint.close()
+            self.gazepoint.stop()
+            self.gazepoint.close()
             self._handler.async_proc.stop()
         
         return self._handler.async_proc
@@ -85,6 +87,16 @@ class _HUDDataCollect(object):
         self.hud_learn = hud_learn
         self._keyb_listener = Keyboard.Listener(on_press=self._on_keypress)
 
+        # Setup and denote the log file path
+        logdir =  Path(LOG_RAW_ROOTDIR, LOG_HUD_SUBDIR)
+        if not logdir.exists():
+            os.makedirs(logdir)
+
+        self._logpath = str(
+            Path(logdir, datetime.now().strftime('%Y-%m-%d--%H-%M.csv')))
+
+        print(f'"{self._logpath}"')
+
     @property
     def async_proc(self):
         return self._keyb_listener
@@ -92,21 +104,15 @@ class _HUDDataCollect(object):
     def _on_keypress(self, key):
         """ The on keypress callback.
         """
+        # Get the key id and centroid of the corresponding on-screen keyboard
+        # button. The centroid is assumed to be user's actual gaze location.
         key_id = key_to_id(key)
+        centr = self.hud_learn.hud_state.hud.active_panel.btn_frompayload(
+            key_id).centroid  # (x, y)
 
-        # Get all gaze points between the previous event and this one
-        print(self.hud_learn._gazepoint.gaze_coords())
-
-        # Actual gaze location is assumed to be the corresponding btns centroid
-        btn_xy = self.hud_learn.hud_state.hud.active_panel.btn_frompayload(
-            key_id).centroid
-
-        print(btn_xy)  # debug
-        self.hud_learn._gazepoint.to_csv('test.csv', label='x, y, 1990')
-        print()
-
-        # Write to log
-
+        # Write all gaze points between the previous event and this one to csv
+        self.hud_learn.gazepoint.to_csv(
+            self._logpath, label=f'{centr[0]}, {centr[1]}, {key_id}')
 
 
 class _HUDTrain(object):
