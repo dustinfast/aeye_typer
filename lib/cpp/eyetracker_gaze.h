@@ -10,6 +10,7 @@
 /////////////////////////////////////////////////////////////////////////////
 
 #include <stdio.h>
+#include <string.h>
 #include <fstream>
 
 #include <boost/thread.hpp>
@@ -103,7 +104,7 @@ class EyeTrackerGaze : public EyeTracker {
 
         void start();
         void stop();
-        int gaze_data_tocsv(const char*, int, const char*);
+        int gaze_data_tocsv(const char*, int, boost::shared_ptr<char>);
         bool is_gaze_valid();
         void enque_gaze_data(shared_ptr<gaze_data_t>);
         void print_gaze_data();
@@ -240,7 +241,7 @@ void EyeTrackerGaze::stop() {
 // Returns an int representing the number of samples written. If label given,
 // appends the given cstring to each csv row written.
 int EyeTrackerGaze::gaze_data_tocsv(
-    const char *file_path, int n=0, const char *label=NULL) {
+    const char *file_path, int n=0, boost::shared_ptr<char> label=NULL) {
     // Copy circ buff contents then (effectively) clear it
     m_async_mutex->lock();
     shared_ptr<circ_buff> gaze_buff = m_gaze_buff;
@@ -256,7 +257,7 @@ int EyeTrackerGaze::gaze_data_tocsv(
     if (n == 0)
         n = sample_count;
 
-    // Ensure any previous async write job has finished and free its mem
+    // Ensure any previous async write job has finished
     if (m_async_writer) {
         m_async_writer->join();
     }
@@ -411,7 +412,10 @@ extern "C" {
 
     int eye_gaze_data_tocsv(
         EyeTrackerGaze* gaze, const char *file_path, int n, const char *label) {
-            return gaze->gaze_data_tocsv(file_path, n, label);
+            boost::shared_ptr<char> p_label(new char[strlen(label)+1]);
+            strcpy(p_label.get(), label);
+
+            return gaze->gaze_data_tocsv(file_path, n, p_label);
     }
 
     void eye_gaze_start(EyeTrackerGaze* gaze) {
@@ -467,7 +471,7 @@ static void cb_gaze_data(tobii_gaze_data_t const *data, void *user_data) {
     EyeTrackerGaze *gaze = static_cast<EyeTrackerGaze*>(user_data);
 
     if(data->left.gaze_point_validity == TOBII_VALIDITY_VALID ==
-    data->right.gaze_point_validity) {
+        data->right.gaze_point_validity) {
         
         // Convert gaze point to screen coords
         int left_gazepoint_x = gaze->disp_x_from_normed_x(
