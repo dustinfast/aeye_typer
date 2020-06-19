@@ -123,7 +123,7 @@
             "text": "Quit",
             "width": 5,
             "is_toggle": false,
-            "payload": null,
+            "payload": 0,
             "payload_type": "hud_quit"
         }
     ],
@@ -494,8 +494,8 @@
             "payload_type": "keystroke"
         },
         {
-            "text": "\"",
-            "alt_text": "'",
+            "text": "'",
+            "alt_text": "\"",
             "width": 3,
             "is_toggle": false,
             "payload": 39,
@@ -602,7 +602,7 @@
             "text": "Shift",
             "width": 7,
             "is_toggle": true,
-            "payload": 65506,
+            "payload": 65505,
             "payload_type": "key_toggle"
         },
         {
@@ -660,15 +660,15 @@
             "text": "Alt",
             "width": 4,
             "is_toggle": true,
-            "payload": 65514,
+            "payload": 65513,
             "payload_type": "key_toggle"
         },
         {
-            "text": "Sup",
+            "text": "Hold",
             "width": 3,
-            "is_toggle": false,
-            "payload": 65516,
-            "payload_type": "keystroke"
+            "is_toggle": true,
+            "payload": 65515,
+            "payload_type": "key_toggle"
         },
         {
             "text": "Menu",
@@ -681,7 +681,7 @@
             "text": "Ctrl",
             "width": 4,
             "is_toggle": true,
-            "payload": 65508,
+            "payload": 65507,
             "payload_type": "key_toggle"
         },
         {

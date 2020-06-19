@@ -72,7 +72,7 @@ class HUD(tk.Tk):
         super().__init__()
 
         self.active_panel = None        # Active panel's frame
-        self._panel_paths = hud_panels  # Path to each panel's layout file
+        self._panel_paths = hud_panels 
 
         # Calculate HUD display coords, based on screen size
         x = (DISP_WIDTH/HUD_DISP_DIV_X) - (HUD_DISP_WIDTH/HUD_DISP_DIV_X)
@@ -93,6 +93,8 @@ class HUD(tk.Tk):
                               foreground='green',
                               relief=SUNKEN)
 
+        # TODO: Denote currently focused window's title
+
         # TODO: Add json panel toggle btns -> self.set_curr_panel(idx)
 
         # TODO: Styles for each mode. i.e. red for collect, etc.
@@ -109,11 +111,11 @@ class HUD(tk.Tk):
         self._host_frame = ttk.Frame(
             self, width=HUD_DISP_WIDTH, height=HUD_DISP_HEIGHT)
 
+        # Init the HUD state mgr
+        self._state = _HUDState(self, mode)
+        
         # Show 0th panel
         self.set_curr_panel(0)
-
-        # Setup the wintools helper
-        self._state = _HUDState(self, mode)
  
     def _quit(self, **kwargs):
         """ Quits the hud window by exiting tk.mainloop.
@@ -166,35 +168,12 @@ class HUD(tk.Tk):
             btn.widget.configure(style=BTN_STYLE_TOGGLE)
 
     def payload_handler(self, btn, payload=None, payload_type=None):
-        """ Fires the requested action, inferred from the payload type ID.
+        """ Calls the state mgr's payload handler, to fire the requested
+            action, as inferred from the payload type.
 
             :param btn: (hud_panel.HUDButton)
         """
-        # Infer the correct handler to call
-        payload_type_handler = {
-            # Close the HUD
-            'hud_quit': self._quit,
-
-            # Send a keystroke to the active window
-            'keystroke': self._state.payload_keystroke_to_active_win,
-
-            # Toggle a keyboard modifier on/off (e.g.: shift, alt, etc.)
-            'key_toggle': self._state.payload_keyboard_toggle_modifer,
-
-            # Run an external command
-            'run_external': self._state.payload_run_external
-            
-            # TODO: if payload_type = 'mouseclick_hold':
-        }.get(payload_type, None)
-
-        if not payload_type_handler:
-            raise NotImplementedError(f'Payload type: {payload_type}')
-
-        # Call the handler
-        # TODO: Depending on mode, some handlers should be disabled
-        payload_type_handler(btn=btn, 
-                             payload=payload,
-                             payload_type=payload_type)
+        self._state._payload_handler(btn, payload, payload_type)
 
 class _HUDState(object):
     def __init__(self, parent_hud, mode):
@@ -335,6 +314,41 @@ class _HUDState(object):
             self._keyboard_active_modifier_btns = []
             self.hud.active_panel.set_btn_text(use_alt_text=False)
 
+    def _payload_handler(self, btn, payload=None, payload_type=None):
+        """ Fires the requested action, inferred from the payload type ID.
+
+            :param btn: (hud_panel.HUDButton)
+        """
+        # Infer the correct handler to call
+        payload_type_handler = {
+            # TODO: if payload_type = 'mouseclick_hold':
+
+            # Close the HUD
+            'hud_quit': self.hud._quit,
+
+            # Send a keystroke to the active window
+            'keystroke': self.payload_keystroke_to_active_win,
+
+            # Toggle a keyboard modifier on/off (e.g.: shift, alt, etc.)
+            'key_toggle': self.payload_keyboard_toggle_modifer,
+
+            # Run an external command
+            'run_external': self.payload_run_external
+        }.get(payload_type, None)
+
+        if not payload_type_handler:
+            raise NotImplementedError(f'Payload type: {payload_type}')
+
+        # Perform AI specific actions
+        self._learn.event_handler(btn=btn, 
+                                  payload=payload,
+                                  payload_type=payload_type)
+
+        # Call the handler
+        payload_type_handler(btn=btn, 
+                             payload=payload,
+                             payload_type=payload_type)
+
     def start(self) -> mp.Process:
         """ Starts the async window-focus watcher and the ml/eyetracker module.
         """
@@ -373,7 +387,7 @@ class _HUDState(object):
         except mp.queues.Full:
             pass
         else:
-            self._learn.stop().join()
+            self._learn.stop()
 
         return self._async_proc
 
@@ -456,7 +470,7 @@ class _HUDState(object):
 
         # Extract kwargs
         payload = kwargs['payload']     # (int) Key vk code
-        sender = kwargs['btn']    # (HUDPanel.HUDButton) Payload sender
+        sender = kwargs['btn']          # (HUDPanel.HUDButton) Payload sender
         
         # Ensure modifier is supported
         if payload == VK_NUMLOCK:
