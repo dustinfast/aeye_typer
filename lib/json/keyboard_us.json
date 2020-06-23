@@ -114,7 +114,21 @@
         },
         {
             "text": "_spacer_",
-            "width": 14,
+            "width": 1,
+            "is_toggle": false,
+            "payload": null,
+            "payload_type": null
+        },
+        {
+            "text": "Click-Hold",
+            "width": 8,
+            "is_toggle": true,
+            "payload": 60005,
+            "payload_type": "mouse_toggle"
+        },
+        {
+            "text": "_spacer_",
+            "width": 1,
             "is_toggle": false,
             "payload": null,
             "payload_type": null
@@ -291,6 +305,7 @@
         },
         {
             "text": "q",
+            "alt_text": "Q",
             "width": 3,
             "is_toggle": false,
             "payload": 113,
@@ -298,6 +313,7 @@
         },
         {
             "text": "w",
+            "alt_text": "W",
             "width": 3,
             "is_toggle": false,
             "payload": 119,
@@ -305,6 +321,7 @@
         },
         {
             "text": "e",
+            "alt_text": "E",
             "width": 3,
             "is_toggle": false,
             "payload": 101,
@@ -312,6 +329,7 @@
         },
         {
             "text": "r",
+            "alt_text": "R",
             "width": 3,
             "is_toggle": false,
             "payload": 114,
@@ -319,6 +337,7 @@
         },
         {
             "text": "t",
+            "alt_text": "T",
             "width": 3,
             "is_toggle": false,
             "payload": 116,
@@ -326,6 +345,7 @@
         },
         {
             "text": "y",
+            "alt_text": "Y",
             "width": 3,
             "is_toggle": false,
             "payload": 121,
@@ -333,6 +353,7 @@
         },
         {
             "text": "u",
+            "alt_text": "U",
             "width": 3,
             "is_toggle": false,
             "payload": 117,
@@ -340,6 +361,7 @@
         },
         {
             "text": "i",
+            "alt_text": "I",
             "width": 3,
             "is_toggle": false,
             "payload": 105,
@@ -347,6 +369,7 @@
         },
         {
             "text": "o",
+            "alt_text": "O",
             "width": 3,
             "is_toggle": false,
             "payload": 111,
@@ -354,6 +377,7 @@
         },
         {
             "text": "p",
+            "alt_text": "P",
             "width": 3,
             "is_toggle": false,
             "payload": 112,
@@ -424,6 +448,7 @@
         },
         {
             "text": "a",
+            "alt_text": "A",
             "width": 3,
             "is_toggle": false,
             "payload": 97,
@@ -431,6 +456,7 @@
         },
         {
             "text": "s",
+            "alt_text": "S",
             "width": 3,
             "is_toggle": false,
             "payload": 115,
@@ -438,6 +464,7 @@
         },
         {
             "text": "d",
+            "alt_text": "D",
             "width": 3,
             "is_toggle": false,
             "payload": 100,
@@ -445,6 +472,7 @@
         },
         {
             "text": "f",
+            "alt_text": "F",
             "width": 3,
             "is_toggle": false,
             "payload": 102,
@@ -452,6 +480,7 @@
         },
         {
             "text": "g",
+            "alt_text": "G",
             "width": 3,
             "is_toggle": false,
             "payload": 103,
@@ -459,6 +488,7 @@
         },
         {
             "text": "h",
+            "alt_text": "H",
             "width": 3,
             "is_toggle": false,
             "payload": 104,
@@ -466,6 +496,7 @@
         },
         {
             "text": "j",
+            "alt_text": "J",
             "width": 3,
             "is_toggle": false,
             "payload": 106,
@@ -473,6 +504,7 @@
         },
         {
             "text": "k",
+            "alt_text": "K",
             "width": 3,
             "is_toggle": false,
             "payload": 107,
@@ -480,6 +512,7 @@
         },
         {
             "text": "l",
+            "alt_text": "L",
             "width": 3,
             "is_toggle": false,
             "payload": 108,
@@ -520,6 +553,7 @@
         },
         {
             "text": "z",
+            "alt_text": "Z",
             "width": 3,
             "is_toggle": false,
             "payload": 122,
@@ -527,6 +561,7 @@
         },
         {
             "text": "x",
+            "alt_text": "X",
             "width": 3,
             "is_toggle": false,
             "payload": 120,
@@ -534,6 +569,7 @@
         },
         {
             "text": "c",
+            "alt_text": "C",
             "width": 3,
             "is_toggle": false,
             "payload": 99,
@@ -541,6 +577,7 @@
         },
         {
             "text": "v",
+            "alt_text": "V",
             "width": 3,
             "is_toggle": false,
             "payload": 118,
@@ -548,6 +585,7 @@
         },
         {
             "text": "b",
+            "alt_text": "B",
             "width": 3,
             "is_toggle": false,
             "payload": 98,
@@ -555,6 +593,7 @@
         },
         {
             "text": "n",
+            "alt_text": "N",
             "width": 3,
             "is_toggle": false,
             "payload": 110,
@@ -562,6 +601,7 @@
         },
         {
             "text": "m",
+            "alt_text": "M",
             "width": 3,
             "is_toggle": false,
             "payload": 109,

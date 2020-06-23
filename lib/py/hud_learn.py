@@ -119,6 +119,8 @@ class HUDLearn(object):
 
         # TODO: Filter rows for only the last label in a series of same label
         # TODO: Possibly use second-to-last, etc, in case of eye-flirt early?
+        # Possibly compress the last x samples, in case training samples have
+        # longer gaze at each btn.
         # print(len(df.index))
         # df = df.drop([i for i in [i for i in df.index if df[i-1] == df[i])
         # # print(len(df.index))
