@@ -62,14 +62,17 @@ ASYNC_STIME = .005
 
 
 class HUD(tk.Tk):
-    def __init__(self, hud_panels=HUD_DEFAULT_PANELS, mode='infer'):
+    __valid_modes = ['basic', 'collect', 'infer']
+
+    def __init__(self, hud_panels=HUD_DEFAULT_PANELS, mode='basic'):
         """ An abstraction of the heads-up display. A HUD contains a number of
             panels, and each panel has some number of buttons on it.
             Only one panel may be visible at a time.
 
             :param hud_panels: (lst) The panels (as layout file paths) to use.
-            :param mode: (str) Either 'collect', 'train', or 'infer'.
+            :param mode: (str) Either 'basic', 'collect', or 'infer'.
         """
+        assert(mode in self.__valid_modes)
         super().__init__()
 
         self.active_panel = None        # Active panel's frame
@@ -94,7 +97,6 @@ class HUD(tk.Tk):
                               foreground='green',
                               relief=SUNKEN)
 
-        # TODO: Denote currently focused window's title
 
         # TODO: Add json panel toggle btns -> self.set_curr_panel(idx)
 
@@ -107,6 +109,8 @@ class HUD(tk.Tk):
         #     'train'     : HUD_STYLE_TRAIN,
         #     'collect'   : HUD_STYLE_COLLECT
         # }.get(mode, None)
+        
+        # TODO: Denote currently focused window's title
 
         # Setup child frame for hosting the active panel frame.
         self._host_frame = ttk.Frame(
@@ -125,14 +129,14 @@ class HUD(tk.Tk):
         """
         self.quit()
 
-    def start(self):
+    def run(self):
         """ Brings up the HUD display. Should be used instead of tk.mainloop 
             because sticky attribute must be handled first. Blocks.
         """
         # Start the managers
         self._state.start()
 
-        # Set sticky attribute so, hud appears on all workspaces
+        # Set sticky attribute so hud appears on all workspaces
         self.update_idletasks()
         self.update()
         self._state.set_hud_sticky()
@@ -322,7 +326,7 @@ class _HUDState(object):
         """
         # Infer the correct handler to call
         payload_type_handler = {
-            # TODO: if payload_type = 'mouseclick_hold':
+            # TODO: if payload_type = 'mouse_toggle':
 
             # Close the HUD
             'hud_quit': self.hud._quit,
@@ -341,9 +345,9 @@ class _HUDState(object):
             raise NotImplementedError(f'Payload type: {payload_type}')
 
         # Perform AI specific actions
-        self._learn.event_handler(btn=btn, 
-                                  payload=payload,
-                                  payload_type=payload_type)
+        self._learn.handle_event(btn=btn, 
+                                 payload=payload,
+                                 payload_type=payload_type)
 
         # Call the handler
         payload_type_handler(btn=btn, 
