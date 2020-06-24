@@ -205,20 +205,21 @@ class HUDTrain(HUDLearn):
         print('Done -- score_x = %.2f | score_y = %.2f' % 
             (model_x_score, model_y_score))
 
-        # import matplotlib.pyplot as plt
-        # y_x_coord_hat = model_x.predict(X_test)
-        # y_y_coord_hat = model_y.predict(X_test)
-        # plt.figure()
-        # plt.scatter(
-        #     y_test_x_coord, y_test_y_coord, c="green", label="y", marker=".")
-        # plt.scatter(
-        #     y_x_coord_hat, y_y_coord_hat, c="red", marker=".",
-        #         label='y_hat (score=%.2f|%.2f)' % (
-        #             model_x_score, model_y_score))
-        # plt.xlim([1500, 3840])
-        # plt.ylim([2160, 1500])
-        # plt.xlabel("gaze_x")
-        # plt.ylabel("gaze_y")
-        # plt.title("Perf")
-        # plt.legend()
-        # plt.savefig(f'test_SVR.png')
+        # debug
+        import matplotlib.pyplot as plt
+        y_x_coord_hat = model_x.predict(X_test)
+        y_y_coord_hat = model_y.predict(X_test)
+        plt.figure()
+        plt.scatter(
+            y_test_x_coord, y_test_y_coord, c="green", label="y", marker=".")
+        plt.scatter(
+            y_x_coord_hat, y_y_coord_hat, c="red", marker=".",
+                label='y_hat (score=%.2f|%.2f)' % (
+                    model_x_score, model_y_score))
+        plt.xlim([1500, 3840])
+        plt.ylim([2160, 1500])
+        plt.xlabel("gaze_x")
+        plt.ylabel("gaze_y")
+        plt.title("Perf")
+        plt.legend()
+        plt.savefig(f'test_SVR.png')

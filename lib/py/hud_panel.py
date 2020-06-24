@@ -17,6 +17,7 @@ HUD_BTN_WIDTH = _conf['HUD_BTN_WIDTH']
 del _conf
 
 # HUD styles
+HUD_STYLE = 'HUD.TFrame'
 BTN_STYLE = 'PanelButton.TButton'
 BTN_STYLE_SPACER = 'Spacer.PanelButton.TButton'
 BTN_STYLE_TOGGLE = 'PanelButtonToggle.TButton'
@@ -32,7 +33,7 @@ class HUDPanel(ttk.Frame):
             :param parent_frame: (tk.ttk.Frame) Hosting frame.
             :param hud: (hud.HUD) the 
         """
-        ttk.Frame.__init__(self, takefocus=0)
+        ttk.Frame.__init__(self, takefocus=0, style=HUD_STYLE)
 
         self.parent = parent_frame
         self.hud = hud

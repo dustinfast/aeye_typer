@@ -36,9 +36,7 @@ HUD_DEFAULT_PANELS =  _conf['HUD_PANELS']
 del _conf
 
 # HUD styles
-HUD_STYLE_INFER = 'Infer.TFrame'
-HUD_STYLE_TRAIN = 'Train.TFrame'
-HUD_STYLE_COLLECT = 'Collect.TFrame'
+HUD_STYLE = 'HUD.TFrame'
 BTN_STYLE = 'PanelButton.TButton'
 BTN_STYLE_SPACER = 'Spacer.PanelButton.TButton'
 BTN_STYLE_TOGGLE = 'PanelButtonToggle.TButton'
@@ -97,19 +95,11 @@ class HUD(tk.Tk):
                               foreground='green',
                               relief=SUNKEN)
 
-
-        # TODO: Add json panel toggle btns -> self.set_curr_panel(idx)
-
-        # TODO: Styles for each mode. i.e. red for collect, etc.
-        # ttk.Style().configure(HUD_STYLE_INFER, background='black')
-        # ttk.Style().configure(HUD_STYLE_TRAIN, background='green')
-        # ttk.Style().configure(HUD_STYLE_COLLECT, foreround='red')
-        # style = {
-        #     'infer'     : HUD_STYLE_INFER,
-        #     'train'     : HUD_STYLE_TRAIN,
-        #     'collect'   : HUD_STYLE_COLLECT
-        # }.get(mode, None)
+        # If in data collection mode, add an ugly highlight to remind user
+        ttk.Style().configure(
+            HUD_STYLE, background='red' if mode == 'collect' else None)
         
+        # TODO: Add json panel toggle btns -> self.set_curr_panel(idx)
         # TODO: Denote currently focused window's title
 
         # Setup child frame for hosting the active panel frame.
