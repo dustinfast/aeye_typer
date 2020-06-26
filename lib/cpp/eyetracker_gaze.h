@@ -75,7 +75,6 @@ typedef struct gaze_data {
 
         int combined_gazepoint_x;
         int combined_gazepoint_y;
-
 	    } gaze_data_t;
 
 typedef struct gaze_point {
@@ -107,6 +106,7 @@ class EyeTrackerGaze : public EyeTracker {
         int gaze_data_tocsv(const char*, int, boost::shared_ptr<char>);
         bool is_gaze_valid();
         void enque_gaze_data(shared_ptr<gaze_data_t>);
+        void set_gaze_marker(shared_ptr<gaze_data_t>);
         void print_gaze_data();
         int gaze_data_sz();
         int disp_x_from_normed_x(float);
@@ -322,7 +322,7 @@ int EyeTrackerGaze::gaze_data_tocsv(
     return sample_count;
 }
 
-// Enques gaze data into the circular buffer
+// Enques gaze data into the circular buffer.
 void EyeTrackerGaze::enque_gaze_data(shared_ptr<gaze_data_t> cgd) {
     m_async_mutex->lock();
     m_gaze_buff->push_back(cgd);
@@ -361,7 +361,7 @@ int EyeTrackerGaze::disp_y_from_normed_y(float y_normed) {
     return y_normed * m_disp_height;
 }
 
-// Returns the current smoothed display gazepoint
+// Returns the current smoothed display gazepoint.
 gaze_point_t* EyeTrackerGaze::get_gazepoint() {
     int avg_x = 0;
     int avg_y = 0;
@@ -392,6 +392,19 @@ gaze_point_t* EyeTrackerGaze::get_gazepoint() {
     gp->y_coord = avg_y;
 
     return gp;
+}
+
+// Sets or updates the on-screen gaze marker position.
+void EyeTrackerGaze::set_gaze_marker(shared_ptr<gaze_data_t> cgd) {
+
+    XMoveWindow(
+        m_disp,
+        m_overlay, 
+        cgd->combined_gazepoint_x,
+        cgd->combined_gazepoint_y
+    );
+
+    XFlush(m_disp);
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -565,21 +578,10 @@ static void cb_gaze_data(tobii_gaze_data_t const *data, void *user_data) {
 
         // Else, reset the gaze mark count & update marker position
         gaze->m_mark_count = 0;
-
-        // Get and annotate the smoothed gaze point
-        // gaze_point_t *gp = gaze->get_gazepoint();
-        // delete gp;
-
-        XMoveWindow(
-            gaze->m_disp,
-            gaze->m_overlay, 
-            x_gazepoint,
-            y_gazepoint);
-
-        XFlush(gaze->m_disp);
+        gaze->set_gaze_marker(cgd);
     }
     else {
-        // printf("Gaze point not valid.");  // Debug
+        // printf("WARN: Gaze point invalid.");  // Debug
     }
 }
 

@@ -180,6 +180,8 @@ class HUDTrain(HUDLearn):
             raise Exception('Unexpected post-processed data shape enountered.')
 
         # Extract and normalize X
+        # TODO: normalize_fromknown(arr, known_min_maxs)
+
         _X = df[[c for c in df.columns if c.startswith('X_')]].values
         _X = normalize(_X, axis=0)
 
