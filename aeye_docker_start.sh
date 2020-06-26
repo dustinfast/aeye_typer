@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# Runs and enters the docker container given by `app_name` with the app's local
+# Runs and enters the application's docker container, with the app's local
 # codebase and data directories mounted, along with the user's local home
-# directory.
-# On exiting the container, it is killed.
+# directory for convenience.
+# On exiting the container, the container is killed.
 
 app_name="fast_aeye_typer"  # Your docker image name
 
