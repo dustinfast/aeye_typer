@@ -2,7 +2,7 @@
 // A class for annotating gaze status from the eyetracker in real time.
 // When the gaze point is valid (i.e. a user is present) gaze_data
 // objects are pushed to a circular buffer and the predicted gaze point is
-// annotated on the screen.
+// annotated on the screen. Buffer contents may also be written to CSV.
 // Extern "C" wrappers are defined for select functions.
 //
 // Author: Dustin Fast <dustin.fast@hotmail.com>
@@ -481,7 +481,7 @@ void do_gaze_data_subscribe(tobii_device_t *device, void *gaze) {
 // overlay denoting the gaze point on the screen.
 // ASSUMES: user_data is a ptr to an object of type EyeTrackerGaze.
 static void cb_gaze_data(tobii_gaze_data_t const *data, void *user_data) {
-    EyeTrackerGaze *gaze = static_cast<EyeTrackerGaze*>(user_data);
+    auto *gaze = static_cast<EyeTrackerGaze*>(user_data);
 
     if(data->left.gaze_point_validity == TOBII_VALIDITY_VALID ==
         data->right.gaze_point_validity) {

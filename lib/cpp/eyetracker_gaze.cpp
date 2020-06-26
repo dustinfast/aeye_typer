@@ -20,18 +20,20 @@ using namespace std;
 #define DISP_HEIGHT_PX 2160
 #define GAZE_MARK_INTERVAL 18
 #define GAZE_BUFF_SZ 45000
-#define GAZE_TIME 10
 #define GAZE_SMOOTHOVER 4
+#define GAZE_TIME 3
 
 
 int main() {
-    EyeTrackerGaze gaze = EyeTrackerGaze(DISP_WIDTH_MM,
-                                         DISP_HEIGHT_MM,
-                                         DISP_WIDTH_PX,
-                                         DISP_HEIGHT_PX,
-                                         GAZE_MARK_INTERVAL,
-                                         GAZE_BUFF_SZ,
-                                         GAZE_SMOOTHOVER);
+    EyeTrackerGaze gaze = EyeTrackerGaze(
+        DISP_WIDTH_MM,
+        DISP_HEIGHT_MM,
+        DISP_WIDTH_PX,
+        DISP_HEIGHT_PX,
+        GAZE_MARK_INTERVAL,
+        GAZE_BUFF_SZ,
+        GAZE_SMOOTHOVER
+    );
 
     printf("Marking gaze point for %d seconds from device...\n", GAZE_TIME);
     gaze.print_device_info();
