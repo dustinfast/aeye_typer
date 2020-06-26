@@ -170,13 +170,18 @@ class HUDTrain(HUDLearn):
 
         # Extract X, with leftmost two features normalized
         _X = df[[c for c in df.columns if c.startswith('X_')]].values
+        from sklearn.preprocessing import normalize
+
+        # TODO: SVR seems to work better when last two feats are not \
+        # normalized... Possibly due to small training set size?
+        # _X[:, -2:] = normalize(_X[:, -2:])
 
         # Extract y, as [gazepoint_x_coord, gazepoint_y_coord]
         _y = df[[c for c in df.columns if c.startswith('y_')]].values[:, :-1]
 
         # Do traintest split
         X_train, X_test, y_train, y_test = train_test_split(
-            _X, _y, train_size=0.8, random_state=RAND_SEED)
+            _X, _y, train_size=0.9, random_state=RAND_SEED)
         # X_train, X_test, y_train, y_test = _X, _X, _y, _y  # debug
 
         # Break labels into their x/y coord components
@@ -185,9 +190,9 @@ class HUDTrain(HUDLearn):
         y_test_x_coord, y_test_y_coord = (
             y_test[:, 0].squeeze(), y_test[:, 1].squeeze())
 
-        model_x = SVR(kernel='rbf', C=100, gamma=0.1, epsilon=.1).fit(
+        model_x = SVR(kernel='rbf', C=200, epsilon=3).fit(
             X_train, y_train_x_coord)
-        model_y = SVR(kernel='rbf', C=100, gamma=0.1, epsilon=.1).fit(
+        model_y = SVR(kernel='rbf', C=200, epsilon=3).fit(
             X_train, y_train_y_coord)
 
         # Save models to file
@@ -211,10 +216,10 @@ class HUDTrain(HUDLearn):
         y_y_coord_hat = model_y.predict(X_test)
         plt.figure()
         plt.scatter(
-            y_test_x_coord, y_test_y_coord, c="green", label="y", marker=".")
+            y_test_x_coord, y_test_y_coord, c="green", label="x/y", marker=".")
         plt.scatter(
             y_x_coord_hat, y_y_coord_hat, c="red", marker=".",
-                label='y_hat (score=%.2f|%.2f)' % (
+                label='x/y pred (score=%.2f|%.2f)' % (
                     model_x_score, model_y_score))
         plt.xlim([1500, 3840])
         plt.ylim([2160, 1500])

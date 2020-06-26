@@ -94,13 +94,12 @@ class HUD(tk.Tk):
                               font=BTN_FONT_BOLD,
                               foreground='green',
                               relief=SUNKEN)
-
-        # If in data collection mode, add an ugly highlight to remind user
         ttk.Style().configure(
             HUD_STYLE, background='red' if mode == 'collect' else None)
+
         
-        # TODO: Add json panel toggle btns -> self.set_curr_panel(idx)
         # TODO: Denote currently focused window's title
+        # TODO: Denote last x keystrokes
 
         # Setup child frame for hosting the active panel frame.
         self._host_frame = ttk.Frame(
