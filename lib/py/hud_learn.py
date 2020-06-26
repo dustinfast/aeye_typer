@@ -10,6 +10,7 @@ from pathlib import Path
 
 import pandas as pd
 from sklearn.svm import SVR
+from sklearn.preprocessing import normalize
 from sklearn.model_selection import train_test_split
 
 import pyximport; pyximport.install()  # Required for EyeTrackerGaze
@@ -125,20 +126,30 @@ class HUDTrain(HUDLearn):
     def run(self):
         self._train_gaze_acc()
 
-    def _train_gaze_acc(self, n_limit=20):
-        """ Gaze accuracy training handler.
+    def _get_training_df(self):
+        """ Returns the training data in pd.DataFrame form w/no post-processing
+            applied.
         """
-        print('Training...')
-
-        # Read in data
         df = pd.read_csv(self._logpath, 
                          header=None,
                          usecols=DATA_COL_IDXS,
                          index_col=False,
                          names=DATA_COL_NAMES)
 
-        # Because only the last few samples for every btn press event actually
-        # denote gazepoint at the time of btn press, drop all but those samples
+        return df
+
+    def _train_gaze_acc(self, n_limit=25, split=0.75):
+        """ Gaze accuracy training handler.
+        """
+        print('Training...')
+        
+        # TODO: If model files already exist, prompt for overwrite
+
+        # Read in training data and ensure safe n_limit
+        df = self._get_training_df()
+
+        # We assume only the last n_limit samples for each btn press denotes
+        # actual gazepoint at event time, so we drop all but those samples...
         drop_idxs = []
         group_idx_n = 0
         prev_keyid = df.iloc[-1:, -1:].values
@@ -146,15 +157,15 @@ class HUDTrain(HUDLearn):
         for i in range(len(df.index)-1, -1, -1):
             curr_keyid = df.iloc[i, -1:].values.item()
 
-            # If curr key id is same as prev key id
+            # ... If curr key id is same as prev key id
             if curr_keyid == prev_keyid:
                 group_idx_n += 1
                 
-                # If n_lim samples for this key already seen, drop this sample
+                # ... If n_lim samples for this key already seen, drop sample
                 if group_idx_n > n_limit:
                     drop_idxs.append(i)
 
-            # Else if curr key id is not the same as prev key, reset count
+            # ... Else curr key id is not same as prev, reset count at 1
             else:
                 if group_idx_n < n_limit:
                     warn(f'Key id {prev_keyid} has < n_limit samples.')
@@ -168,21 +179,16 @@ class HUDTrain(HUDLearn):
         if len(df.index) % n_limit != 0:
             raise Exception('Unexpected post-processed data shape enountered.')
 
-        # Extract X, with leftmost two features normalized
+        # Extract and normalize X
         _X = df[[c for c in df.columns if c.startswith('X_')]].values
-        from sklearn.preprocessing import normalize
-
-        # TODO: SVR seems to work better when last two feats are not \
-        # normalized... Possibly due to small training set size?
-        # _X[:, -2:] = normalize(_X[:, -2:])
+        _X = normalize(_X, axis=0)
 
         # Extract y, as [gazepoint_x_coord, gazepoint_y_coord]
         _y = df[[c for c in df.columns if c.startswith('y_')]].values[:, :-1]
 
         # Do traintest split
         X_train, X_test, y_train, y_test = train_test_split(
-            _X, _y, train_size=0.9, random_state=RAND_SEED)
-        # X_train, X_test, y_train, y_test = _X, _X, _y, _y  # debug
+            _X, _y, train_size=split, random_state=RAND_SEED)
 
         # Break labels into their x/y coord components
         y_train_x_coord, y_train_y_coord = (
@@ -207,24 +213,24 @@ class HUDTrain(HUDLearn):
         model_x_score = model_x.score(X_test, y_test_x_coord)
         model_y_score = model_y.score(X_test, y_test_y_coord)
 
-        print('Done -- score_x = %.2f | score_y = %.2f' % 
+        print('Done -- score_x = %.4f | score_y = %.4f' % 
             (model_x_score, model_y_score))
 
-        # debug
-        import matplotlib.pyplot as plt
-        y_x_coord_hat = model_x.predict(X_test)
-        y_y_coord_hat = model_y.predict(X_test)
-        plt.figure()
-        plt.scatter(
-            y_test_x_coord, y_test_y_coord, c="green", label="x/y", marker=".")
-        plt.scatter(
-            y_x_coord_hat, y_y_coord_hat, c="red", marker=".",
-                label='x/y pred (score=%.2f|%.2f)' % (
-                    model_x_score, model_y_score))
-        plt.xlim([1500, 3840])
-        plt.ylim([2160, 1500])
-        plt.xlabel("gaze_x")
-        plt.ylabel("gaze_y")
-        plt.title("Perf")
-        plt.legend()
-        plt.savefig(f'test_SVR.png')
+        # # Plot x/y coord actual vs x/y coord pred, for testing convenience
+        # import matplotlib.pyplot as plt
+        # y_x_coord_hat = model_x.predict(X_test)
+        # y_y_coord_hat = model_y.predict(X_test)
+        # plt.figure()
+        # plt.scatter(
+        #     y_test_x_coord, y_test_y_coord, c="green", label="x/y", marker=".")
+        # plt.scatter(
+        #     y_x_coord_hat, y_y_coord_hat, c="red", marker=".",
+        #         label='x/y pred (score=%.4f|%.4f)' % (
+        #             model_x_score, model_y_score))
+        # plt.xlim([1500, 3840])
+        # plt.ylim([2160, 1500])
+        # plt.xlabel("gaze_x")
+        # plt.ylabel("gaze_y")
+        # plt.title("Perf")
+        # plt.legend()
+        # plt.savefig(f'test_SVR.png')
