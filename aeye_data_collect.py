@@ -26,7 +26,7 @@ del _conf
 LOG_NAME = 'cfg0_log1'
 LOG_NOTES = ('# Log Notes\n'
              '  \n'
-             'First set of logs containing gaze_point_data.\n'
+             'First set of logs containing both eeg and gaze_point_data.\n'
              'Git commit hash: 588e23  \n'
              '  \n'
              '## Channels\n'
