@@ -49,6 +49,7 @@ RUN echo "Installing 3rd party Python 3.6 libraries..." && \
         sqlalchemy \
         cython \
         brainflow \
+        skl2onnx \
         pynput
 
 RUN echo "Updating apt-get..." && \

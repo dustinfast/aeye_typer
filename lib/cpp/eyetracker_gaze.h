@@ -9,8 +9,6 @@
 //
 /////////////////////////////////////////////////////////////////////////////
 
-#include <stdio.h>
-#include <string.h>
 #include <fstream>
 
 #include <boost/thread.hpp>
@@ -33,6 +31,7 @@ using namespace std;
 #define GAZE_MARKER_BORDER 0
 #define GAZE_MARKER_BORDER 0
 #define MOUNT_OFFSET_MM 0.0
+#define PY_INFERLIB_PATH "../py/app.py"
 
 typedef struct gaze_data {
         int64_t unixtime_us;
@@ -129,6 +128,7 @@ class EyeTrackerGaze : public EyeTracker {
 };
 
 // Default constructor
+// TODO: Param docstring
 EyeTrackerGaze::EyeTrackerGaze(float disp_width_mm, 
                                float disp_height_mm,
                                int disp_width_px,
@@ -200,6 +200,16 @@ EyeTrackerGaze::EyeTrackerGaze(float disp_width_mm,
         );
 
         XMapWindow(m_disp, m_overlay);
+
+        // PyObject *tuple;
+        // tuple = Py_BuildValue("(iis)", 1, 2, "three");
+        // printf("%d\n", tuple[2]);
+
+        // PyObject* strPath = Py_BuildValue("s", "../py/app.py");
+        // PyObject* strPath = PyString_FromString((char*)"../py/app.py");
+
+        // PyObject* myModule = PyImport_Import(strPath);
+
 }
 
 // Destructor
@@ -396,7 +406,9 @@ gaze_point_t* EyeTrackerGaze::get_gazepoint() {
 
 // Sets or updates the on-screen gaze marker position.
 void EyeTrackerGaze::set_gaze_marker(shared_ptr<gaze_data_t> cgd) {
-
+    // TODO: Iff infer == True, get predicted coords
+    
+    // Else...
     XMoveWindow(
         m_disp,
         m_overlay, 

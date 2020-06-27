@@ -23,6 +23,7 @@ using namespace std;
 #define GAZE_SMOOTHOVER 4
 #define GAZE_TIME 3
 
+// auto parser = nvonnxparser::createParser(NULL, NULL);
 
 int main() {
     EyeTrackerGaze gaze = EyeTrackerGaze(

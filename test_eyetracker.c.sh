@@ -1,7 +1,8 @@
 #! /usr/bin/env bash
 
 # A script for testing the on-screen eyetracker gaze marking cpp interface.
-# Note: Passing any cmd line arg will cause resulting binary file to persist.
+# Note: For dev convenience, passing any cmd line arg to this script will
+# cause resulting binary file to persist. Else, it is removed on exit.
 
 # Start eyetracker service iff needed
 STATUS="$(systemctl is-active tobii-runtime-IS4LARGE107)"

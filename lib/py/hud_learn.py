@@ -12,6 +12,8 @@ import pandas as pd
 from sklearn.svm import SVR
 from sklearn.preprocessing import normalize
 from sklearn.model_selection import train_test_split
+from skl2onnx import convert_sklearn
+from skl2onnx.common.data_types import FloatTensorType
 
 import pyximport; pyximport.install()  # Required for EyeTrackerGaze
 
@@ -73,7 +75,7 @@ class HUDLearn(object):
         if not logdir.exists():
             os.makedirs(logdir)
 
-        return str(Path(logdir, f'{DATA_SESSION_NAME}_{v}.pkl'))
+        return str(Path(logdir, f'{DATA_SESSION_NAME}_{v}.onnx'))
 
     def start(self):
         """ Starts the async handlers. Returns ref to the async process.
@@ -184,7 +186,7 @@ class HUDTrain(HUDLearn):
 
         _X = df[[c for c in df.columns if c.startswith('X_')]].values
         _X = normalize(_X, axis=0)
-
+        
         # Extract y, as [gazepoint_x_coord, gazepoint_y_coord]
         _y = df[[c for c in df.columns if c.startswith('y_')]].values[:, :-1]
 
@@ -202,12 +204,6 @@ class HUDTrain(HUDLearn):
             X_train, y_train_x_coord)
         model_y = SVR(kernel='rbf', C=200, epsilon=3).fit(
             X_train, y_train_y_coord)
-
-        # Save models to file
-        with open(self._model_x_path, 'wb') as f:
-            pickle.dump(model_x, f)
-        with open(self._model_y_path, 'wb') as f:
-            pickle.dump(model_y, f)
 
         # Validate
         print('Done.')
@@ -236,3 +232,14 @@ class HUDTrain(HUDLearn):
         # plt.title("Perf")
         # plt.legend()
         # plt.savefig(f'test_SVR.png')
+
+        # Convert model to ONNX, for use by the app's cpp modules
+        feat_types = [('float_input', FloatTensorType([None, X_train.shape[1]]))]
+        model_x = convert_sklearn(model_x, initial_types=feat_types)
+        model_y = convert_sklearn(model_y, initial_types=feat_types)
+        
+        # Save ONNX models to file
+        with open(self._model_x_path, 'wb') as f:
+            f.write(model_x.SerializeToString())
+        with open(self._model_y_path, 'wb') as f:
+            f.write(model_y.SerializeToString())
