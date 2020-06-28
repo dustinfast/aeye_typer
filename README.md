@@ -1,6 +1,6 @@
 # AEye Typer
 
-I was diagnosed with Amyotrophic Lateral Sclerosis (ALS, AKA Lou-Gehrig's Disease) in early 2020. This application is intended to give myself the ability to continue my Computer Science and Artificial Intelligence (AI) work long after I lose the dexterity required to operate a physical mouse and keyboard. It is a work in progress.
+In early 2020 I was diagnosed with Amyotrophic Lateral Sclerosis (ALS, AKA Lou-Gehrig's Disease). This application is intended to give myself the ability to continue my Computer Science and Artificial Intelligence (AI) work long after I lose the dexterity required to operate a physical mouse and keyboard. It is a work in progress.
 
 Author: Dustin Fast <dustin.fast@outlook.com>, 2020
 
