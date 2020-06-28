@@ -6,7 +6,7 @@ Author: Dustin Fast <dustin.fast@outlook.com>, 2020
 
 ## Overview
 
-This application is accessibility tool for allowing hands free use of a virtual mouse and keyboard via a screen-mounted eyetracker and (possibly) a wearable brain-computing interface (BCI). It is intended to differ from existing solutions in that it
+This application is an accessibility tool for allowing hands free use of a virtual mouse and keyboard via a screen-mounted eyetracker and (possibly) a wearable brain-computing interface (BCI). It is intended to differ from existing solutions in that it
 
 * May be utilized by a fully paralyzed but conscious (i.e. "locked-in") individual.
 * Exposes a virtual, fully-featured keyboard capable of accepting complex keystroke combinations.
@@ -35,10 +35,11 @@ In this way, a user may click the mouse at any location using eye-movement alone
 
 ## Installation
 
-Clone this repo and navigate to its root directory, then build the application's docker image with  
+Clone this repo and build the application's docker image with  
 
 ```bash
-cd docker
+git clone git@github.com:dustinfast/aeye_typer.git
+cd aeye_typer/docker
 ./build.sh
 cd ../
 ```
