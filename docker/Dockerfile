@@ -3,7 +3,7 @@
 
 FROM nvidia/cudagl:10.0-devel-ubuntu18.04
 
-LABEL description="fast_aeye_typer"
+LABEL description="aeye_typer"
 LABEL maintainer="Dustin Fast <dustin.fast@outlook.com>"
 
 ENV CUDA_HOME=/usr/local/cuda

@@ -5,7 +5,7 @@
 # directory for convenience.
 # On exiting the container, the container is killed.
 
-app_name="fast_aeye_typer"  # Your docker image name
+app_name="aeye_typer"  # Your docker image name
 
 
 # Set up cmd line args

@@ -1,88 +1,84 @@
-# Fast A-Eye TypeR
+# AEye Typer
 
-This application is a work in progress.  
+I was diagnosed with Amyotrophic Lateral Sclerosis (ALS, AKA Lou-Gehrig's Disease) in early 2020. This application is intended to give myself the ability to continue my Computer Science and Artificial Intelligence (AI) work long after I lose the dexterity required to operate a physical mouse and keyboard. It is a work in progress.
 
-An accessibility tool for allowing hands free use of a mouse and keyboard via a screen-mounted eyetracker and wearable brain-scanner.
+Author: Dustin Fast <dustin.fast@outlook.com>, 2020
 
-This tool is intended to differ from existing accessibility solutions in that
+## Overview
 
-* It is inteded for use in a linux environment
-* Use is based on eye movement and thought alone - i.e. a paralyzed but fully conscious person may use it.
-* The rate of typing (WPM) is intended to be on par with that of a proficient typist's.
+This application is accessibility tool for allowing hands free use of a virtual mouse and keyboard via a screen-mounted eyetracker and (possibly) a wearable brain-computing interface (BCI). It is intended to differ from existing solutions in that it...
 
-Proof of concept will be accomplished through the following steps:
+* May be utilized by a fully paralyzed but conscious (i.e. "locked-in") individual.
+* Exposes a virtual, fully-featured keyboard capable of accepting complex keystroke combinations.
+* Allows virtual typing/clicking at rates/precisions comparable to physical keyboards/mice.
+* Does not constrain the user to a collection of pre-defined words/phrases.
+* Supports a text-heavy workflow in a graphical linux environment. 
+* In the context of gaze-tracking accuracy, is display-size and user-position agnsotic.
 
-1. Keystrokes, mouse clicks, EEG signals, and gaze-point data are recorded while a participant uses the application in Data Collection mode.
+This will be accomplished by
 
-2. Machine learning models will be built and trained to infer when user is typing, clicking, or scroll-wheeling from the EEG and eyetracker data streams.
+* Implementing a fully-featured on-screen virtual keyboard. [STATUS: Functional]
+* Creating data collection pipelines for associating physical mouse-clicks/keystrokes with the users gaze activity. [STATUS: Functional]
+* Improving, through the use of machine learning, the inherent inaccuracy of modern "one-size fits all" gaze-tracking devices. [STATUS: Partially Implemented]
+* Developing mouse-click inference models, accepting as input the user's gaze activity. [STATUS: Not Implemented]
 
-3. Machine learning models will be built and trained to infer keystrokes, mouse clicks/scrolls, and cursor location from the EEG and eyetracker data streams.
+In this way, a user may click the mouse at any location using eye-movement alone. If the user clicks a virtual keyboard button, that key is then "virtually" pressed as if it were a physical keystroke.  
 
-4. Machine learning models will be built and trained to improve gaze-to-display-coordinates for the users specific setup.
+## Dependencies
 
-Author: Dustin Fast <dustin.fast@hotmail.com>
+* Docker (`sudo apt-install docker`)
+* [Nvidia-Docker](https://github.com/NVIDIA/nvidia-docker)
+* [Tobii 4L IS4](https://tech.tobii.com/products/#4L) Eyetracking Device and license file
+* Optional: [OpenBCI Mark IV EEG Headset](https://shop.openbci.com/collections/frontpage/products/ultracortex-mark-iv) with [8-channel Cyton board](https://shop.openbci.com/collections/frontpage/products/cyton-biosensing-board-8-channel?variant=38958638542)
 
-## Setup
+## Installation
 
-Clone this repo, then build the application's docker image with  
+Clone this repo and navigate to its root directory, then build the application's docker image with  
 
 ```bash
 cd docker
 ./build.sh
+cd ../
 ```
 
-Tested on Ubuntu 18.04, dockerized with Docker 18.09.7.
+(Tested on Ubuntu 18.04, dockerized with Docker 18.09.7.)
 
 ## Usage
 
-Start/enter the docker container with  `./aeye_docker_start.sh LOCAL_APP_DATA_DIRECTORY_PATH`. All items below are in the context of the container.
+Start and enter the docker container with `./aeye_docker_start.sh LOCAL_APP_DATA_DIRECTORY_PATH`, where `LOCAL_APP_DATA_DIRECTORY_PATH` is an existing local directory the application may write to.
 
-### Device Setup 
+**All steps described below are in the context of this container unless otherwise noted.**
 
-#### Eye-Tracker Installation
+### Setup 
 
-Device: Tobii 4L  
+#### Configuration
 
-Device installation is handled by the docker build process. To verify installation, run `test_eyetracker.py`. 
+Modify fields `DISP_WIDTH_MM`, `DISP_HEIGHT_MM`, `DISP_WIDTH_PX`, and `DISP_HEIGHT_PX` in `_config.yaml` with your display device's dimensions. Note that A) The use of multiple workspaces is supported, and B) Use with multiple display devices has not been tested.
+
+#### Eye-Tracker
+
+Device installation was performed during the docker build process. To verify functionality, use `./test_eyetracker.py`. 
 
 The eyetracker must now be calibrated with `./aeye_typer --calibrate`.
 
-#### EEG Installation
+After this process, you may wish to commit calibration to the docker container with (from outside the container) `docker commit aeye_typer_c aeye_typer:latest`.
 
-Device: OpenBCI Cyton  
+#### EEG
 
-Device installation is handled by the docker build process. To verify your BCI installation run `./test_eeg_conn.sh`.
+Device installation was performed during the docker build process. To verify your BCI installation, run `./test_eeg.sh`.
+
+NOTE: The EEG device is optional and does not currently affect application performance. 
 
 ### Data Collection
 
-Start data collection with `./aeye_data_collect.py`. Keystrokes, mouse clicks, EEG signals, and gaze-point data are then logged to the paths denoted in `_config.yaml`.
-
-Note that data is logged in the following way # TODO: no gaze if gaze not valid, etc.
+Start data collection with `./aeye_typer.py --data_collect`. The virtual keyboard is then displayed with a red highlight to denote operation in this mode... The user (or caretaker, if needed) must then use a physical mouse to enter "virtual" keystrokes by clicking virtual keyboard buttons. During this time, the user is assumed to be gazing at each virtual keyboard button as it is clicked. In this way, a training corpus is generated.
 
 ### Training
 
-Not Implemented
+Assuming a sufficiently sized training corpus, the gaze-point accuracy improvement models may be trained with `./aeye_typer.py --train_ml`.
+
+Mouse-click inference model training is currently not implemented.
 
 ### Inference
 
 Not Implemented
-
-## Ideas
-
-"Symbol" mode (e.g. 'if', 'else') versus "Key" mode (e.g. 'i', 'f', 'e', 'l', 's', 'e')
-
-
-## TODO
-
-* Fix tkinter performance -- possibly due to pack/grid mix?
-* Hold next key-click, etc. cmds... For click/drag, etc.
-* vkEYB "EDITOR" w/ send to gaze point. Editor has diff modes (like md script modes) for highlighting/linting, etc. OR editor is a vscode editor in the tkinter frame 
-* Refactor hud_panel to include a btn class and add init btns from json
-* Integrate hud into vscode?
-* Remove distance outliers from click to gaze data
-* Super Key -> Mouse click
-* Gaze log "fill-in", to fill in gaps where user looks down at keyboard, etc.
-* Add rawdata_to_sql
-* Data filtering: Remove all key events w/no associated EEG and/or eye data
-* Data filtering: Remove all eeg events outside of known good events
-* Dashboard denoting status (tobii_user_position_guide_subscribe, etc)
