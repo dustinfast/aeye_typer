@@ -22,7 +22,7 @@ This will be accomplished by
 * Improving, through the use of machine learning, the inherent inaccuracy of modern "one-size fits all" gaze-tracking devices. [STATUS: Partially Implemented]
 * Developing mouse-click inference models, accepting as input the user's gaze activity. [STATUS: Not Implemented]
 
-In this way, a user may click the mouse at any location using eye-movement alone. If the user chooses to click a virtual keyboard button, that key is then "virtually" pressed as if it were a physical keystroke.  
+In this way, a user may click the mouse at any location using eye-movement alone. If the user chooses to "click" a virtual keyboard button, that key is then "virtually" pressed as if it were a physical keystroke. Rapid typing may then be performed by flitting one's gaze to the intended virtual keyboard keys.
 
 ## Dependencies
 
