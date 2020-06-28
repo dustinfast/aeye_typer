@@ -23,8 +23,6 @@ using namespace std;
 #define GAZE_SMOOTHOVER 4
 #define GAZE_TIME 3
 
-// auto parser = nvonnxparser::createParser(NULL, NULL);
-
 int main() {
     EyeTrackerGaze gaze = EyeTrackerGaze(
         DISP_WIDTH_MM,
@@ -45,7 +43,6 @@ int main() {
     for (int i = 0; i < GAZE_TIME; i++) {
         boost::this_thread::sleep_for(boost::chrono::seconds{1});
     }
-    // gaze.gaze_to_csv("test.csv", 5);
 
     gaze.stop();
 
