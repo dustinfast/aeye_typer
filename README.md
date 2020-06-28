@@ -6,7 +6,7 @@ Author: Dustin Fast <dustin.fast@outlook.com>, 2020
 
 ## Overview
 
-This application is accessibility tool for allowing hands free use of a virtual mouse and keyboard via a screen-mounted eyetracker and (possibly) a wearable brain-computing interface (BCI). It is intended to differ from existing solutions in that it...
+This application is accessibility tool for allowing hands free use of a virtual mouse and keyboard via a screen-mounted eyetracker and (possibly) a wearable brain-computing interface (BCI). It is intended to differ from existing solutions in that it
 
 * May be utilized by a fully paralyzed but conscious (i.e. "locked-in") individual.
 * Exposes a virtual, fully-featured keyboard capable of accepting complex keystroke combinations.
@@ -22,11 +22,13 @@ This will be accomplished by
 * Improving, through the use of machine learning, the inherent inaccuracy of modern "one-size fits all" gaze-tracking devices. [STATUS: Partially Implemented]
 * Developing mouse-click inference models, accepting as input the user's gaze activity. [STATUS: Not Implemented]
 
-In this way, a user may click the mouse at any location using eye-movement alone. If the user clicks a virtual keyboard button, that key is then "virtually" pressed as if it were a physical keystroke.  
+In this way, a user may click the mouse at any location using eye-movement alone. If the user chooses to click a virtual keyboard button, that key is then "virtually" pressed as if it were a physical keystroke.  
 
 ## Dependencies
 
-* Docker (`sudo apt-install docker`)
+(Tested on Ubuntu 18.04, dockerized with Docker 18.09.7)
+
+* [Docker](https://docs.docker.com/engine/install/ubuntu/)
 * [Nvidia-Docker](https://github.com/NVIDIA/nvidia-docker)
 * [Tobii 4L IS4](https://tech.tobii.com/products/#4L) Eyetracking Device and license file
 * Optional: [OpenBCI Mark IV EEG Headset](https://shop.openbci.com/collections/frontpage/products/ultracortex-mark-iv) with [8-channel Cyton board](https://shop.openbci.com/collections/frontpage/products/cyton-biosensing-board-8-channel?variant=38958638542)
@@ -40,8 +42,6 @@ cd docker
 ./build.sh
 cd ../
 ```
-
-(Tested on Ubuntu 18.04, dockerized with Docker 18.09.7.)
 
 ## Usage
 
