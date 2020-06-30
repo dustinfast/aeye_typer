@@ -30,7 +30,7 @@ DISP_HEIGHT = _conf['DISP_HEIGHT_PX']
 HUD_DISP_WIDTH = _conf['HUD_DISP_WIDTH_PX']
 HUD_DISP_HEIGHT = _conf['HUD_DISP_HEIGHT_PX']
 HUD_DISP_DIV_X = _conf['HUD_DISP_COORD_DIVISOR_X']
-HUD_DISP_DIV_Y = _conf['HUD_DISP_COORD_DIVISOR_Y']
+HUD_DISP_DIV_Y = _conf['HUD_DISP_COORD_DIVISOR_Y'] 
 HUD_DISP_TITLE = _conf['HUD_DISP_TITLE']
 HUD_DEFAULT_PANELS =  _conf['HUD_PANELS']
 del _conf
@@ -65,7 +65,7 @@ class HUD(tk.Tk):
     def __init__(self, hud_panels=HUD_DEFAULT_PANELS, mode='basic'):
         """ An abstraction of the heads-up display. A HUD contains a number of
             panels, and each panel has some number of buttons on it.
-            Only one panel may be visible at a time.
+            Only one panel may be visible on the hud at a time.
 
             :param hud_panels: (lst) The panels (as layout file paths) to use.
             :param mode: (str) Either 'basic', 'collect', or 'infer'.
@@ -98,8 +98,10 @@ class HUD(tk.Tk):
             HUD_STYLE, background='red' if mode == 'collect' else None)
 
         
+        # TODO: Change gaze-mark color to reflect mode, rather than bg
         # TODO: Denote currently focused window's title
-        # TODO: Denote last x keystrokes
+        # FIXME: If hud is clicked but outside a btn, focus is captured.
+        # TODO: Helper denoting last x keystrokes
 
         # Setup child frame for hosting the active panel frame.
         self._host_frame = ttk.Frame(
