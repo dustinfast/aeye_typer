@@ -31,7 +31,6 @@ using namespace std;
 #define GAZE_MARKER_BORDER 0
 #define GAZE_MARKER_BORDER 0
 #define MOUNT_OFFSET_MM 0.0
-#define PY_INFERLIB_PATH "../py/app.py"
 
 typedef struct gaze_data {
         int64_t unixtime_us;
@@ -200,16 +199,6 @@ EyeTrackerGaze::EyeTrackerGaze(float disp_width_mm,
         );
 
         XMapWindow(m_disp, m_overlay);
-
-        // PyObject *tuple;
-        // tuple = Py_BuildValue("(iis)", 1, 2, "three");
-        // printf("%d\n", tuple[2]);
-
-        // PyObject* strPath = Py_BuildValue("s", "../py/app.py");
-        // PyObject* strPath = PyString_FromString((char*)"../py/app.py");
-
-        // PyObject* myModule = PyImport_Import(strPath);
-
 }
 
 // Destructor
@@ -352,7 +341,6 @@ void EyeTrackerGaze::print_gaze_data() {
     m_async_mutex->unlock();
 
     printf("Gaze sample count: %li\n", m_gaze_buff->size());
-
 }
 
 // Returns the current number of gaze points in the gaze data buffer.
