@@ -1,5 +1,5 @@
-# Application Docker image Dockerfile. 
-# Build an image from it with ./build.sh
+# The application's Dockerfile. 
+# To build an image from it, run ./build.sh
 
 FROM nvidia/cudagl:10.0-devel-ubuntu18.04
 
@@ -18,24 +18,48 @@ RUN echo "Updating apt-get..." && \
 
 RUN echo "Installing apt-utils..." && \
     apt-get install -y --no-install-recommends \
-    apt-utils
+        apt-utils
+RUN apt-get update
 
-RUN echo "Updating apt-get..." && \
-    apt-get update
-    
-RUN echo "Installing Python 3.6..." && \
+RUN echo "Installing 3rd party linux utils (apt-get)..." && \
+    apt-get install -y --no-install-recommends \
+        vim \
+        git \
+        curl \
+        htop \
+        wget \
+        bzip2 \
+        unzip \
+        iotop \
+        dos2unix \
+        apt-file && apt-file update
+
+RUN echo "Installing Python 3.6 (apt-get)..." && \
     apt-get install -y software-properties-common && \
     add-apt-repository -y ppa:deadsnakes/ppa && \
     apt-get update
-
 RUN apt-get install -y \
-    python3-pip \
-    python3.6-dev \
-    python3.6 \
-    python3-setuptools
+        python3-pip \
+        python3.6-dev \
+        python3.6 \
+        python3-setuptools
 RUN python3.6 -m pip install --upgrade pip
 
-RUN echo "Installing 3rd party Python 3.6 libraries..." && \
+# TODO: RUN echo "Installing NVIDA components (apt-get)..." && \
+    # apt-get install -y --no-install-recommends \
+    # libcudnn7=7.6.4.38-1+cuda10.1  \
+    # libcudnn7-dev=7.6.4.38-1+cuda10.1 \
+    # libnvinfer6=6.0.1-1+cuda10.1 \
+    # libnvinfer-dev=6.0.1-1+cuda10.1 \
+    # libnvinfer-plugin6=6.0.1-1+cuda10.1\
+
+RUN echo "Installing application dependencies (apt-get)..." && \
+    apt-get install -y --no-install-recommends \
+        gir1.2-wnck-3.0 \
+        libboost-all-dev \
+        python3-tk
+
+RUN echo "Installing application dependencies(pip)..." && \
     python3.6 -m pip install \
         keras==2.3.1 \
         tensorflow-gpu==2.0.0 \
@@ -48,52 +72,45 @@ RUN echo "Installing 3rd party Python 3.6 libraries..." && \
         matplotlib \
         sqlalchemy \
         cython \
-        brainflow \
         skl2onnx \
         pynput
 
 RUN echo "Updating apt-get..." && \
     apt-get update 
 
-RUN echo "Installing 3rd party linux applications..." && \
+RUN echo "Installing Tobii dependencies (apt-get)..." && \
     apt-get install -y --no-install-recommends \
-    vim \
-    git \
-    htop \
-    wget \
-    bzip2 \
-    unzip \
-    iotop \
-    dos2unix \ 
-    usbutils \
+        gconf2 \
+        libappindicator1 \
+        libasound2 \
+        libnotify4 \
+        libnss3 \
+        libxss-dev \
+        libcanberra-gtk3-module \
+        libxtst6
+
+RUN echo "Installing OpenBCI dependencies (apt-get)..." && \
+    apt-get install -y --no-install-recommends \
     setserial \
-    openssh-server \
     avahi-daemon \
-    default-jre \
-    default-jdk \
-    libxi-dev \
-    libxss-dev \
-    libgconf-2-4 \
-    libgtk-3-0 \
-    libcanberra-gtk3-module \
-    compiz \
     libxcomposite-dev \
-    xinput \
-    python3-gi \
-    gir1.2-wnck-3.0 \
-    python3-tk \
+    libxi-dev \
     libxdo-dev \
-    libsqlite3-dev \
-    libyaml-cpp-dev \
-    libboost-all-dev \
-    libxtst6 \
-    libasound2 \
-    libcudnn7=7.6.4.38-1+cuda10.1  \
-    libcudnn7-dev=7.6.4.38-1+cuda10.1 \
-    libnvinfer6=6.0.1-1+cuda10.1 \
-    libnvinfer-dev=6.0.1-1+cuda10.1 \
-    libnvinfer-plugin6=6.0.1-1+cuda10.1\
-    apt-file && apt-file update
+    libgconf-2-4 \
+    default-jre \
+    default-jdk 
+
+RUN echo "Installing OpenBCI dependencies(pip)..." && \
+    python3.6 -m pip install \
+        brainflow
+        
+# TODO: No longer needed?
+    # python3-gi \
+    # usbutils \
+    # openssh-server \
+    # xinput \
+    # compiz \
+    # libgtk-3-0 \
 
 RUN echo "Setting up workspace..."
 # Make python3.6 the default python version
@@ -104,7 +121,7 @@ COPY dependencies/.bashrc /root/.bashrc
 RUN mkdir -p /opt/app/src
 RUN pwd
 
-RUN echo "Installing OpenBCI_Hub..."
+RUN echo "Settting up OpenBCI_Hub..."
 RUN mkdir -p /tmp/OpenBCI_Hub
 COPY dependencies/OpenBCIHub-v2.1.0-linux-64bit.zip /tmp/OpenBCI_Hub
 WORKDIR /tmp/OpenBCI_Hub
@@ -113,7 +130,7 @@ RUN mkdir -p /opt/app/dependencies
 RUN mv OpenBCIHub-v2.1.0-linux-64bit /opt/app/dependencies/OpenBCI_Hub
 RUN rm -rf /tmp/OpenBCI_Hub
 
-RUN echo "Installing Tobii PDK..."
+RUN echo "Settting up Tobii PDK..."
 RUN mkdir -p /opt/app/dependencies/tobii_pdk_install
 COPY dependencies/IS4LARGE107_UB16_x64_1.13.15_public.zip /opt/app/dependencies/tobii_pdk_install
 WORKDIR /opt/app/dependencies/tobii_pdk_install
@@ -127,20 +144,14 @@ RUN cp -pR lib/x64/*.so /usr/lib/tobii/
 RUN mkdir /usr/include/tobii
 RUN cp -R include/tobii/* /usr/include/tobii
 
-RUN echo "Installing tobii_config..."
-RUN apt-get update && \
-    apt-get install -y \
-    gconf2 \
-    libnotify4 \
-    libappindicator1
-
+RUN echo "Settting up Tobii config..."
 RUN mkdir -p /tmp/tobii_config
 COPY dependencies/tobii_config_0.1.8_amd64.deb /tmp/tobii_config
 WORKDIR /tmp/tobii_config
 RUN dpkg -i tobii_config_0.1.8_amd64.deb
 RUN rm -rf /tmp/tobii_config
 
-RUN echo "Installing tobii manager..."
+RUN echo "Settting up Tobii manager..."
 RUN mkdir -p /tmp/tobii_mgr
 COPY dependencies/TobiiProEyeTrackerManager-2.1.0.deb /tmp/tobii_mgr
 WORKDIR /tmp/tobii_mgr
