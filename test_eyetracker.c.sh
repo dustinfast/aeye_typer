@@ -17,6 +17,7 @@ LD_LIBRARY_PATH=/usr/lib/tobii/:$LD_LIBRARY_PATH
 
 gcc lib/cpp/eyetracker_gaze.cpp  \
     -o eye_tracker_gazemark.out \
+    -I/usr/include/python3.6m -lpython3.6m \
     -lstdc++ -lX11 \
     -lpthread -lboost_system  -lboost_thread  \
     -pthread /usr/lib/tobii/libtobii_stream_engine.so

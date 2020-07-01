@@ -11,6 +11,8 @@
 
 #include <fstream>
 
+#include <Python.h>
+
 #include <boost/thread.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/circular_buffer.hpp>
@@ -199,6 +201,13 @@ EyeTrackerGaze::EyeTrackerGaze(float disp_width_mm,
         );
 
         XMapWindow(m_disp, m_overlay);
+
+        
+        // TODO: PyObject *tuple;
+        // tuple = Py_BuildValue("(iis)", 1, 2, "three");
+        // PyObject *strPath = Py_BuildValue("s", "../py/app.py");
+        // printf("%s\n", strPath);
+        // PyObject *myModule = PyImport_Import(strPath);
 }
 
 // Destructor
