@@ -11,8 +11,6 @@
 
 #include <fstream>
 
-#include <Python.h>
-
 #include <boost/thread.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/circular_buffer.hpp>
@@ -22,6 +20,7 @@
 #include <X11/Xutil.h>
 
 #include "eyetracker.h"
+#include "py_objs.cpp"
 
 using namespace std;
 
@@ -113,16 +112,18 @@ class EyeTrackerGaze : public EyeTracker {
         int disp_y_from_normed_y(float);
         gaze_point_t* get_gazepoint();
 
-        EyeTrackerGaze(float, float, int, int, int, int, int);
+        EyeTrackerGaze(float, float, int, int, int, int, int, const char*, const char*);
         ~EyeTrackerGaze();
 
     protected:
         int m_disp_width;
         int m_disp_height;
         int m_buff_sz;
+        bool m_use_ml;
         shared_ptr<circ_buff> m_gaze_buff;
 
     private:
+        CoordPredict *m_x_ml, *m_y_ml;
         shared_ptr<boost::thread> m_async_streamer;
         shared_ptr<boost::thread> m_async_writer;
         shared_ptr<boost::mutex> m_async_mutex;
@@ -136,7 +137,9 @@ EyeTrackerGaze::EyeTrackerGaze(float disp_width_mm,
                                int disp_height_px,
                                int mark_freq,
                                int buff_sz,
-                               int smooth_over) {
+                               int smooth_over,
+                               const char *ml_x_path=NULL,
+                               const char *ml_y_path=NULL) {
         // Init members from args
         m_disp_width = disp_width_px;
         m_disp_height = disp_height_px;
@@ -202,16 +205,19 @@ EyeTrackerGaze::EyeTrackerGaze(float disp_width_mm,
 
         XMapWindow(m_disp, m_overlay);
 
-        
-        // TODO: PyObject *tuple;
-        // tuple = Py_BuildValue("(iis)", 1, 2, "three");
-        // PyObject *strPath = Py_BuildValue("s", "../py/app.py");
-        // printf("%s\n", strPath);
-        // PyObject *myModule = PyImport_Import(strPath);
+        // Instantiate the gaze coord acc improvement models iff given
+        if (ml_x_path != NULL && ml_y_path != NULL) {
+            m_x_ml = new CoordPredict(ml_x_path);
+            m_y_ml = new CoordPredict(ml_y_path);
+            m_use_ml = True;
+        } else {
+            m_use_ml = False;
+        }
 }
 
 // Destructor
 EyeTrackerGaze::~EyeTrackerGaze() {
+    delete(m_x_ml, m_y_ml);
     XUnmapWindow(m_disp, m_overlay);
     XFlush(m_disp);
     XCloseDisplay(m_disp);
@@ -403,15 +409,26 @@ gaze_point_t* EyeTrackerGaze::get_gazepoint() {
 
 // Sets or updates the on-screen gaze marker position.
 void EyeTrackerGaze::set_gaze_marker(shared_ptr<gaze_data_t> cgd) {
-    // TODO: Iff infer == True, get predicted coords
-    
-    // Else...
-    XMoveWindow(
-        m_disp,
-        m_overlay, 
-        cgd->combined_gazepoint_x,
-        cgd->combined_gazepoint_y
-    );
+    // Iff using ml to increase acc, use predicted coords
+    if (m_use_ml) {
+        long int x = m_x_ml->predict(NULL);
+        printf("%ld\n", x);
+        XMoveWindow(
+            m_disp,
+            m_overlay, 
+            cgd->combined_gazepoint_x,
+            cgd->combined_gazepoint_y
+        ); 
+
+    // Else use coords as given
+    } else {
+        XMoveWindow(
+            m_disp,
+            m_overlay, 
+            cgd->combined_gazepoint_x,
+            cgd->combined_gazepoint_y
+        );
+    }
 
     XFlush(m_disp);
 }
@@ -420,12 +437,26 @@ void EyeTrackerGaze::set_gaze_marker(shared_ptr<gaze_data_t> cgd) {
 // Extern wrapper exposing a subset of EyeTrackerGaze()'s methods
 extern "C" {
     EyeTrackerGaze* eye_gaze_new(
-        float disp_width_mm, float disp_height_mm, int disp_width_px, 
-            int disp_height_px, int mark_freq, int buff_sz, int smooth_over) {
-                return new EyeTrackerGaze(
-                    disp_width_mm, disp_height_mm, disp_width_px,
-                        disp_height_px, mark_freq, buff_sz, smooth_over
-                );
+        float disp_width_mm,
+        float disp_height_mm,
+        int disp_width_px, 
+        int disp_height_px,
+        int mark_freq,
+        int buff_sz,
+        int smooth_over,
+        const char *ml_x_path,
+        const char *ml_y_path) {
+            return new EyeTrackerGaze(
+                disp_width_mm,
+                disp_height_mm,
+                disp_width_px,
+                disp_height_px,
+                mark_freq,
+                buff_sz,
+                smooth_over,
+                ml_x_path,
+                ml_y_path
+            );
     }
 
     void eye_gaze_destructor(EyeTrackerGaze* gaze) {
