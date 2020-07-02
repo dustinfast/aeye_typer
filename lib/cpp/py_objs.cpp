@@ -11,48 +11,48 @@
 PyObject *get_pyclass(const char *name);
 
 
-class CoordPredict {
+class EyeTrackerCoordPredict {
     public:
         long int predict(void*);
-        CoordPredict(const char*);
-        ~CoordPredict();
+        EyeTrackerCoordPredict(const char*);
+        ~EyeTrackerCoordPredict();
 
     protected:
         PyObject *m_self;
 };
 
-CoordPredict::CoordPredict(const char *model_path) {
+EyeTrackerCoordPredict::EyeTrackerCoordPredict(const char *model_path) {
     setenv("PYTHONPATH", "/opt/app/src/lib/py/", 1);
 
     Py_Initialize();
     
     // Import py module and get class attribute
-    PyObject *p_module = PyImport_ImportModule("coord_predict");
+    PyObject *p_module = PyImport_ImportModule("eyetracker_coord_predict");
     assert(p_module != NULL);
 
-    PyObject *p_class_attr = PyObject_GetAttrString(p_module, "CoordPredict");
-    assert(p_class_attr != NULL);
+    PyObject *p_attr = PyObject_GetAttrString(p_module, "EyeTrackerCoordPredict");
+    assert(p_attr != NULL);
 
     // Instantiate the class obj
-    PyObject * p_class_obj = get_pyclass("CoordPredict");
-    assert(p_class_obj != NULL);
+    PyObject * p_obj = get_pyclass("EyeTrackerCoordPredict");
+    assert(p_obj != NULL);
 
-    PyObject *p_class_args = Py_BuildValue("(s)", model_path);
-    m_self = PyObject_CallObject(p_class_attr, p_class_args);
+    PyObject *p_args = Py_BuildValue("(s)", model_path);
+    m_self = PyObject_CallObject(p_attr, p_args);
     assert(m_self != NULL);
 
-    Py_DECREF(p_class_args);
-    Py_DECREF(p_class_obj);
-    Py_DECREF(p_class_attr);
+    Py_DECREF(p_args);
+    Py_DECREF(p_obj);
+    Py_DECREF(p_attr);
     Py_DECREF(p_module);
 }
 
-CoordPredict::~CoordPredict() {
+EyeTrackerCoordPredict::~EyeTrackerCoordPredict() {
     Py_DECREF(m_self);
     Py_Finalize();
 }
 
-long int CoordPredict::predict(void *p) {
+long int EyeTrackerCoordPredict::predict(void *p) {
     // TODO: Implement fully
     PyObject *p_res = PyObject_CallMethod(m_self, "predict", "(ii)", 1, 3);
     assert(p_res != NULL);

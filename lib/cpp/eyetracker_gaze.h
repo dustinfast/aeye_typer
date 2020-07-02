@@ -123,7 +123,7 @@ class EyeTrackerGaze : public EyeTracker {
         shared_ptr<circ_buff> m_gaze_buff;
 
     private:
-        CoordPredict *m_x_ml, *m_y_ml;
+        EyeTrackerCoordPredict *m_x_ml, *m_y_ml;
         shared_ptr<boost::thread> m_async_streamer;
         shared_ptr<boost::thread> m_async_writer;
         shared_ptr<boost::mutex> m_async_mutex;
@@ -207,8 +207,8 @@ EyeTrackerGaze::EyeTrackerGaze(float disp_width_mm,
 
         // Instantiate the gaze coord acc improvement models iff given
         if (ml_x_path != NULL && ml_y_path != NULL) {
-            m_x_ml = new CoordPredict(ml_x_path);
-            m_y_ml = new CoordPredict(ml_y_path);
+            m_x_ml = new EyeTrackerCoordPredict(ml_x_path);
+            m_y_ml = new EyeTrackerCoordPredict(ml_y_path);
             m_use_ml = True;
         } else {
             m_use_ml = False;
@@ -411,8 +411,8 @@ gaze_point_t* EyeTrackerGaze::get_gazepoint() {
 void EyeTrackerGaze::set_gaze_marker(shared_ptr<gaze_data_t> cgd) {
     // Iff using ml to increase acc, use predicted coords
     if (m_use_ml) {
-        long int x = m_x_ml->predict(NULL);
-        printf("%ld\n", x);
+        // long int x = m_x_ml->predict(NULL);
+        // printf("%ld\n", x);
         XMoveWindow(
             m_disp,
             m_overlay, 

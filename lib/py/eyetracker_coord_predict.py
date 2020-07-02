@@ -3,7 +3,7 @@
 
 __author__ = 'Dustin Fast <dustin.fast@outlook.com>'
 
-class CoordPredict():
+class EyeTrackerCoordPredict():
     def __init__(self, model_path):
         self._path = model_path
     
