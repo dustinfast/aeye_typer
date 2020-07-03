@@ -69,7 +69,7 @@ Device installation is handled by the docker build process. To verify functional
 
 The eyetracker must now be calibrated with `./aeye_typer --calibrate`.
 
-You may now wish to commit this calibration to the docker container with (from outside the container) `docker commit aeye_typer_c aeye_typer:latest`. If not, calibration will be lost when the container is closed.
+Calibration must now be commited to the docker container with (from outside the container) `docker commit aeye_typer_c aeye_typer:latest`. If this step is no t performed, calibration will be lost when the container is closed.
 
 #### BCI / EEG
 

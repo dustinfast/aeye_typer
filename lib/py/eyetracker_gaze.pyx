@@ -15,7 +15,6 @@ DISP_WIDTH_MM = _conf['DISP_WIDTH_MM']
 DISP_HEIGHT_MM = _conf['DISP_HEIGHT_MM']
 DISP_WIDTH_PX = _conf['DISP_WIDTH_PX']
 DISP_HEIGHT_PX = _conf['DISP_HEIGHT_PX']
-GAZE_SAMPLE_HZ = _conf['EYETRACKER_SAMPLE_HZ']
 GAZE_BUFF_SZ = _conf['EYETRACKER_BUFF_SZ']
 GAZE_MARK_INTERVAL = _conf['EYETRACKER_MARK_INTERVAL']
 GAZE_PREP_PATH = _conf['EYETRACKER_PREP_SCRIPT_PATH']
@@ -34,7 +33,7 @@ class gaze_point(ctypes.Structure):
 
 
 class EyeTrackerGaze(object):
-    def __init__(self):
+    def __init__(self, ml_x_path=None, ml_y_path=None):
         # Build external .so file
         prep_proc = Popen([GAZE_PREP_PATH], stderr=PIPE)
         stderr = prep_proc.communicate()[1]
@@ -46,8 +45,9 @@ class EyeTrackerGaze(object):
             exit()
 
         self._lib = self._init_lib(LIB_PATH)
-        self.sample_rate = GAZE_SAMPLE_HZ
         self._obj = None  # Populated on open()
+        self._ml_x_path = ml_x_path
+        self._ml_y_path = ml_y_path
 
     @staticmethod
     def _init_lib(lib_path):
@@ -58,7 +58,8 @@ class EyeTrackerGaze(object):
         # Constructor
         lib.eye_gaze_new.argtypes = [
             ctypes.c_float, ctypes.c_float, ctypes.c_int, 
-                ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int]
+                ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int,
+                    ctypes.c_char_p, ctypes.c_char_p]
         lib.eye_gaze_new.restype = ctypes.c_void_p
 
         # Destructor
@@ -103,9 +104,21 @@ class EyeTrackerGaze(object):
             warn('Device already open.')
             return
 
+        try:
+            ml_x_path = bytes(self._ml_x_path, encoding="ascii")
+        except TypeError:
+            ml_x_path = None
+
+        try:
+            ml_y_path = bytes(self._ml_y_path, encoding="ascii")
+        except TypeError:
+            ml_y_path = None
+
+
         self._obj = self._lib.eye_gaze_new(
             DISP_WIDTH_MM, DISP_HEIGHT_MM, DISP_WIDTH_PX, DISP_HEIGHT_PX,
-                GAZE_MARK_INTERVAL, GAZE_BUFF_SZ, GAZE_SMOOTH_OVER)
+                GAZE_MARK_INTERVAL, GAZE_BUFF_SZ, GAZE_SMOOTH_OVER,
+                    ml_x_path, ml_y_path)
 
     def start(self):
         """ Starts the asynchronous gaze tracking.

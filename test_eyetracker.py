@@ -10,17 +10,18 @@ import pyximport; pyximport.install()
 
 from lib.py.eyetracker_gaze import EyeTrackerGaze
 
-DURATION_S = 1
+DURATION_S = 2
 
 if __name__ == "__main__":
-    e = EyeTrackerGaze()
+    e = EyeTrackerGaze(
+        '/opt/app/data/aeye_typer/event_logs/raw/hud/2020-06-13_x.pkl',
+        '/opt/app/data/aeye_typer/event_logs/raw/hud/2020-06-13_y.pkl')
     
     e.open()
     e.start()
 
     print(f'Marking gaze...')
     time.sleep(DURATION_S)
-    # e.to_csv('test.csv', 0)
     
     e.stop()
     e.close()

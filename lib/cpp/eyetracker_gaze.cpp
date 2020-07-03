@@ -21,7 +21,7 @@ using namespace std;
 #define GAZE_MARK_INTERVAL 18
 #define GAZE_BUFF_SZ 45000
 #define GAZE_SMOOTHOVER 4
-#define GAZE_TIME 3
+#define GAZE_TIME 1
 
 int main() {
     EyeTrackerGaze gaze = EyeTrackerGaze(

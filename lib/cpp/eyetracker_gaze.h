@@ -207,8 +207,13 @@ EyeTrackerGaze::EyeTrackerGaze(float disp_width_mm,
 
         // Instantiate the gaze coord acc improvement models iff given
         if (ml_x_path != NULL && ml_y_path != NULL) {
+            printf("INFO: Using ML gaze accuracy assist.\n");
+            printf("A\n"); // debug
+
             m_x_ml = new EyeTrackerCoordPredict(ml_x_path);
             m_y_ml = new EyeTrackerCoordPredict(ml_y_path);
+            printf("OK\n"); // debug
+
             m_use_ml = True;
         } else {
             m_use_ml = False;
@@ -217,7 +222,10 @@ EyeTrackerGaze::EyeTrackerGaze(float disp_width_mm,
 
 // Destructor
 EyeTrackerGaze::~EyeTrackerGaze() {
-    delete(m_x_ml, m_y_ml);
+    if (m_use_ml) {
+        // TODO: delete(m_x_ml, m_y_ml);
+    }
+
     XUnmapWindow(m_disp, m_overlay);
     XFlush(m_disp);
     XCloseDisplay(m_disp);
@@ -411,8 +419,26 @@ gaze_point_t* EyeTrackerGaze::get_gazepoint() {
 void EyeTrackerGaze::set_gaze_marker(shared_ptr<gaze_data_t> cgd) {
     // Iff using ml to increase acc, use predicted coords
     if (m_use_ml) {
-        // long int x = m_x_ml->predict(NULL);
-        // printf("%ld\n", x);
+        long int x = m_x_ml->predict(
+            cgd->left_eyeposition_normed_x,
+            cgd->left_eyeposition_normed_y,
+            cgd->left_eyeposition_normed_z,
+            cgd->right_eyeposition_normed_x,
+            cgd->right_eyeposition_normed_y,
+            cgd->right_eyeposition_normed_z,
+            cgd->combined_gazepoint_x,
+            cgd->combined_gazepoint_y
+        );
+        long int y = m_y_ml->predict(
+            cgd->left_eyeposition_normed_x,
+            cgd->left_eyeposition_normed_y,
+            cgd->left_eyeposition_normed_z,
+            cgd->right_eyeposition_normed_x,
+            cgd->right_eyeposition_normed_y,
+            cgd->right_eyeposition_normed_z,
+            cgd->combined_gazepoint_x,
+            cgd->combined_gazepoint_y
+        );
         XMoveWindow(
             m_disp,
             m_overlay, 
