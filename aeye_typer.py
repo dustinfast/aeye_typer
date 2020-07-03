@@ -29,6 +29,12 @@ if __name__ == "__main__":
                         action='store_true',
                         default=False,
                         help=arg_help_str)
+    arg_flags = ('-i', '--infer')
+    arg_help_str = 'Runs application in ml-assist mode.'
+    parser.add_argument(*arg_flags,
+                        action='store_true',
+                        default=False,
+                        help=arg_help_str)
     arg_flags = ('-t', '--train_ml')
     arg_help_str = 'Runs training of the applications ML models.'
     parser.add_argument(*arg_flags,
@@ -41,5 +47,9 @@ if __name__ == "__main__":
         proc = Popen([CMD_CALIBRATE])
     elif args.data_collect:
         HUD(mode='collect').run()
+    elif args.infer:
+        HUD(mode='infer').run()
     elif args.train_ml:
         HUDTrain().run()
+    else:
+        HUD(mode='basic').run()

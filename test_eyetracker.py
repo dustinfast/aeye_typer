@@ -10,7 +10,7 @@ import pyximport; pyximport.install()
 
 from lib.py.eyetracker_gaze import EyeTrackerGaze
 
-DURATION_S = 5
+DURATION_S = 2
 
 if __name__ == "__main__":
     e = EyeTrackerGaze(

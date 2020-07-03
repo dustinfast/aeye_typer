@@ -119,7 +119,8 @@ long int EyeTrackerCoordPredict::predict(
 
         // Release GIL lock
         PyGILState_Release(m_py_gilstate);
-        printf("%li\n", pred);
+        
+        // printf("%li\n", pred);  // debug
 
         return pred;
 }

@@ -45,16 +45,19 @@ class HUDLearn(object):
         """
         self.hud_state = hud_state
 
-        self._gazepoint = EyeTrackerGaze()
         self._logpath = self.get_log_path()
         self._model_x_path = self.get_model_path('x')
         self._model_y_path = self.get_model_path('y')
+        self._gazepoint = EyeTrackerGaze(
+            self._model_x_path if mode == 'infer' else None,
+            self._model_y_path if mode == 'infer' else None
+        )
 
         # Determine handler to use, based on the given mode
         self.handle_event = {
             'basic'     : self._null,
             'collect'   : self.on_event_collect,
-            'infer'     : self.on_event_infer
+            'infer'     : self._null
         }.get(mode, self._null)
 
     def get_log_path(self):
@@ -99,8 +102,11 @@ class HUDLearn(object):
             
             Training data is collected as the user clicks on a btn with the
             mouse. It is assumed that on click, the user's gaze is centered
-            on the on-screen keyboard button.
-            # TODO: eyetracking samples are recorded leading up to each click...
+            on the on-screen keyboard button. At the time of each click, a
+            number of Eyetracking samples (up to the number denoted by
+            _config.yaml:EYETRACKER_BUFF_SZ) are recorded leading up to each
+            click event, the label of each sample recorded at that time is
+            labeled with the key's keycode.
         """
         # Get the centroid of the button, then write all gaze points between
         # the previous buttnon click and this one to csv

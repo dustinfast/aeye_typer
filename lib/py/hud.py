@@ -101,7 +101,7 @@ class HUD(tk.Tk):
         # TODO: Change gaze-mark color to reflect mode, rather than bg
         # TODO: Denote currently focused window's title
         # FIXME: If hud is clicked but outside a btn, focus is captured.
-        # TODO: Helper denoting last x keystrokes
+        # TODO: Helper txt denoting last x keystrokes
 
         # Setup child frame for hosting the active panel frame.
         self._host_frame = ttk.Frame(

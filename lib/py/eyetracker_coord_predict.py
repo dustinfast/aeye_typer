@@ -16,7 +16,7 @@ class EyeTrackerCoordPredict():
             coordinate. To predict, say, coords x and y, two objs must be
             instantiated with each passed the model trained for that coord.
         """
-        # Load the predictive model from file
+        # Load the predictive model and feature scalar from file
         try:
             with open(model_path, 'rb') as f:
                 self._model = pickle.load(f)
@@ -25,7 +25,6 @@ class EyeTrackerCoordPredict():
             self._model = None
         else:
             self._scaler = self._model.scaler
-            # TODO: Extract scaler
     
     def predict(self, 
                 eyepos_left_x, 
