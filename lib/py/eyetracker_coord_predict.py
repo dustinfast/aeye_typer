@@ -23,8 +23,9 @@ class EyeTrackerCoordPredict():
         except Exception as e:
             error(f'Failed to load {model_path} due to\n{repr(e)}')
             self._model = None
-
-        # TODO: Extract min/max X metadata
+        else:
+            self._scaler = self._model.scaler
+            # TODO: Extract scaler
     
     def predict(self, 
                 eyepos_left_x, 
@@ -37,19 +38,20 @@ class EyeTrackerCoordPredict():
                 gaze_coord_y):
         """ Returns the coordinate prediction from the given gaze features.
         """
-        # TODO: Pass features as a c array
+        # TODO: Pass features as a c array?
         if self._model:
             try:
                 pred = self._model.predict(
-                    np.array([[
-                        eyepos_left_x, 
-                        eyepos_left_y, 
-                        eyepos_left_z,
-                        eyepos_right_x, 
-                        eyepos_right_y,
-                        eyepos_right_z,
-                        gaze_coord_x, 
-                        gaze_coord_y]]))
+                    self._scaler.transform(
+                        np.array([[
+                            eyepos_left_x, 
+                            eyepos_left_y, 
+                            eyepos_left_z,
+                            eyepos_right_x, 
+                            eyepos_right_y,
+                            eyepos_right_z,
+                            gaze_coord_x, 
+                            gaze_coord_y]])))
             except Exception as e:
                 error(f'Coord prediction failed with\n{repr(e)}')
                 return 0

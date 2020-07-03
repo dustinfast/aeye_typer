@@ -10,7 +10,7 @@ from pathlib import Path
 
 import pandas as pd
 from sklearn.svm import SVR
-from sklearn.preprocessing import normalize
+from sklearn.preprocessing import MinMaxScaler
 from sklearn.model_selection import train_test_split
 
 import pyximport; pyximport.install()  # Required for EyeTrackerGaze
@@ -179,20 +179,22 @@ class HUDTrain(HUDLearn):
         if len(df.index) % n_limit != 0:
             raise Exception('Unexpected post-processed data shape enountered.')
 
-        # Extract X
+        # Extract X, as [[feature_1, feature_2, ...], ...]
         _X = df[[c for c in df.columns if c.startswith('X_')]].values
 
-        # Denote pre-norm col mins/maxs, then normalize
-        _X_col_min_vals = _X.min(axis=0)
-        _X_col_max_vals = _X.max(axis=0)
-        _X = normalize(_X, axis=0)
-        
         # Extract y, as [gazepoint_x_coord, gazepoint_y_coord]
         _y = df[[c for c in df.columns if c.startswith('y_')]].values[:, :-1]
 
         # Do traintest split
         X_train, X_test, y_train, y_test = train_test_split(
             _X, _y, train_size=split, random_state=RAND_SEED)
+
+        # Scale training set, then scale test set from its scaler
+        scaler = MinMaxScaler()
+        scaler.fit(X_train)
+        X_train = scaler.transform(X_train)
+
+        X_test = scaler.transform(X_test)
         
         # Break labels into their x/y coord components.
         y_train_x_coord, y_train_y_coord = (
@@ -233,11 +235,9 @@ class HUDTrain(HUDLearn):
         # plt.legend()
         # plt.savefig(f'test_SVR.png')
 
-        # Denote metadata in model obj
-        model_x._X_col_min_vals = _X_col_min_vals
-        model_y._X_col_min_vals = _X_col_min_vals
-        model_x._X_col_max_vals = _X_col_max_vals
-        model_y._X_col_max_vals = _X_col_max_vals
+        # Set scaler as a model member, so it's saved with it
+        model_x.scaler = scaler
+        model_y.scaler = scaler
         
         # Save models to file
         with open(self._model_x_path, 'wb') as f:
