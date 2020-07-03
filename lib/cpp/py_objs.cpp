@@ -119,7 +119,7 @@ long int EyeTrackerCoordPredict::predict(
 
         // Release GIL lock
         PyGILState_Release(m_py_gilstate);
-        printf("%i\n", gaze_coord_x);
+        printf("%li\n", pred);
 
         return pred;
 }

@@ -439,8 +439,8 @@ void EyeTrackerGaze::set_gaze_marker(shared_ptr<gaze_data_t> cgd) {
         XMoveWindow(
             m_disp,
             m_overlay, 
-            cgd->combined_gazepoint_x,
-            cgd->combined_gazepoint_y
+            x,
+            y
         ); 
 
     // Else use coords as given

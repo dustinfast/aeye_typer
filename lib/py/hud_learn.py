@@ -179,11 +179,13 @@ class HUDTrain(HUDLearn):
         if len(df.index) % n_limit != 0:
             raise Exception('Unexpected post-processed data shape enountered.')
 
-        # Extract and normalize X
-        # TODO: normalize_fromknown(arr, known_min_maxs)
-
+        # Extract X
         _X = df[[c for c in df.columns if c.startswith('X_')]].values
-        # _X = normalize(_X, axis=0)
+
+        # Denote pre-norm col mins/maxs, then normalize
+        _X_col_min_vals = _X.min(axis=0)
+        _X_col_max_vals = _X.max(axis=0)
+        _X = normalize(_X, axis=0)
         
         # Extract y, as [gazepoint_x_coord, gazepoint_y_coord]
         _y = df[[c for c in df.columns if c.startswith('y_')]].values[:, :-1]
@@ -192,7 +194,7 @@ class HUDTrain(HUDLearn):
         X_train, X_test, y_train, y_test = train_test_split(
             _X, _y, train_size=split, random_state=RAND_SEED)
         
-        # Break labels into their x/y coord components
+        # Break labels into their x/y coord components.
         y_train_x_coord, y_train_y_coord = (
             y_train[:, 0].squeeze(), y_train[:, 1].squeeze())
         y_test_x_coord, y_test_y_coord = (
@@ -213,24 +215,30 @@ class HUDTrain(HUDLearn):
             (model_x_score, model_y_score))
 
         # # Plot x/y coord actual vs x/y coord pred, for testing convenience
-        import matplotlib.pyplot as plt
-        y_x_coord_hat = model_x.predict(X_test)
-        y_y_coord_hat = model_y.predict(X_test)
-        plt.figure()
-        plt.scatter(
-            y_test_x_coord, y_test_y_coord, c="green", label="x/y", marker=".")
-        plt.scatter(
-            y_x_coord_hat, y_y_coord_hat, c="red", marker=".",
-                label='x/y pred (score=%.4f|%.4f)' % (
-                    model_x_score, model_y_score))
-        plt.xlim([1500, 3840])
-        plt.ylim([2160, 1500])
-        plt.xlabel("gaze_x")
-        plt.ylabel("gaze_y")
-        plt.title("Perf")
-        plt.legend()
-        plt.savefig(f'test_SVR.png')
+        # import matplotlib.pyplot as plt
+        # y_x_coord_hat = model_x.predict(X_test)
+        # y_y_coord_hat = model_y.predict(X_test)
+        # plt.figure()
+        # plt.scatter(
+        #     y_test_x_coord, y_test_y_coord, c="green", label="x/y", marker=".")
+        # plt.scatter(
+        #     y_x_coord_hat, y_y_coord_hat, c="red", marker=".",
+        #         label='x/y pred (score=%.4f|%.4f)' % (
+        #             model_x_score, model_y_score))
+        # plt.xlim([1500, 3840])
+        # plt.ylim([2160, 1500])
+        # plt.xlabel("gaze_x")
+        # plt.ylabel("gaze_y")
+        # plt.title("Perf")
+        # plt.legend()
+        # plt.savefig(f'test_SVR.png')
 
+        # Denote metadata in model obj
+        model_x._X_col_min_vals = _X_col_min_vals
+        model_y._X_col_min_vals = _X_col_min_vals
+        model_x._X_col_max_vals = _X_col_max_vals
+        model_y._X_col_max_vals = _X_col_max_vals
+        
         # Save models to file
         with open(self._model_x_path, 'wb') as f:
             pickle.dump(model_x, f)
