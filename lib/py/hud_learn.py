@@ -109,7 +109,7 @@ class HUDLearn(object):
             labeled with the key's keycode.
         """
         # Get the centroid of the button, then write all gaze points between
-        # the previous buttnon click and this one to csv
+        # the previous button click and this one to csv
         centr_x, centr_y = btn.centroid
         
         self._gazepoint.to_csv(
