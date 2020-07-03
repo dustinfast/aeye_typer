@@ -9,9 +9,11 @@ import pickle
 class EyeTrackerCoordPredict():
     def __init__(self, model_path):
         print('Path: ' + model_path)
-        # with open(model_path, 'wb') as f:
-        #     self._model = pickle.load(f)
-        # pass
+        try:
+            with open(model_path, 'wb') as f:
+                self._model = pickle.load(f)
+        except Exception as e:
+            print(str(e))
     
     def predict(self, 
                 eyepos_left_x, 

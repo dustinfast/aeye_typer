@@ -14,8 +14,8 @@ DURATION_S = 2
 
 if __name__ == "__main__":
     e = EyeTrackerGaze(
-        '/opt/app/data/aeye_typer/event_logs/raw/hud/2020-06-13_x.pkl',
-        '/opt/app/data/aeye_typer/event_logs/raw/hud/2020-06-13_y.pkl')
+        '/opt/app/data/event_logs/raw/hud/2020-06-13_x.pkl',
+        '/opt/app/data/event_logs/raw/hud/2020-06-13_y.pkl')
     
     e.open()
     e.start()

@@ -207,14 +207,10 @@ EyeTrackerGaze::EyeTrackerGaze(float disp_width_mm,
 
         // Instantiate the gaze coord acc improvement models iff given
         if (ml_x_path != NULL && ml_y_path != NULL) {
-            printf("INFO: Using ML gaze accuracy assist.\n");
-            printf("A\n"); // debug
-
             m_x_ml = new EyeTrackerCoordPredict(ml_x_path);
             m_y_ml = new EyeTrackerCoordPredict(ml_y_path);
-            printf("OK\n"); // debug
-
             m_use_ml = True;
+            printf("INFO: Using ML gaze accuracy assist.\n");
         } else {
             m_use_ml = False;
         }
@@ -439,6 +435,7 @@ void EyeTrackerGaze::set_gaze_marker(shared_ptr<gaze_data_t> cgd) {
             cgd->combined_gazepoint_x,
             cgd->combined_gazepoint_y
         );
+
         XMoveWindow(
             m_disp,
             m_overlay, 

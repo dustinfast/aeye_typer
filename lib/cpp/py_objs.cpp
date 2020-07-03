@@ -8,6 +8,11 @@
 #include <Python.h>
 
 
+/////////////////////////////////////////////////////////////////////////////
+// Defs
+
+#define PY_LIB_IMPORT_STR "import sys; sys.path.insert(0, '/opt/app/src/lib/py/')"
+
 PyObject *get_pyclass(const char *name);
 
 
@@ -26,7 +31,6 @@ class EyeTrackerCoordPredict {
             int gaze_coord_x, 
             int gaze_coord_y
         );
-        EyeTrackerCoordPredict();
         EyeTrackerCoordPredict(const char *model_path);
         ~EyeTrackerCoordPredict();
 
@@ -38,8 +42,6 @@ class EyeTrackerCoordPredict {
         PyGILState_STATE m_py_gilstate;
 };
 
-EyeTrackerCoordPredict::EyeTrackerCoordPredict() {}
-
 EyeTrackerCoordPredict::EyeTrackerCoordPredict(const char *model_path) {
 
     // Acquire gill lock iff needed
@@ -47,16 +49,10 @@ EyeTrackerCoordPredict::EyeTrackerCoordPredict(const char *model_path) {
         m_py_gilstate = PyGILState_Ensure();
 
     Py_Initialize();
-
-    // m_py_threadstate = Py_NewInterpreter();
-    printf("B\n");
-
     PyEval_InitThreads();
-    printf("GIL 2: %i\n", PyGILState_Check());
 
-    PyRun_SimpleString ("import sys; sys.path.insert(0, '/opt/app/src/lib/py/')");
-    printf("C\n");
-
+    // Append lib dir to python path
+    PyRun_SimpleString (PY_LIB_IMPORT_STR);
 
     // Import py module and get class attribute
     PyObject *p_module = PyImport_ImportModule("eyetracker_coord_predict");
@@ -73,6 +69,7 @@ EyeTrackerCoordPredict::EyeTrackerCoordPredict(const char *model_path) {
     m_py_self = PyObject_CallObject(p_attr, p_args);
     assert(m_py_self != NULL);
 
+    // Decrement ptr refs
     Py_DECREF(p_args);
     Py_DECREF(p_obj);
     Py_DECREF(p_attr);
@@ -84,7 +81,6 @@ EyeTrackerCoordPredict::EyeTrackerCoordPredict(const char *model_path) {
 
 EyeTrackerCoordPredict::~EyeTrackerCoordPredict() {
     Py_DECREF(m_py_self);
-    // Py_EndInterpreter(m_py_threadstate);
     Py_Finalize();
 }
 
@@ -103,7 +99,7 @@ long int EyeTrackerCoordPredict::predict(
             m_py_gilstate = PyGILState_Ensure();
 
         // Call python obj's predict method
-        PyObject *p_res = PyObject_CallMethod(
+        PyObject *p_result = PyObject_CallMethod(
             m_py_self, 
             "predict", 
             "(ddddddii)",
@@ -116,11 +112,10 @@ long int EyeTrackerCoordPredict::predict(
             gaze_coord_x,
             gaze_coord_y
         );
-        assert(p_res != NULL);
+        assert(p_result != NULL);
 
-        long int pred = PyLong_AsLong(p_res);
-        // PyArg_Parse(pres, "s", &cstr);
-        Py_DECREF(p_res);
+        long int pred = PyLong_AsLong(p_result);
+        Py_DECREF(p_result);
 
         // Release GIL lock
         PyGILState_Release(m_py_gilstate);
