@@ -19,7 +19,7 @@ This will be accomplished by
 
 * Implementing the vKeyb [STATUS: **Functional**]
 * Creating data collection pipelines for associating physical mouse-clicks/keystrokes with the users gaze activity [STATUS: **Functional**]
-* Improving, through the use of machine learning (ML), the inherent inaccuracy of modern gaze-tracking devices [STATUS: Partially Implemented (~75%)]
+* Improving, through the use of machine learning (ML), the inherent inaccuracy of modern gaze-tracking devices [STATUS: Partially Implemented (~90%)]
 * Developing a mouse-click inference model and pipeline, accepting as input the user's gaze activity [STATUS: Not Implemented]
 * Ensuring setup and calibration are intuitive enough to be performed by, say, some other disabled individual or their caretaker.  [STATUS: Ongoing]
 
@@ -87,8 +87,10 @@ WARNING: The "virtual" keystrokes are logged as part of this process. Please ens
 
 Assuming a sufficiently sized training corpus, the gaze-point accuracy improvement models may be trained with `./aeye_typer.py --train_ml`.
 
-Mouse-click inference model training is currently not implemented.
+Note: Mouse-click inference model training is currently not implemented.
 
 ### Inference
 
-Not Implemented
+Assuming the gaze-point accuracy improvement models have been succesfully trained, run the application in inference moe with `./aeye_typer.py --infer`.
+
+None Mouse-click inference is currently not implemented.
