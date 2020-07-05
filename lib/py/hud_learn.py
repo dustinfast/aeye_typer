@@ -9,8 +9,11 @@ from time import sleep
 from pathlib import Path
 
 import pandas as pd
+import seaborn as sb
+from matplotlib import pyplot as plt
 from sklearn.svm import SVR
 from sklearn.preprocessing import MinMaxScaler
+from sklearn.metrics import mean_absolute_error
 from sklearn.model_selection import train_test_split
 
 import pyximport; pyximport.install()  # Required for EyeTrackerGaze
@@ -143,8 +146,8 @@ class HUDTrain(HUDLearn):
                          names=DATA_COL_NAMES)
 
         return df
-
-    def _train_gaze_acc(self, n_limit=25, split=0.75):
+    
+    def _train_gaze_acc(self, n_limit=25, split=0.7):
         """ Gaze accuracy training handler.
         """
         print('Training...')
@@ -185,10 +188,17 @@ class HUDTrain(HUDLearn):
         if len(df.index) % n_limit != 0:
             raise Exception('Unexpected post-processed data shape enountered.')
 
+         # Plot and save corr matrix, for testing purposes
+        # corr = df.iloc[:, :-1].corr()
+        # fig = plt.figure(figsize = (15,15))
+
+        # sb.heatmap(corr, vmax=0.8, square=True)
+        # plt.savefig(f'test_SVR_cor.png')
+
         # Extract X, as [[feature_1, feature_2, ...], ...]
         _X = df[[c for c in df.columns if c.startswith('X_')]].values
 
-        # Extract y, as [gazepoint_x_coord, gazepoint_y_coord]
+        # Extract y, as [[gazepoint_x_coord, gazepoint_y_coord], ... ]
         _y = df[[c for c in df.columns if c.startswith('y_')]].values[:, :-1]
 
         # Do traintest split
@@ -208,24 +218,34 @@ class HUDTrain(HUDLearn):
         y_test_x_coord, y_test_y_coord = (
             y_test[:, 0].squeeze(), y_test[:, 1].squeeze())
 
-        model_x = SVR(kernel='rbf', C=200, epsilon=3).fit(
+        # NOTE: Best was x = 0.9912, y = 0.9631 w C=1000 and e=6
+        model_x = SVR(kernel='rbf', C=1000, epsilon=3).fit(
             X_train, y_train_x_coord)
-        model_y = SVR(kernel='rbf', C=200, epsilon=3).fit(
+        model_y = SVR(kernel='rbf', C=1000, epsilon=3).fit(
             X_train, y_train_y_coord)
 
         # Validate
         print('Done.')
         print('Validating...')
-        model_x_score = model_x.score(X_test, y_test_x_coord)
-        model_y_score = model_y.score(X_test, y_test_y_coord)
-
+        y_x_coord_hat = model_x.predict(X_test)
+        y_y_coord_hat = model_y.predict(X_test)
+        model_x_score = mean_absolute_error(y_test_x_coord, y_x_coord_hat)
+        model_y_score = mean_absolute_error(y_test_y_coord, y_y_coord_hat)
+        
         print('Done:\n\tScore_x = %.4f\n\tScore_y = %.4f' % 
             (model_x_score, model_y_score))
 
+        # Set scaler as a model member, so it's saved with it
+        model_x.scaler = scaler
+        model_y.scaler = scaler
+        
+        # Save models to file
+        with open(self._model_x_path, 'wb') as f:
+            pickle.dump(model_x, f)
+        with open(self._model_y_path, 'wb') as f:
+            pickle.dump(model_y, f)
+
         # # Plot x/y coord actual vs x/y coord pred, for testing convenience
-        # import matplotlib.pyplot as plt
-        # y_x_coord_hat = model_x.predict(X_test)
-        # y_y_coord_hat = model_y.predict(X_test)
         # plt.figure()
         # plt.scatter(
         #     y_test_x_coord, y_test_y_coord, c="green", label="x/y", marker=".")
@@ -239,14 +259,4 @@ class HUDTrain(HUDLearn):
         # plt.ylabel("gaze_y")
         # plt.title("Perf")
         # plt.legend()
-        # plt.savefig(f'test_SVR.png')
-
-        # Set scaler as a model member, so it's saved with it
-        model_x.scaler = scaler
-        model_y.scaler = scaler
-        
-        # Save models to file
-        with open(self._model_x_path, 'wb') as f:
-            pickle.dump(model_x, f)
-        with open(self._model_y_path, 'wb') as f:
-            pickle.dump(model_y, f)
+        # plt.savefig(f'test_SVR_acc.png')
