@@ -70,6 +70,7 @@ RUN echo "Installing application dependencies(pip)..." && \
         sklearn \
         pyyaml \
         matplotlib \
+        seaborn \
         sqlalchemy \
         cython \
         skl2onnx \
