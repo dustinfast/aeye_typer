@@ -219,9 +219,9 @@ class HUDTrain(HUDLearn):
             y_test[:, 0].squeeze(), y_test[:, 1].squeeze())
 
         # NOTE: Best was x = 0.9912, y = 0.9631 w C=1000 and e=6
-        model_x = SVR(kernel='rbf', C=1000, epsilon=3).fit(
+        model_x = SVR(kernel='rbf', C=1000, epsilon=6).fit(
             X_train, y_train_x_coord)
-        model_y = SVR(kernel='rbf', C=1000, epsilon=3).fit(
+        model_y = SVR(kernel='rbf', C=1000, epsilon=6).fit(
             X_train, y_train_y_coord)
 
         # Validate
