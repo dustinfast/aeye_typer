@@ -5,6 +5,7 @@
 __author__ = 'Dustin Fast <dustin.fast@outlook.com>'
 
 import ctypes
+from pathlib import Path
 from subprocess import Popen, PIPE
 
 from lib.py.app import config, info, warn, error
@@ -20,6 +21,8 @@ GAZE_MARK_INTERVAL = _conf['EYETRACKER_MARK_INTERVAL']
 GAZE_PREP_PATH = _conf['EYETRACKER_PREP_SCRIPT_PATH']
 GAZE_SMOOTH_OVER = _conf['EYETRACKER_SMOOTH_OVER']
 del _conf
+
+GAZE_CALIB_PATH = '/opt/app/data/eyetracker.calib'
 
 
 class gaze_point(ctypes.Structure):
@@ -83,6 +86,10 @@ class EyeTrackerGaze(object):
         lib.eye_gaze_data_sz.argtypes = [ctypes.c_void_p]
         lib.eye_gaze_data_sz.restype = ctypes.c_int
 
+        # Device calibration writer
+        lib.eye_write_calibration.argtypes = [ctypes.c_void_p]
+        lib.eye_write_calibration.restype = ctypes.c_void_p
+
         # GazePoint
         lib.eye_gaze_point.argtypes = [ctypes.c_void_p]
         lib.eye_gaze_point.restype = ctypes.c_void_p
@@ -101,7 +108,7 @@ class EyeTrackerGaze(object):
         """ Opens the device for use.
         """
         if self._obj is not None:
-            warn('Device already open.')
+            error('Eyetracker.open attempted but device already open.')
             return
 
         try:
@@ -120,27 +127,27 @@ class EyeTrackerGaze(object):
                 GAZE_MARK_INTERVAL, GAZE_BUFF_SZ, GAZE_SMOOTH_OVER,
                     ml_x_path, ml_y_path)
 
+    def close(self):
+        """ Closes the device.
+        """
+        if self._obj is None:
+            warn('Eyetracker.close attempted but device not open.')
+
+        self._lib.eye_gaze_destructor(self._obj)
+        self._obj = None
+
     def start(self):
-        """ Starts the asynchronous gaze tracking.
+        """ Starts asynchronously gaze tracking.
         """
         self._ensure_device_opened()
         self._lib.eye_gaze_start(self._obj)
 
     def stop(self):
-        """ Stops the asynchronous gaze tracking.
+        """ Stops asynchronously gaze tracking.
         """
         self._ensure_device_opened()
         self._lib.eye_gaze_stop(self._obj)
         
-    def close(self):
-        """ Closes the device.
-        """
-        if self._obj is None:
-            error('Device not open.')
-
-        self._lib.eye_gaze_destructor(self._obj)
-        self._obj = None
-
     def to_csv(self, file_path, num_points=0, label=''):
         """ Writes up to the last n gaze data points to the given file path,
             creating it if exists else appending to it.
@@ -166,6 +173,21 @@ class EyeTrackerGaze(object):
         """
         self._ensure_device_opened()
         return self._lib.eye_gaze_data_sz(self._obj)
+
+    def write_calibration(self):
+        """ Writes the eyetracker device's calibration data to file.
+        """
+        self._ensure_device_opened()
+
+        # If exists, prompt for overwrite
+        if Path(GAZE_CALIB_PATH).exists():
+            warn('Calibration file exists! Overwrite it', end=' ')
+            if input('[y/N]? ') != 'y':
+                info('Calibration write aborted by user.')
+                return
+
+        # If not exists OR if overwrite confirmed, write to file
+        self._lib.eye_write_calibration(self._obj)
 
     def gaze_coords(self):
         """ Returns the current gaze point in display coords.

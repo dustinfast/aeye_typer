@@ -65,11 +65,9 @@ Modify fields `DISP_WIDTH_MM`, `DISP_HEIGHT_MM`, `DISP_WIDTH_PX`, and `DISP_HEIG
 
 #### Eye Tracker
 
-Device installation is handled by the docker build process. To verify functionality, connect your eye-tracker via USB and run `./test_eyetracker.py`. 
+Device installation is handled by the docker build process, but the eyetracker must first be calibrated. To do so, ensure your device is plugged in via USB and run `./aeye_typer --calibrate`.
 
-The eyetracker must now be calibrated with `./aeye_typer --calibrate`.
-
-Calibration must now be commited to the docker container with (from outside the container) `docker commit aeye_typer_c aeye_typer:latest`. If this step is no t performed, calibration will be lost when the container is closed.
+WARN: If calibration has previously been performed, you will be prompted to overwrite. Overwriting is not recommended unless re-training of the application's ML models will also be performed.
 
 #### BCI / EEG
 

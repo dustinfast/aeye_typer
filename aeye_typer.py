@@ -10,6 +10,8 @@ from subprocess import Popen
 from lib.py.hud import HUD
 from lib.py.hud_learn import HUDTrain
 
+import pyximport; pyximport.install()
+from lib.py.eyetracker_gaze import EyeTrackerGaze
 
 CMD_CALIBRATE = 'tobiiproeyetrackermanager'
 
@@ -44,7 +46,16 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.calibrate:
+        # Run the external calibration tool and wait for quit
         proc = Popen([CMD_CALIBRATE])
+        proc.wait()
+
+        # Write the calibration to file
+        e = EyeTrackerGaze()
+        e.open()
+        e.write_calibration()
+        e.close()
+
     elif args.data_collect:
         HUD(mode='collect').run()
     elif args.infer:
@@ -53,3 +64,4 @@ if __name__ == "__main__":
         HUDTrain().run()
     else:
         HUD(mode='basic').run()
+
