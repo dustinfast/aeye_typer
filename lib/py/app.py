@@ -47,6 +47,7 @@ def key_to_id(key):
             key_id = key.vk
 
     return key_id
+    
 def info(s, end='\n'):
     """ Prints the given string to stdout, formatted as an info str.
     """
@@ -69,7 +70,6 @@ def error(s, end='\n'):
     """ Prints the given string to stdout, formatted as an error.
     """
     print(f"{ANSII_ESC_ERROR}ERROR:{ANSII_ESC_ENDCOLOR} {s}", end=end)
-
 
 
 def bold(s, end='\n'):
