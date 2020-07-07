@@ -47,32 +47,32 @@ def key_to_id(key):
             key_id = key.vk
 
     return key_id
-def info(s):
+def info(s, end='\n'):
     """ Prints the given string to stdout, formatted as an info str.
     """
-    print(f"INFO: {s}")
+    print(f"INFO: {s}", end=end)
 
 
-def info_ok(s):
+def info_ok(s, end='\n'):
     """ Prints the given string to stdout, formatted as an info/OK str.
     """
-    print(f"{ANSII_ESC_OK}INFO:{ANSII_ESC_ENDCOLOR} {s}")
+    print(f"{ANSII_ESC_OK}INFO:{ANSII_ESC_ENDCOLOR} {s}", end=end)
 
 
-def warn(s):
+def warn(s, end='\n'):
     """ Prints the given string to stdout, formatted as a warning.
     """
-    print(f"{ANSII_ESC_WARNING}WARN:{ANSII_ESC_ENDCOLOR} {s}")
+    print(f"{ANSII_ESC_WARNING}WARN:{ANSII_ESC_ENDCOLOR} {s}", end=end)
 
 
-def error(s):
+def error(s, end='\n'):
     """ Prints the given string to stdout, formatted as an error.
     """
-    print(f"{ANSII_ESC_ERROR}ERROR:{ANSII_ESC_ENDCOLOR} {s}")
+    print(f"{ANSII_ESC_ERROR}ERROR:{ANSII_ESC_ENDCOLOR} {s}", end=end)
 
 
 
-def bold(s):
+def bold(s, end='\n'):
     """ Prints the given string to stdout in bold.
     """
-    print(f"{ANSII_ESC_BOLD}{s}{ANSII_ESC_ENDCOLOR}")
+    print(f"{ANSII_ESC_BOLD}{s}{ANSII_ESC_ENDCOLOR}", end=end)
