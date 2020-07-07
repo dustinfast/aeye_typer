@@ -81,18 +81,21 @@ DATA_COL_IDXS = [3, 4, 5, 6, 7, 8, 31, 32, 33, 34, 35]
 #     'X_right_gazepoint_mm_x',
 #     'X_right_gazepoint_mm_y',
 #     'X_right_gazepoint_mm_z',
+#     # All above, none below gives
+#     # mae_x = 7.9031
+#     # mae_y = 7.0651
 
 #     # mae_x = 7.9042
 #     # mae_y = 7.0615
-#     'X_left_gazepoint_normed_x',
-#     'X_left_gazepoint_normed_y',
-#     'X_right_gazepoint_normed_x',
-#     'X_right_gazepoint_normed_y',
+#     # 'X_left_gazepoint_normed_x',
+#     # 'X_left_gazepoint_normed_y',
+#     # 'X_right_gazepoint_normed_x',
+#     # 'X_right_gazepoint_normed_y',
 
 #     # mae_x = 7.9176
 #     # mae_y = 7.0760
-#     'X_combined_gazepoint_x',
-#     'X_combined_gazepoint_y',
+#     # 'X_combined_gazepoint_x',
+#     # 'X_combined_gazepoint_y',
 
 #     'y_gaze_x',
 #     'y_gaze_y',
@@ -103,8 +106,8 @@ DATA_COL_IDXS = [3, 4, 5, 6, 7, 8, 31, 32, 33, 34, 35]
 #                  9, 10, 11, 12, 13, 14,
 #                  15, 16, 17, 18, 19, 20,
 #                  21, 22, 23, 24, 25, 26,
-#                  27, 28, 29, 30,
-#                  31, 32,
+#                 #  27, 28, 29, 30,
+#                 #  31, 32,
 #                  33, 34, 35
 # ]
 
