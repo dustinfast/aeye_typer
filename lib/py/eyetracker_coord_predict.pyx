@@ -56,6 +56,6 @@ class EyeTrackerCoordPredict():
                 error(f'Coord prediction failed with\n{repr(e)}')
                 return 0
             else:
-                return int(pred.item())
+                return round(pred.item())
         else:
             return 0
