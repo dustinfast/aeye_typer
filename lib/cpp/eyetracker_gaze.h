@@ -210,7 +210,7 @@ EyeTrackerGaze::EyeTrackerGaze(float disp_width_mm,
             m_x_ml = new EyeTrackerCoordPredict(ml_x_path);
             m_y_ml = new EyeTrackerCoordPredict(ml_y_path);
             m_use_ml = True;
-            printf("INFO: Using ML gaze accuracy-assist.\n");
+            info_ok("Using ML gaze accuracy-assist.\n");
         } else {
             m_use_ml = False;
         }
@@ -230,7 +230,7 @@ EyeTrackerGaze::~EyeTrackerGaze() {
 // Starts the async gaze threads
 void EyeTrackerGaze::start() {
     if (m_async_streamer) {
-        printf("ERROR: Gaze stream already running.");
+        warn("Gaze stream start attempted but already running.");
     } else {
         m_async_streamer = make_shared<boost::thread>(
             do_gaze_data_subscribe, m_device, this
@@ -359,7 +359,8 @@ void EyeTrackerGaze::print_gaze_data() {
     }
     m_async_mutex->unlock();
 
-    printf("Gaze sample count: %li\n", m_gaze_buff->size());
+    info("");
+    printf("Gaze sample count = %li\n", m_gaze_buff->size());
 }
 
 // Returns the current number of gaze points in the gaze data buffer.
@@ -506,6 +507,10 @@ extern "C" {
         return gaze->gaze_data_sz();
     }
 
+    void eye_write_calibration(EyeTrackerGaze* gaze) {
+        gaze->calibration_write();
+    }
+
     gaze_point_t* eye_gaze_point(EyeTrackerGaze* gaze) {
         return gaze->get_gazepoint();
     }
@@ -644,7 +649,7 @@ static void cb_gaze_data(tobii_gaze_data_t const *data, void *user_data) {
         gaze->set_gaze_marker(cgd);
     }
     else {
-        // printf("WARN: Gaze point invalid.");  // Debug
+        // warn("Gaze point invalid. Is user present?\n"); // for debug
     }
 }
 

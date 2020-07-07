@@ -21,7 +21,7 @@ using namespace std;
 #define GAZE_MARK_INTERVAL 18
 #define GAZE_BUFF_SZ 45000
 #define GAZE_SMOOTHOVER 4
-#define GAZE_TIME 1
+#define GAZE_TIME 3
 
 int main() {
     EyeTrackerGaze gaze = EyeTrackerGaze(
@@ -33,12 +33,10 @@ int main() {
         GAZE_BUFF_SZ,
         GAZE_SMOOTHOVER
     );
-
-    printf("Marking gaze point for %d seconds from device...\n", GAZE_TIME);
     
     gaze.print_device_info();
-    gaze.print_feature_group();
-
+    
+    printf("\nMarking real-time gaze point for %d seconds...\n", GAZE_TIME);
     gaze.start();
 
     for (int i = 0; i < GAZE_TIME; i++) {
@@ -47,5 +45,6 @@ int main() {
 
     gaze.stop();
 
+    printf("Done.\n");
     return 0;
 }

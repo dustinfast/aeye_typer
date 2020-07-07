@@ -20,6 +20,8 @@
 
 #include <boost/thread.hpp>
 
+#include "app.h"
+
 using namespace std;
 using namespace std::chrono;
 
@@ -33,9 +35,9 @@ using namespace std::chrono;
 #define NO_ERROR TOBII_ERROR_NO_ERROR
 
 void sync_device_time_async(tobii_device_t *device);
-static size_t read_license_file(uint16_t* license);
+size_t read_license_file(uint16_t* license);
 void single_url_receiver(char const *url, void *user_data);
-void calibr_writer(void const* data, size_t size, void* user_data);
+void calibration_writer(void const* data, size_t size, void* user_data);
 
 /////////////////////////////////////////////////////////////////////////////
 // Class
@@ -44,19 +46,19 @@ class EyeTracker {
     public:
         EyeTracker();
         ~EyeTracker();
-        int64_t devicetime_to_systime(int64_t);
         void sync_device_time();
         void print_device_info();
         void print_feature_group();
-        void calibr_write();
-        void calibr_load();
+        void calibration_write();
+        int64_t devicetime_to_systime(int64_t);
 
     protected:
         int64_t m_device_time_offset;
-        bool m_is_elevated;
         tobii_device_t *m_device;
         tobii_api_t *m_api;
+        bool m_is_elevated;
         void set_display(float, float, float);
+        void calibration_load();
     
     private:
         shared_ptr<boost::thread> m_async_time_syncer;
@@ -95,26 +97,26 @@ EyeTracker::EyeTracker() {
 
     // If open elevated failed, open in unelevated mode
     if (validation_result != TOBII_LICENSE_VALIDATION_RESULT_OK) {
-        printf("WARN: Failed to create elevated eyetracking device... ");
+        warn("Failed to create elevated eyetracking device... ");
 
         if (validation_result == TOBII_LICENSE_VALIDATION_RESULT_EXPIRED) {
-            printf("License expired.");
+            printf("License expired. ");
         } else {
-            printf("License invalid.");
+            printf("License invalid. ");
         }
 
-        printf("\nINFO: Using non-elevated device instead...\n");
+        printf("Using non-elevated device instead...\n");
         assert(tobii_device_create(m_api, url, &m_device) == NO_ERROR);
         m_is_elevated = False;
     
     // Else if elevated create succeeded
     } else {
-        printf("INFO: Using elevated eyetracking device...\n");
+        info_ok("Using elevated eyetracking device.\n");
         m_is_elevated = True;
     }
 
-    // Load calibration from file
-    // calibr_load();
+    // Load calibration from file -- if no exist, will warn
+    calibration_load();
     
     // Set default states
     m_async_time_syncer = NULL;
@@ -177,38 +179,46 @@ void EyeTracker::print_device_info() {
     printf("Device Integration Type: %s\n", info.integration_type);
     printf("Device Runtime Build Ver: %s\n", info.runtime_build_version);
 
+    // Feature group
+    print_feature_group();
+
     // Supported streams info
-    printf("Device streams user presence: "); 
+    printf("Device supports stream user presence: "); 
     tobii_stream_supported(m_device, TOBII_STREAM_USER_PRESENCE, &supported);
     if(supported == TOBII_SUPPORTED) { printf( "True" ); 
     } else { printf( "False" ); }
     
-    printf("\nDevice streams gaze point: "); 
+    printf("\nDevice supports stream gaze point: "); 
     tobii_stream_supported(m_device, TOBII_STREAM_GAZE_POINT, &supported);
     if(supported == TOBII_SUPPORTED) { printf( "True" ); 
     } else { printf( "False" ); }
     
-    printf("\nDevice streams gaze origin: "); 
+    printf("\nDevice supports stream gaze origin: "); 
     tobii_stream_supported(m_device, TOBII_STREAM_GAZE_ORIGIN, &supported);
     if(supported == TOBII_SUPPORTED) { printf( "True" ); 
     } else { printf( "False" ); }
 
-    printf("\nDevice streams eye position: "); 
+    printf("\nDevice supports stream eye position: "); 
     tobii_stream_supported(m_device, TOBII_STREAM_EYE_POSITION_NORMALIZED, &supported);
     if(supported == TOBII_SUPPORTED) { printf( "True" ); 
     } else { printf( "False" ); }
 
-    printf("\nDevice streams head pose: "); 
+    printf("\nDevice supports stream position guide: "); 
+    tobii_stream_supported(m_device, TOBII_STREAM_USER_POSITION_GUIDE, &supported);
+    if(supported == TOBII_SUPPORTED) { printf( "True" ); 
+    } else { printf( "False" ); }
+
+    printf("\nDevice supports stream head pose: "); 
     tobii_stream_supported(m_device, TOBII_STREAM_HEAD_POSE, &supported);
     if(supported == TOBII_SUPPORTED) { printf( "True" ); 
     } else { printf( "False" ); }
 
-    printf("\nDevice streams gaze data: "); 
+    printf("\nDevice supports stream gaze data: "); 
     tobii_stream_supported(m_device, TOBII_STREAM_GAZE_DATA, &supported);
     if(supported == TOBII_SUPPORTED) { printf( "True" ); 
     } else { printf( "False" ); }
 
-    printf("\nDevice streams diag image: "); 
+    printf("\nDevice supports stream diag image: "); 
     tobii_stream_supported(m_device, TOBII_STREAM_DIAGNOSTICS_IMAGE, &supported);
     if(supported == TOBII_SUPPORTED) { printf( "True" ); 
     } else { printf( "False" ); }
@@ -216,20 +226,27 @@ void EyeTracker::print_device_info() {
     printf("\n");
 }
 
+// Prints the device's active feature group to stdout. Note that the feature
+// group is mostly dependent on the license file loaded, if any.
 void EyeTracker::print_feature_group() {
     tobii_feature_group_t feature_group;
     tobii_error_t error = tobii_get_feature_group(m_device, &feature_group);
     assert(error == NO_ERROR );
-    if( feature_group == TOBII_FEATURE_GROUP_BLOCKED)
-        printf("Running with 'blocked' feature group.\n");
-    if( feature_group == TOBII_FEATURE_GROUP_CONSUMER)
-        printf("Running with 'consumer' feature group.\n");
-    if( feature_group == TOBII_FEATURE_GROUP_CONFIG)
-        printf("Running with 'config' feature group.\n");
-    if( feature_group == TOBII_FEATURE_GROUP_PROFESSIONAL)
-        printf("Running with 'professional' feature group.\n");
-    if( feature_group == TOBII_FEATURE_GROUP_INTERNAL)
-        printf("Running with 'internal' feature group.\n");
+
+    printf("Device Feature Group: ");
+    if(feature_group == TOBII_FEATURE_GROUP_BLOCKED)
+        printf("Blocked");
+    else if(feature_group == TOBII_FEATURE_GROUP_CONSUMER)
+        printf("Consumer");
+    else if(feature_group == TOBII_FEATURE_GROUP_CONFIG)
+        printf("Config");
+    else if(feature_group == TOBII_FEATURE_GROUP_PROFESSIONAL)
+        printf("Professional");
+    else if(feature_group == TOBII_FEATURE_GROUP_INTERNAL)
+        printf("Internal");
+    else
+        printf("Unknown");
+    printf("\n");
 }
 
 // Sets the eyetrackers's display area from the given screen sz & device-mount offset.
@@ -253,15 +270,16 @@ void EyeTracker::set_display(float width_mm, float height_mm, float offset_x_mm)
 }
 
 // Requests that the eyetracker's calibration be written to file
-void EyeTracker::calibr_write() {
+void EyeTracker::calibration_write() {
     tobii_error_t error;
+    void *v;
 
-    error = tobii_calibration_retrieve(m_device, calibr_writer, NULL);
+    error = tobii_calibration_retrieve(m_device, calibration_writer, v);
     assert(error == NO_ERROR );
 }
 
 // Sets the eyetracker's calibration from file
-void EyeTracker::calibr_load() {
+void EyeTracker::calibration_load() {
     tobii_error_t error;
     size_t size;
     void *data[CALIB_MAX_BYTES_SZ];
@@ -271,8 +289,7 @@ void EyeTracker::calibr_load() {
     
     // Ensure file exists
     if (!f) {
-        printf("ERROR: Calibration load failed - File not found... ");
-        printf("Using device's preloaded calibration.\n");
+        warn("Calibration load failed (file not found).\n");
         return;
     }
 
@@ -283,17 +300,24 @@ void EyeTracker::calibr_load() {
 
     // Apply the calibration data
     error = tobii_calibration_apply(m_device, data, size);
-    assert(error == NO_ERROR );
+    if (error != NO_ERROR) {
+        if (error == TOBII_ERROR_INSUFFICIENT_LICENSE)
+            warn("Calibration load failed (insufficient license).\n");
+        else
+            warn("Calibration load failed (unknown reason).\n");
+    } else {
+        info_ok("Calibration loaded sucesfully.\n");
+    }
 }
 
 /////////////////////////////////////////////////////////////////////////////
 // Misc Helpers
 
 // Callback for writing eyetracker device calibration to file
-void calibr_writer(void const* data, size_t size, void* _) {
+void calibration_writer(void const* data, size_t size, void* _) {
     // Ensure reasonable size
     if (size >= CALIB_MAX_BYTES_SZ) {
-        printf("ERROR: Calibration write failed - Data larger than expected.\n");
+        error("Calibration write failed - Data sz outside expected bounds.\n");
         return;
     }
 
@@ -314,11 +338,11 @@ void sync_device_time_async(tobii_device_t *device) {
 }
 
 // Reads an eyetracker license file (Copied from the tobii stream SDK docs)
-static size_t read_license_file(uint16_t* license) {
+size_t read_license_file(uint16_t* license) {
     FILE *license_file = fopen(LIC_PATH, "rb");
 
     if(!license_file) {
-        printf("License key could not be found!");
+        error("License load failed (file not found)");
         return 0;
     }
     fseek(license_file, 0, SEEK_END);
@@ -327,7 +351,7 @@ static size_t read_license_file(uint16_t* license) {
     rewind(license_file);
 
     if(file_size <= 0){
-        printf("License file is empty!");
+        error("License load failed (file is empty)");
         return 0;
     }
 
