@@ -62,19 +62,19 @@ ASYNC_STIME = .005
 class HUD(tk.Tk):
     __valid_modes = ['basic', 'collect', 'infer']
 
-    def __init__(self, hud_panels=HUD_DEFAULT_PANELS, mode='basic'):
+    def __init__(self, panels=HUD_DEFAULT_PANELS, mode='basic'):
         """ An abstraction of the heads-up display. A HUD contains a number of
             panels, and each panel has some number of buttons on it.
             Only one panel may be visible on the hud at a time.
 
-            :param hud_panels: (lst) The panels (as layout file paths) to use.
+            :param panels: (lst) The panels (as layout file paths) to use.
             :param mode: (str) Either 'basic', 'collect', or 'infer'.
         """
         assert(mode in self.__valid_modes)
         super().__init__()
 
         self.active_panel = None        # Active panel's frame
-        self._panel_paths = hud_panels 
+        self._panel_paths = panels 
 
         # Calculate HUD display coords, based on screen size
         x = (DISP_WIDTH/HUD_DISP_DIV_X) - (HUD_DISP_WIDTH/HUD_DISP_DIV_X)
@@ -97,11 +97,11 @@ class HUD(tk.Tk):
         ttk.Style().configure(
             HUD_STYLE, background='red' if mode == 'collect' else None)
 
-        
         # TODO: Change gaze-mark color to reflect mode, rather than bg
         # TODO: Denote currently focused window's title
         # FIXME: If hud is clicked but outside a btn, focus is captured.
-        # TODO: Helper txt denoting last x keystrokes
+        # TODO: Helper denoting last x keystrokes
+        # TODO: User position guide
 
         # Setup child frame for hosting the active panel frame.
         self._host_frame = ttk.Frame(
