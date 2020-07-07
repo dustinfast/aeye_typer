@@ -35,9 +35,10 @@ int main() {
     );
 
     printf("Marking gaze point for %d seconds from device...\n", GAZE_TIME);
+    
     gaze.print_device_info();
     gaze.print_feature_group();
-    
+
     gaze.start();
 
     for (int i = 0; i < GAZE_TIME; i++) {
