@@ -84,19 +84,24 @@ typedef struct gaze_point {
 
 typedef boost::circular_buffer<shared_ptr<gaze_data_t>> circ_buff;
 
-void do_gaze_data_subscribe(tobii_device_t*, void*);
+void do_gazestream_subscribe(tobii_device_t*, void*);
 static void cb_gaze_data(tobii_gaze_data_t const*, void*);
 XColor createXColorFromRGBA(void*, short, short, short, short);
-
+void cb_user_pos_guide(tobii_user_position_guide_t const*, void*);
 
 /////////////////////////////////////////////////////////////////////////////
 // Class
 
 class EyeTrackerGaze : public EyeTracker {
     public:
-        int m_mark_count;
         int m_mark_freq;
+        int m_mark_count;
+        int m_pos_guide_update_freq;
+        int m_pos_guide_count;
         int m_smooth_over;
+        float m_pos_guide_x;
+        float m_pos_guide_y;
+        float m_pos_guide_z;
         Display *m_disp;
         Window m_overlay;
 
@@ -144,6 +149,7 @@ EyeTrackerGaze::EyeTrackerGaze(float disp_width_mm,
         m_disp_width = disp_width_px;
         m_disp_height = disp_height_px;
         m_mark_freq = mark_freq;
+        m_pos_guide_update_freq = mark_freq * 2;
         m_buff_sz = buff_sz;
         m_smooth_over = smooth_over;
 
@@ -159,6 +165,10 @@ EyeTrackerGaze::EyeTrackerGaze(float disp_width_mm,
 
         // Set default tracker states
         m_mark_count = 0;
+        m_pos_guide_count = 0;
+        m_pos_guide_x = 0;
+        m_pos_guide_y = 0;
+        m_pos_guide_z = 0;
         m_async_writer = NULL;
         m_async_streamer = NULL;
 
@@ -233,7 +243,7 @@ void EyeTrackerGaze::start() {
         warn("Gaze stream start attempted but already running.");
     } else {
         m_async_streamer = make_shared<boost::thread>(
-            do_gaze_data_subscribe, m_device, this
+            do_gazestream_subscribe, m_device, this
         );
     }
 }
@@ -507,6 +517,18 @@ extern "C" {
         return gaze->gaze_data_sz();
     }
 
+    float eye_user_pos_guide_x(EyeTrackerGaze* gaze) {
+        return gaze->m_pos_guide_x;
+    }
+
+    float eye_user_pos_guide_y(EyeTrackerGaze* gaze) {
+        return gaze->m_pos_guide_y;
+    }
+
+    float eye_user_pos_guide_z(EyeTrackerGaze* gaze) {
+        return gaze->m_pos_guide_z;
+    }
+
     void eye_write_calibration(EyeTrackerGaze* gaze) {
         gaze->calibration_write();
     }
@@ -524,12 +546,16 @@ extern "C" {
 /////////////////////////////////////////////////////////////////////////////
 // Gaze subscriber and callback functions
 
-// Starts the gaze point data stream
-void do_gaze_data_subscribe(tobii_device_t *device, void *gaze) {
+// Starts the gaze point and user position guide data streams
+void do_gazestream_subscribe(tobii_device_t *device, void *gaze) {
 
     // Subscribe to gaze point
     assert(tobii_gaze_data_subscribe(device, cb_gaze_data, gaze
     ) == NO_ERROR);
+
+    assert(tobii_user_position_guide_subscribe(device, cb_user_pos_guide, gaze
+    ) == NO_ERROR);
+        
 
     try {
         while (True) {
@@ -539,6 +565,7 @@ void do_gaze_data_subscribe(tobii_device_t *device, void *gaze) {
         }
     } catch (boost::thread_interrupted&) {}
 
+    assert(tobii_user_position_guide_unsubscribe(device) == NO_ERROR);
     assert(tobii_gaze_data_unsubscribe(device) == NO_ERROR);
 }
 
@@ -548,8 +575,8 @@ void do_gaze_data_subscribe(tobii_device_t *device, void *gaze) {
 // data into EyeTrackerGazes' circular buffer. Also creates a shaded window
 // overlay denoting the gaze point on the screen.
 // ASSUMES: user_data is a ptr to an object of type EyeTrackerGaze.
-static void cb_gaze_data(tobii_gaze_data_t const *data, void *user_data) {
-    auto *gaze = static_cast<EyeTrackerGaze*>(user_data);
+static void cb_gaze_data(tobii_gaze_data_t const *data, void *obj) {
+    auto *gaze = static_cast<EyeTrackerGaze*>(obj);
 
     if(data->left.gaze_point_validity == TOBII_VALIDITY_VALID ==
         data->right.gaze_point_validity) {
@@ -644,12 +671,37 @@ static void cb_gaze_data(tobii_gaze_data_t const *data, void *user_data) {
         if (gaze->m_mark_count % gaze->m_mark_freq != 0)
             return;
 
-        // Else, reset the gaze mark count & update marker position
-        gaze->m_mark_count = 0;
         gaze->set_gaze_marker(cgd);
+        gaze->m_mark_count = 0;
     }
     else {
         // warn("Gaze point invalid. Is user present?\n"); // for debug
+        gaze->m_mark_count = 0;
+    }
+}
+
+void cb_user_pos_guide(tobii_user_position_guide_t const* data, void* obj) {
+    auto *gaze = static_cast<EyeTrackerGaze*>(obj);
+
+    if(data->left_position_validity == TOBII_VALIDITY_VALID == 
+        data->right_position_validity) {
+            // Update gaze's user position guide every update_freq callbacks
+            gaze->m_pos_guide_count++;
+            if (gaze->m_pos_guide_count % gaze->m_pos_guide_update_freq != 0)
+                return;
+
+            gaze->m_pos_guide_x = (data->left_position_normalized_xyz[0] + 
+                data->right_position_normalized_xyz[0]) / 2;
+            gaze->m_pos_guide_y = (data->left_position_normalized_xyz[1] + 
+                data->right_position_normalized_xyz[1]) / 2;
+            gaze->m_pos_guide_z = (data->left_position_normalized_xyz[2] + 
+                data->right_position_normalized_xyz[2]) / 2;
+            gaze->m_pos_guide_count = 0;
+    } else {
+        gaze->m_pos_guide_x = 0;
+        gaze->m_pos_guide_y = 0;
+        gaze->m_pos_guide_z = 0;
+        gaze->m_pos_guide_count = 0;
     }
 }
 

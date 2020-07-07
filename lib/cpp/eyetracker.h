@@ -306,7 +306,7 @@ void EyeTracker::calibration_load() {
         else
             warn("Calibration load failed (unknown reason).\n");
     } else {
-        info_ok("Calibration loaded sucesfully.\n");
+        info_ok("Calibration loaded successfully.\n");
     }
 }
 

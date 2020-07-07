@@ -86,6 +86,18 @@ class EyeTrackerGaze(object):
         lib.eye_gaze_data_sz.argtypes = [ctypes.c_void_p]
         lib.eye_gaze_data_sz.restype = ctypes.c_int
 
+        # User position guide, x
+        lib.eye_user_pos_guide_x.argtypes = [ctypes.c_void_p]
+        lib.eye_user_pos_guide_x.restype = ctypes.c_float
+
+        # User position guide, y
+        lib.eye_user_pos_guide_y.argtypes = [ctypes.c_void_p]
+        lib.eye_user_pos_guide_y.restype = ctypes.c_float
+
+        # User position guide, z
+        lib.eye_user_pos_guide_z.argtypes = [ctypes.c_void_p]
+        lib.eye_user_pos_guide_z.restype = ctypes.c_float
+
         # Device calibration writer
         lib.eye_write_calibration.argtypes = [ctypes.c_void_p]
         lib.eye_write_calibration.restype = ctypes.c_void_p
@@ -173,6 +185,14 @@ class EyeTrackerGaze(object):
         """
         self._ensure_device_opened()
         return self._lib.eye_gaze_data_sz(self._obj)
+
+    def user_pos_guide(self):
+        """ Returns a tuple representing the user position guide, as (x, y, z).
+        """
+        self._ensure_device_opened()
+        return (self._lib.eye_user_pos_guide_x(self._obj),
+                self._lib.eye_user_pos_guide_y(self._obj),
+                self._lib.eye_user_pos_guide_z(self._obj))
 
     def write_calibration(self):
         """ Writes the eyetracker device's calibration data to file.
