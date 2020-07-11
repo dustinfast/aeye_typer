@@ -4,6 +4,7 @@
 __author__ = 'Dustin Fast <dustin.fast@outlook.com>'
 
 import json
+import random
 from collections import OrderedDict
 
 import tkinter as tk
@@ -14,6 +15,8 @@ from lib.py.app import config
 
 _conf = config()
 HUD_BTN_WIDTH = _conf['HUD_BTN_WIDTH']
+DISP_WIDTH = _conf['DISP_WIDTH_PX']
+DISP_HEIGHT = _conf['DISP_HEIGHT_PX']
 del _conf
 
 # HUD styles
@@ -31,7 +34,7 @@ class HUDPanel(ttk.Frame):
             and/or panels of its own.
 
             :param parent_frame: (tk.ttk.Frame) Hosting frame.
-            :param hud: (hud.HUD) the 
+            :param hud: (hud.HUD)
         """
         ttk.Frame.__init__(self, takefocus=0, style=HUD_STYLE)
 
@@ -126,6 +129,83 @@ class HUDPanel(ttk.Frame):
             else:
                 btn_widg.configure(
                     text=self._hud_btns[i].text)
+
+
+class HUDDataCollectPanel(ttk.Frame):
+    def __init__(self, parent_frame, hud, x, y):
+        """ 
+        """
+        ttk.Frame.__init__(self, takefocus=0, style=HUD_STYLE)
+
+        self.parent = parent_frame
+        self.hud = hud
+        self.x = x
+        self.y = y
+
+        # Setup panel buttons, then show the panel frame
+        self.grid(row=0, column=0)
+
+        self._btn_row_frames = []
+        self._hud_btns = []
+        self._payload_to_btn = {}   # { payload: HUDBtn }
+
+        # Determine how many btns it takes to fill the screen
+        btn_disp_width = 2 * HUD_BTN_WIDTH
+        b = ttk.Button(None,
+                       width=btn_disp_width,
+                       style=BTN_STYLE)
+        req_fill_width = int(DISP_WIDTH / b.winfo_reqwidth()) - 1
+        req_fill_height = int(DISP_HEIGHT / b.winfo_reqheight()) - 1
+        mid_width = int(req_fill_width / 2)
+        mid_height = int(req_fill_height / 2)
+
+        for i in range(req_fill_height):
+            # Create the current row's frame
+            self._btn_row_frames.append(ttk.Frame(self))
+            parent_row_frame = self._btn_row_frames[i]
+            parent_row_frame.grid(row=i, sticky=tk.NW)
+
+            # Add buttons/spacers for curr row
+            for j in range(req_fill_width):
+                btn = HUDButton()
+
+                # If ~middle button, make it a quit btn
+                if i == mid_height and j == mid_width:
+                    btn.widget = ttk.Button(
+                        parent_row_frame,
+                        style=BTN_STYLE_TOGGLE,
+                        width=btn_disp_width,
+                        text='OK')
+                    btn.widget.grid(row=0, column=j)
+                    btn.widget.configure(command=lambda btn=btn: \
+                        self.hud.payload_handler(
+                            btn, 0, 'hud_quit'))
+
+                # Else, create a clickable btn at extrema and probabilistically
+                elif random.randint(0, 99) > 98 or (
+                    (i == 0 or i == mid_height or i == req_fill_height-1) and (
+                        j == 0 or j == mid_width or j == req_fill_width-1)
+                ):
+                    btn.widget = ttk.Button(
+                        parent_row_frame,
+                        style=BTN_STYLE,
+                        width=btn_disp_width,
+                        text='+')
+                    btn.payload = f'{len(self._hud_btns)}'
+                    btn.widget.grid(row=0, column=j)
+                    btn.widget.configure(command=lambda btn=btn: \
+                        self.hud.payload_handler(
+                            btn, btn.payload, 'acc_data_stroke'))
+
+                # Else, create a dead/spacer btn
+                else:
+                    btn.widget = ttk.Button(
+                        parent_row_frame,
+                        width=btn_disp_width,
+                        style=BTN_STYLE_SPACER)
+                    btn.widget.grid(row=0, column=j)
+
+                self._hud_btns.append(btn)
 
 
 class HUDButton(object):

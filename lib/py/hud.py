@@ -19,7 +19,7 @@ gi.require_version('Wnck', '3.0')
 from gi.repository import Wnck
 
 from lib.py.app import config, warn
-from lib.py.hud_panel import HUDPanel
+from lib.py.hud_panel import HUDPanel, HUDDataCollectPanel
 from lib.py.hud_learn import HUDLearn
 
 
@@ -76,15 +76,20 @@ class HUD(tk.Tk):
         self.active_panel = None        # Active panel's frame
         self._panel_paths = panels 
 
-        # Calculate HUD display coords, based on screen size
-        x = (DISP_WIDTH/HUD_DISP_DIV_X) - (HUD_DISP_WIDTH/HUD_DISP_DIV_X)
-        y = (DISP_HEIGHT/HUD_DISP_DIV_Y) - (HUD_DISP_HEIGHT/HUD_DISP_DIV_Y)
+        # Calculate HUD display coords, based on screen size and mode
+        x = (DISP_WIDTH/HUD_DISP_DIV_X) - (HUD_DISP_WIDTH/HUD_DISP_DIV_X) \
+            if mode != 'collect' else 0
+        y = (DISP_HEIGHT/HUD_DISP_DIV_Y) - (HUD_DISP_HEIGHT/HUD_DISP_DIV_Y) \
+            if mode != 'collect' else 0
+        width = HUD_DISP_WIDTH if mode != 'collect' else DISP_WIDTH
+        height = HUD_DISP_HEIGHT if mode != 'collect' else DISP_HEIGHT
+
 
         # Set HUD title/height/width/coords/top-window-persistence
         self.winfo_toplevel().title(HUD_DISP_TITLE)
         self.attributes('-type', 'splash')
         self.attributes('-topmost', 'true')
-        self.geometry('%dx%d+%d+%d' % (HUD_DISP_WIDTH, HUD_DISP_HEIGHT, x, y))
+        self.geometry('%dx%d+%d+%d' % (width, height, x, y))
 
         # Register styles
         ttk.Style().configure(BTN_STYLE, font=BTN_FONT)
@@ -94,24 +99,24 @@ class HUD(tk.Tk):
                               font=BTN_FONT_BOLD,
                               foreground='green',
                               relief=SUNKEN)
-        ttk.Style().configure(
-            HUD_STYLE, background='red' if mode == 'collect' else None)
 
         # TODO: Change gaze-mark color to reflect mode, rather than bg
+        # ttk.Style().configure(
+        #     HUD_STYLE, background='red' if mode == 'collect' else None)
         # TODO: Denote currently focused window's title
         # FIXME: If hud is clicked but outside a btn, focus is captured.
         # TODO: Helper denoting last x keystrokes
         # TODO: User position guide
 
-        # Setup child frame for hosting the active panel frame.
-        self._host_frame = ttk.Frame(
-            self, width=HUD_DISP_WIDTH, height=HUD_DISP_HEIGHT)
+        # Init a child frame for hosting the active panel frame.
+        self._host_frame = ttk.Frame(self, width=width, height=height)
 
         # Init the HUD state mgr
         self._state = _HUDState(self, mode)
         
         # Show 0th panel
-        self.set_curr_panel(0)
+        self.set_curr_panel(0) if mode != 'collect' \
+            else self._set_collect_panel()
  
     def _quit(self, **kwargs):
         """ Quits the hud window by exiting tk.mainloop.
@@ -139,7 +144,7 @@ class HUD(tk.Tk):
         self._state.stop().join
 
     def set_curr_panel(self, idx):
-        """ Sets the currently displayed to the requested panel.
+        """ Sets the currently displayed panel to the requested panel.
         """
         # Denote request panel's layout file
         panel_json_path = self._panel_paths[idx]
@@ -150,6 +155,19 @@ class HUD(tk.Tk):
 
         self.active_panel = HUDPanel.from_json(
             panel_json_path,
+            parent_frame=self._host_frame,
+            hud=self,
+            x=self._host_frame.winfo_rootx(),
+            y=self._host_frame.winfo_rooty())
+
+    def _set_collect_panel(self):
+        """ Sets the currently displayed panel to the data collect panel.
+        """
+        # Destroy currently active panel, if any
+        if self.active_panel:
+            self.active_panel.destroy()
+
+        self.active_panel = HUDDataCollectPanel(
             parent_frame=self._host_frame,
             hud=self,
             x=self._host_frame.winfo_rootx(),
@@ -325,6 +343,9 @@ class _HUDState(object):
             # Send a keystroke to the active window
             'keystroke': self.payload_keystroke_to_active_win,
 
+            # Log gaze acc training keystroke
+            'acc_data_stroke': self._learn.on_event_collect,
+
             # Toggle a keyboard modifier on/off (e.g.: shift, alt, etc.)
             'key_toggle': self.payload_keyboard_toggle_modifer,
 
@@ -334,11 +355,6 @@ class _HUDState(object):
 
         if not payload_type_handler:
             raise NotImplementedError(f'Payload type: {payload_type}')
-
-        # Perform AI specific actions
-        self._learn.handle_event(btn=btn, 
-                                 payload=payload,
-                                 payload_type=payload_type)
 
         # Call the handler
         payload_type_handler(btn=btn, 

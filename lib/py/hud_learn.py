@@ -28,10 +28,12 @@ LOG_RAW_ROOTDIR = _conf['EVENTLOG_RAW_ROOTDIR']
 LOG_HUD_SUBDIR = _conf['EVENTLOG_HUD_SUBDIR']
 del _conf
 
+BTN_STYLE_SPACER = 'Spacer.PanelButton.TButton'
+
 # Training data attributes
 DATA_SESSION_NAME = '2020-06-13'
-RAND_SEED = 1234
 DATA_GROUP_KEY = 'y_key_id'                  
+RAND_SEED = 1234
 
 # mae_x = 8.3777
 # mae_y = 7.6306
@@ -47,6 +49,10 @@ DATA_COL_IDXS = [3, 4, 5, 6, 7, 8, 31, 32, 33, 34, 35]
 #                   'X_eyepos_right_x', 'X_eyepos_right_y', 'X_eyepos_right_z',
 #                   'X_gaze_x', 'X_gaze_y', 'y_gaze_x', 'y_gaze_y', 'y_key_id']
 # DATA_COL_IDXS = [1, 2, 3, 4, 5, 6, 7, 8, 31, 32, 33, 34, 35]
+
+# DATA_COL_NAMES = ['X_pupil_dia_l', 'X_pupil_dia_r',
+#                   'X_gaze_x', 'X_gaze_y', 'y_gaze_x', 'y_gaze_y', 'y_key_id']
+# DATA_COL_IDXS = [1, 2, 31, 32, 33, 34, 35]
 
 # mae_x = 7.9200
 # mae_y = 7.0659
@@ -130,13 +136,6 @@ class HUDLearn(object):
             self._model_y_path if mode == 'infer' else None
         )
 
-        # Determine handler to use, based on the given mode
-        self.handle_event = {
-            'basic'     : self._null,
-            'collect'   : self.on_event_collect,
-            'infer'     : self._null
-        }.get(mode, self._null)
-
     def get_log_path(self):
         """ Sets up and returns the log file path.
         """
@@ -185,15 +184,14 @@ class HUDLearn(object):
             click event, the label of each sample recorded at that time is
             labeled with the key's keycode.
         """
-        # Get the centroid of the button, then write all gaze points between
+        # Get the centroid of the button, then write gaze points between
         # the previous button click and this one to csv
         centr_x, centr_y = btn.centroid
         
         self._gazepoint.to_csv(
             self._logpath, label=f'{centr_x}, {centr_y}, {btn.payload}')
 
-    def on_event_infer(self, btn, payload=None, payload_type=None):
-            pass
+        btn.widget.configure(text='')
 
 
 class HUDTrain(HUDLearn):
@@ -221,7 +219,7 @@ class HUDTrain(HUDLearn):
 
         return df
     
-    def _train_gaze_acc(self, n_limit=35, split=0.75):
+    def _train_gaze_acc(self, n_limit=25, split=0.75):
         """ Gaze accuracy training handler.
         """
         print('Training...')
@@ -233,6 +231,7 @@ class HUDTrain(HUDLearn):
 
         # We assume only the last n_limit samples for each btn press denotes
         # actual gazepoint at event time, so we drop all but those samples...
+        # TODO: Results are misleading. Need to aggregate samples.
         drop_idxs = []
         group_idx_n = 0
         prev_keyid = df.iloc[-1:, -1:].values
@@ -290,9 +289,9 @@ class HUDTrain(HUDLearn):
         y_test_x_coord, y_test_y_coord = (
             y_test[:, 0].squeeze(), y_test[:, 1].squeeze())
 
-        model_x = SVR(kernel='rbf', C=1000, epsilon=.1).fit(
+        model_x = SVR(kernel='rbf', C=100, epsilon=.1).fit(
             X_train, y_train_x_coord)
-        model_y = SVR(kernel='rbf', C=1000, epsilon=.1).fit(
+        model_y = SVR(kernel='rbf', C=100, epsilon=.1).fit(
             X_train, y_train_y_coord)
 
         # Validate
