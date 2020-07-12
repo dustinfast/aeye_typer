@@ -18,7 +18,11 @@ import gi
 gi.require_version('Wnck', '3.0')
 from gi.repository import Wnck
 
+
+import pyximport; pyximport.install()  # Required for EyeTrackerGaze
+
 from lib.py.app import config, warn
+from lib.py.eyetracker_gaze import EyeTrackerGaze
 from lib.py.hud_panel import HUDKeyboardPanel, HUDPosGuidePanel
 from lib.py.hud_learn import HUDLearn
 
@@ -191,6 +195,11 @@ class _HUDState(object):
         self._mouse = Mouse.Controller()
         self._keyboard = Keyboard.Controller()
 
+        # Init gazetracking module
+        self._gazetracker = EyeTrackerGaze(
+            self._learn.model_x_path if mode == 'infer' else None,
+            self._learn.model_y_path if mode == 'infer' else None)
+
         # Keyboard modifer state containers
         self._keyboard_active_modifier_btns = []
         self._keyboard_hold_modifiers = False
@@ -333,11 +342,12 @@ class _HUDState(object):
             raise NotImplementedError(f'Payload type: {payload_type}')
 
         # Perform AI specific actions
-        self._learn.handle_event(btn=btn, 
+        self._learn.handle_event(gaze=self._gazetracker,
+                                 btn=btn, 
                                  payload=payload,
                                  payload_type=payload_type)
 
-        # Call the handler
+        # Handle the btns payload
         payload_type_handler(btn=btn, 
                              payload=payload,
                              payload_type=payload_type)
@@ -361,8 +371,12 @@ class _HUDState(object):
                     self._async_signal_q, self._async_output_q))
             self._async_proc.start()
 
-            # Start the ml/eyetracker modules
-            self._learn.start()
+            # Start the eyetracker
+            self._gazetracker.open()
+            self._gazetracker.start()
+            
+            # Give time to spin up
+            sleep(1)
 
         return self._async_proc
 
@@ -380,7 +394,8 @@ class _HUDState(object):
         except mp.queues.Full:
             pass
         else:
-            self._learn.stop()
+            self._gazetracker.stop()
+            self._gazetracker.close()
 
         return self._async_proc
 

@@ -61,7 +61,7 @@ if __name__ == "__main__":
     elif args.infer:
         HUD(mode='infer').run()
     elif args.train_ml:
-        HUDTrain().run()
+        HUDTrain().train()
     else:
         HUD(mode='basic').run()
 

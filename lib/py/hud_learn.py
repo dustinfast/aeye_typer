@@ -16,9 +16,6 @@ from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import mean_absolute_error
 from sklearn.model_selection import train_test_split
 
-import pyximport; pyximport.install()  # Required for EyeTrackerGaze
-
-from lib.py.eyetracker_gaze import EyeTrackerGaze
 from lib.py.app import key_to_id, config, info, warn
 
 
@@ -114,13 +111,9 @@ class HUDLearn(object):
         """
         self.hud_state = hud_state
 
-        self._logpath = self.get_log_path()
-        self._model_x_path = self.get_model_path('x')
-        self._model_y_path = self.get_model_path('y')
-        self._gazepoint = EyeTrackerGaze(
-            self._model_x_path if mode == 'infer' else None,
-            self._model_y_path if mode == 'infer' else None
-        )
+        self._logpath = self._log_path()
+        self.model_x_path = self._model_path('x')
+        self.model_y_path = self._model_path('y')
 
         # Determine handler to use, based on the given mode
         self.handle_event = {
@@ -129,7 +122,7 @@ class HUDLearn(object):
             'infer'     : self._null
         }.get(mode, self._null)
 
-    def get_log_path(self):
+    def _log_path(self):
         """ Sets up and returns the log file path.
         """
         logdir =  Path(LOG_RAW_ROOTDIR, LOG_HUD_SUBDIR)
@@ -138,7 +131,7 @@ class HUDLearn(object):
 
         return str(Path(logdir, f'{DATA_SESSION_NAME}.csv'))
 
-    def get_model_path(self, v):
+    def _model_path(self, v):
         """ Sets up and returns the ml model's file path.
         """
         logdir =  Path(LOG_RAW_ROOTDIR, LOG_HUD_SUBDIR)
@@ -147,27 +140,13 @@ class HUDLearn(object):
 
         return str(Path(logdir, f'{DATA_SESSION_NAME}_{v}.pkl'))
 
-    def start(self):
-        """ Starts the async handlers. Returns ref to the async process.
-        """
-        self._gazepoint.open()
-        self._gazepoint.start()
-        sleep(1)  # Give time to spin up
-        
-    def stop(self):
-        """ Stops the async handlers. Returns ref to the async process.
-        """
-        self._gazepoint.stop()
-        self._gazepoint.close()
-
     def _null(self, **kwargs):
         """ Dummy function, for 'basic' mode compatibility.
         """
         pass
-
-    # TODO: def on_event_collect_clickinferdata(): On mouse click, log gaze
         
-    def on_event_collect(self, btn, payload=None, payload_type=None):
+    def on_event_collect(self, gaze, btn, payload=None, payload_type=None):
+        # TODO: def on_event_collect_click(): On mouse click, log gaze
         """ Training data collection handler. To be called by the HUD state 
             manager on a collectable event.
             
@@ -179,15 +158,10 @@ class HUDLearn(object):
             click event, the label of each sample recorded at that time is
             labeled with the key's keycode.
         """
-        # Get the centroid of the button, then write all gaze points between
-        # the previous button click and this one to csv
+        # Get the centroid of the button, then write it, along with all gaze
+        # points between the previous button click and this one to csv
         centr_x, centr_y = btn.centroid
-        
-        self._gazepoint.to_csv(
-            self._logpath, label=f'{centr_x}, {centr_y}, {btn.payload}')
-
-    def on_event_infer(self, btn, payload=None, payload_type=None):
-            pass
+        gaze.to_csv(self._logpath, label=f'{centr_x}, {centr_y}, {btn.payload}')
 
 
 class HUDTrain(HUDLearn):
@@ -200,7 +174,7 @@ class HUDTrain(HUDLearn):
         """
         super().__init__(None, None)
 
-    def run(self):
+    def train(self):
         self._train_gaze_acc()
 
     def _get_training_df(self):
@@ -305,9 +279,9 @@ class HUDTrain(HUDLearn):
         model_y.scaler = scaler
         
         # Save models to file
-        with open(self._model_x_path, 'wb') as f:
+        with open(self.model_x_path, 'wb') as f:
             pickle.dump(model_x, f)
-        with open(self._model_y_path, 'wb') as f:
+        with open(self.model_y_path, 'wb') as f:
             pickle.dump(model_y, f)
 
         # # Plot x/y coord actual vs x/y coord pred, for testing convenience
