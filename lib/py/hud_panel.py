@@ -185,8 +185,6 @@ class HUDPosGuidePanel(HUDPanel):
                 width=4*HUD_BTN_WIDTH,
             ).grid(row=1, column=2, rowspan=1, columnspan=1))
 
-        
-
 
 class HUDPanelButton(object):
     # TODO: Refactor as a subclass of type ttk.Button
