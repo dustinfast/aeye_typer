@@ -26,7 +26,7 @@ BTN_SPACER_TEXT = '_spacer_'
 
 
 class HUDPanel(ttk.Frame):
-    def __init__(self, parent_frame, hud, x, y, btn_layout):
+    def __init__(self, parent_frame, hud, btn_layout):
         """ An abstraction of a HUD panel -- A HUD Panel contains buttons
             and/or panels of its own.
 
@@ -37,19 +37,17 @@ class HUDPanel(ttk.Frame):
 
         self.parent = parent_frame
         self.hud = hud
-        self.x = x
-        self.y = y
 
         # Setup panel buttons then show the panel frame
         self.grid(row=0, column=0)
         self._init_btns(btn_layout)
 
     @classmethod
-    def from_json(cls, json_path, parent_frame, hud, x, y):
+    def from_json(cls, json_path, parent_frame, hud):
         with open(json_path, 'r') as f:
             btn_layout = json.load(f, object_hook=HUDButton.from_kwargs)
 
-        return cls(parent_frame, hud, x, y, btn_layout)
+        return cls(parent_frame, hud, btn_layout)
 
     def _init_btns(self, btn_layout):
         """ Init's the panel's buttons from the given panel layout.

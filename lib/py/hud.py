@@ -151,9 +151,7 @@ class HUD(tk.Tk):
         self.active_panel = HUDPanel.from_json(
             panel_json_path,
             parent_frame=self._host_frame,
-            hud=self,
-            x=self._host_frame.winfo_rootx(),
-            y=self._host_frame.winfo_rooty())
+            hud=self)
 
     def set_btn_viz_toggle(self, btn, toggle_on=False):
         """ Sets a btn as toggled on, visually.
