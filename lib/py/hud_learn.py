@@ -172,6 +172,8 @@ class HUDLearn(object):
         """ Dummy function, for 'basic' mode compatibility.
         """
         pass
+
+    # TODO: def on_event_collect_clickinferdata(): On mouse click, log gaze
         
     def on_event_collect(self, btn, payload=None, payload_type=None):
         """ Training data collection handler. To be called by the HUD state 
