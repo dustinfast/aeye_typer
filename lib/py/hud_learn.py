@@ -29,7 +29,7 @@ LOG_HUD_SUBDIR = _conf['EVENTLOG_HUD_SUBDIR']
 del _conf
 
 # Training data attributes
-DATA_SESSION_NAME = '2020-06-13'
+DATA_SESSION_NAME = '2020-07-11'
 RAND_SEED = 1234
 DATA_GROUP_KEY = 'y_key_id'                  
 
@@ -39,14 +39,6 @@ DATA_COL_NAMES = ['X_eyepos_left_x', 'X_eyepos_left_y', 'X_eyepos_left_z',
                   'X_eyepos_right_x', 'X_eyepos_right_y', 'X_eyepos_right_z',
                   'X_gaze_x', 'X_gaze_y', 'y_gaze_x', 'y_gaze_y', 'y_key_id']
 DATA_COL_IDXS = [3, 4, 5, 6, 7, 8, 31, 32, 33, 34, 35]
-
-# mae_x = 7.3667
-# mae_y = 6.7142
-# DATA_COL_NAMES = ['X_pupil_dia_l', 'X_pupil_dia_r',
-#                   'X_eyepos_left_x', 'X_eyepos_left_y', 'X_eyepos_left_z',
-#                   'X_eyepos_right_x', 'X_eyepos_right_y', 'X_eyepos_right_z',
-#                   'X_gaze_x', 'X_gaze_y', 'y_gaze_x', 'y_gaze_y', 'y_key_id']
-# DATA_COL_IDXS = [1, 2, 3, 4, 5, 6, 7, 8, 31, 32, 33, 34, 35]
 
 # mae_x = 7.9200
 # mae_y = 7.0659

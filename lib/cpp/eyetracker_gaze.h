@@ -697,6 +697,14 @@ void cb_user_pos_guide(tobii_user_position_guide_t const* data, void* obj) {
             gaze->m_pos_guide_z = (data->left_position_normalized_xyz[2] + 
                 data->right_position_normalized_xyz[2]) / 2;
             gaze->m_pos_guide_count = 0;
+
+            // printf(
+            //     "%f - %f - %f\n", 
+            //     gaze->m_pos_guide_x, 
+            //     gaze->m_pos_guide_y, 
+            //     gaze->m_pos_guide_z
+            // );  // Debug
+
     } else {
         gaze->m_pos_guide_x = 0;
         gaze->m_pos_guide_y = 0;
