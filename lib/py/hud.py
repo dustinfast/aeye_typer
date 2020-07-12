@@ -108,7 +108,7 @@ class HUD(tk.Tk):
             self, width=frame_width, height=HUD_DISP_HEIGHT)
         
         # Init the HUD state mgr
-        self._state = _HUDState(self, mode)
+        self.state = _HUDState(self, mode)
         
         # Setup the HUD's panel
         self._init_panels()
@@ -125,18 +125,18 @@ class HUD(tk.Tk):
             because sticky attribute must be handled first. Blocks.
         """
         # Start the managers
-        self._state.start()
+        self.state.start()
 
         # Set sticky attribute so hud appears on all workspaces
         self.update_idletasks()
         self.update()
-        self._state.set_hud_sticky()
+        self.state.set_hud_sticky()
 
         # Start the blocking main loop
         self.mainloop()
 
         # Stop the managers
-        self._state.stop().join
+        self.state.stop().join
 
     def _init_panels(self):
         """ Sets up each of the HUD panels.
@@ -166,7 +166,7 @@ class HUD(tk.Tk):
 
             :param btn: (hud_panel.HUDButton)
         """
-        self._state._payload_handler(btn, payload, payload_type)
+        self.state._payload_handler(btn, payload, payload_type)
 
 class _HUDState(object):
     def __init__(self, parent_hud, mode):

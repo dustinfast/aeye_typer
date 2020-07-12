@@ -128,17 +128,10 @@
         },
         {
             "text": "_spacer_",
-            "width": 1,
+            "width": 3,
             "is_toggle": false,
             "payload": null,
             "payload_type": null
-        },
-        {
-            "text": "Quit",
-            "width": 5,
-            "is_toggle": false,
-            "payload": 0,
-            "payload_type": "hud_quit"
         }
     ],
 

@@ -75,7 +75,7 @@ class HUDKeyboardPanel(HUDPanel):
                         parent_row_frame,
                         width=btn_disp_width,
                         style=BTN_STYLE_SPACER)
-                    btn.widget.grid(row=0, column=j, ipady=4, ipadx=0)
+                    btn.widget.grid(row=0, column=j, ipady=4)
             
                 # Else create a clickable keyboard btn
                 else:
@@ -84,7 +84,7 @@ class HUDKeyboardPanel(HUDPanel):
                         style=BTN_STYLE_TOGGLE if btn.is_toggle else BTN_STYLE,
                         width=btn_disp_width,
                         text=btn.text)
-                    btn.widget.grid(row=0, column=j, ipady=4, ipadx=0)
+                    btn.widget.grid(row=0, column=j, ipady=4)
                     btn.widget.configure(
                         command=lambda btn=btn: self.btn_payload_handler(btn))
 
@@ -125,7 +125,7 @@ class HUDKeyboardPanel(HUDPanel):
 
 
 class HUDPosGuidePanel(HUDPanel):
-    def __init__(self, parent_frame, hud, grid_col):
+    def __init__(self, parent_frame, hud, grid_col, hz=10):
         """ An abstraction of a HUD panel -- A HUD Panel contains buttons
             and/or panels of its own.
 
@@ -134,34 +134,56 @@ class HUDPosGuidePanel(HUDPanel):
         """
         super().__init__(parent_frame, hud, grid_col)
 
+        self._hz = hz           # Pos guide update frequency
+        self._pos_widgets = []  # 2D array of user pos guide widgets
+
         # Create the current row's frame
         host_frame = ttk.Frame(self)
         host_frame.grid(row=0, sticky=tk.NW)
 
-        # Create a spacer in the first row
-        ttk.Button(
-            host_frame,
-            width=7*HUD_BTN_WIDTH,
-            style=BTN_STYLE_SPACER
-        ).grid(row=0, column=0)
+        # TODO: Create seperators
+        # ttk.Separator(
+        #     host_frame,
+        #     orient='vertical'
+        # ).grid(row=0, column=0)
 
-        # Create a quit button
-        btn = HUDPanelButton(text='Quit', payload = 0, payload_type='hud_quit')
+        # Create the HUD quit button
+        btn = HUDPanelButton(text='Quit', payload=0, payload_type='hud_quit')
         btn.widget = ttk.Button(
             host_frame,
-            style=BTN_STYLE_TOGGLE if btn.is_toggle else BTN_STYLE,
-            width=5*HUD_BTN_WIDTH,
+            style=BTN_STYLE,
+            width=4*HUD_BTN_WIDTH,
             text=btn.text)
-        btn.widget.grid(row=0, column=1, ipady=4, ipadx=0)
+        btn.widget.grid(row=0, column=2, ipady=4)
         btn.widget.configure(
             command=lambda btn=btn: self.btn_payload_handler(btn))
 
-        # Pos guide, top left (spacer
-        # ttk.Button(
-        #     host_frame,
-        #     style=BTN_STYLE_TOGGLE if btn.is_toggle else BTN_STYLE,
-        #     width=5*HUD_BTN_WIDTH,
-        #     text='').grid(row=1, column=0, columnpan=3)
+        # Create the user position guide display...
+        self._pos_widgets.append([])
+        
+        # ...top left (spacer)
+        self._pos_widgets[0].append(
+            ttk.Button(
+                host_frame,
+                style=BTN_STYLE_SPACER,
+                width=4*HUD_BTN_WIDTH,
+            ).grid(row=1, column=0, rowspan=1, columnspan=1))
+
+        # ...top center
+        self._pos_widgets[0].append(
+            ttk.Button(
+                host_frame,
+                style=BTN_STYLE_SPACER,
+                width=4*HUD_BTN_WIDTH,
+            ).grid(row=1, column=1, rowspan=1, columnspan=1))
+
+        # ...top right (spacer)
+        self._pos_widgets[0].append(
+            ttk.Button(
+                host_frame,
+                style=BTN_STYLE_SPACER,
+                width=4*HUD_BTN_WIDTH,
+            ).grid(row=1, column=2, rowspan=1, columnspan=1))
 
         
 
