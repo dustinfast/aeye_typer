@@ -18,7 +18,6 @@ import gi
 gi.require_version('Wnck', '3.0')
 from gi.repository import Wnck
 
-
 import pyximport; pyximport.install()  # Required for EyeTrackerGaze
 
 from lib.py.app import config, warn

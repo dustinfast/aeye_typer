@@ -26,7 +26,7 @@ LOG_HUD_SUBDIR = _conf['EVENTLOG_HUD_SUBDIR']
 del _conf
 
 # Training data attributes
-DATA_SESSION_NAME = '2020-07-11'
+DATA_SESSION_NAME = '2020-06-13'
 RAND_SEED = 1234
 DATA_GROUP_KEY = 'y_key_id'                  
 
