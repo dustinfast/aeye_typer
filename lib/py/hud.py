@@ -19,7 +19,7 @@ gi.require_version('Wnck', '3.0')
 from gi.repository import Wnck
 
 from lib.py.app import config, warn
-from lib.py.hud_panel import HUDPanel
+from lib.py.hud_panel import HUDKeyboardPanel, HUDPosGuidePanel
 from lib.py.hud_learn import HUDLearn
 
 
@@ -29,10 +29,11 @@ DISP_WIDTH = _conf['DISP_WIDTH_PX']
 DISP_HEIGHT = _conf['DISP_HEIGHT_PX']
 HUD_DISP_WIDTH = _conf['HUD_DISP_WIDTH_PX']
 HUD_DISP_HEIGHT = _conf['HUD_DISP_HEIGHT_PX']
+HUD_POSGUIDE_WIDTH_PX = _conf['HUD_POSGUIDE_WIDTH_PX']
 HUD_DISP_DIV_X = _conf['HUD_DISP_COORD_DIVISOR_X']
 HUD_DISP_DIV_Y = _conf['HUD_DISP_COORD_DIVISOR_Y'] 
 HUD_DISP_TITLE = _conf['HUD_DISP_TITLE']
-HUD_DEFAULT_PANELS =  _conf['HUD_PANELS']
+HUD_KEYB_JSON =  _conf['HUD_KEYB_JSON']
 del _conf
 
 # HUD styles
@@ -62,29 +63,29 @@ ASYNC_STIME = .005
 class HUD(tk.Tk):
     __valid_modes = ['basic', 'collect', 'infer']
 
-    def __init__(self, panels=HUD_DEFAULT_PANELS, mode='basic'):
-        """ An abstraction of the heads-up display. A HUD contains a number of
-            panels, and each panel has some number of buttons on it.
-            Only one panel may be visible on the hud at a time.
+    def __init__(self, mode='basic'):
+        """ An abstraction of the heads-up display. The HUD contains panels,
+            i.e., the on-screen keyb and user position guide. Each panel
+            occupies a col in the hud and is always visible.
 
-            :param panels: (lst) The panels (as layout file paths) to use.
             :param mode: (str) Either 'basic', 'collect', or 'infer'.
         """
         assert(mode in self.__valid_modes)
         super().__init__()
 
-        self.active_panel = None        # Active panel's frame
-        self._panel_paths = panels 
+        self.keyb_panel = None      # Keyboard panel obj  
+        self.posg_panel = None      # User position guide panel obj
 
         # Calculate HUD display coords, based on screen size
         x = (DISP_WIDTH/HUD_DISP_DIV_X) - (HUD_DISP_WIDTH/HUD_DISP_DIV_X)
         y = (DISP_HEIGHT/HUD_DISP_DIV_Y) - (HUD_DISP_HEIGHT/HUD_DISP_DIV_Y)
+        frame_width = HUD_DISP_WIDTH + HUD_POSGUIDE_WIDTH_PX
 
         # Set HUD title/height/width/coords/top-window-persistence
         self.winfo_toplevel().title(HUD_DISP_TITLE)
         self.attributes('-type', 'splash')
         self.attributes('-topmost', 'true')
-        self.geometry('%dx%d+%d+%d' % (HUD_DISP_WIDTH, HUD_DISP_HEIGHT, x, y))
+        self.geometry('%dx%d+%d+%d' % (frame_width, HUD_DISP_HEIGHT, x, y))
 
         # Register styles
         ttk.Style().configure(BTN_STYLE, font=BTN_FONT)
@@ -101,17 +102,16 @@ class HUD(tk.Tk):
         # TODO: Denote currently focused window's title
         # FIXME: If hud is clicked but outside a btn, focus is captured.
         # TODO: Helper denoting last x keystrokes
-        # TODO: User position guide
 
-        # Setup child frame for hosting the active panel frame.
+        # Setup child frame for hosting the panel frames
         self._host_frame = ttk.Frame(
-            self, width=HUD_DISP_WIDTH, height=HUD_DISP_HEIGHT)
-
+            self, width=frame_width, height=HUD_DISP_HEIGHT)
+        
         # Init the HUD state mgr
         self._state = _HUDState(self, mode)
         
-        # Show 0th panel
-        self.set_curr_panel(0)
+        # Setup the HUD's panel
+        self._init_panels()
  
     def _quit(self, **kwargs):
         """ Quits the hud window by exiting tk.mainloop.
@@ -138,20 +138,19 @@ class HUD(tk.Tk):
         # Stop the managers
         self._state.stop().join
 
-    def set_curr_panel(self, idx):
-        """ Sets the currently displayed to the requested panel.
+    def _init_panels(self):
+        """ Sets up each of the HUD panels.
         """
-        # Denote request panel's layout file
-        panel_json_path = self._panel_paths[idx]
-        
-        # Destroy currently active panel, if any
-        if self.active_panel:
-            self.active_panel.destroy()
+        # Init keyb panel in the 0th col
+        self.keyb_panel = HUDKeyboardPanel(parent_frame=self._host_frame,
+                                           hud=self,
+                                           json_path=HUD_KEYB_JSON,
+                                           grid_col=0)
 
-        self.active_panel = HUDPanel.from_json(
-            panel_json_path,
-            parent_frame=self._host_frame,
-            hud=self)
+        # Init user-position guid ein the 1th col
+        self.posg_panel = HUDPosGuidePanel(parent_frame=self._host_frame,
+                                           hud=self,
+                                           grid_col=1)
 
     def set_btn_viz_toggle(self, btn, toggle_on=False):
         """ Sets a btn as toggled on, visually.
@@ -306,7 +305,7 @@ class _HUDState(object):
                 self.hud.set_btn_viz_toggle(b)
 
             self._keyboard_active_modifier_btns = []
-            self.hud.active_panel.set_btn_text(use_alt_text=False)
+            self.hud.keyb_panel.set_btn_text(use_alt_text=False)
 
     def _payload_handler(self, btn, payload=None, payload_type=None):
         """ Fires the requested action, inferred from the payload type ID.
