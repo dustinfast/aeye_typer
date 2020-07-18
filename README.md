@@ -1,14 +1,17 @@
 # AEye Typer
 
+Hands-free Artificial Intelligence-assisted keyboard and mouse.  
 An open-source work in progress.
 
-This application was conceived in early 2020 following my Amyotrophic Lateral Sclerosis (ALS, AKA Lou-Gehrig's Disease) diagnosis. It is intended to provide a means of continuing my Software Engineering/Artificial Intelligence work long after the disease progresses to the point that I'm unable able to operate a physical keyboard and mouse. Development is in the spirit that, if successful, the technology may be beneficial to others.
+This application, conceived in early 2020 following my Amyotrophic Lateral Sclerosis (ALS, AKA Lou-Gehrig's Disease) diagnosis, is intended to provide a mechanism by which I may continue my Software Engineering/Artificial Intelligence work after I lose the use of my hands to the disease.  
+
+Development is in the spirit that, if succesful, the technology may be beneficial to others.
 
 Author: Dustin Fast <dustin.fast@outlook.com>, 2020
 
 ## Overview
 
-AEye Typer is an accessibility tool with the goal of allowing hands-free use of a virtual mouse (vMouse) and keyboard (vKeyb) via a screen-mounted gaze-tracking device (or possibly, in the future, a wearable brain-computing interface (BCI). It is intended to be different from existing solutions in that it
+AEye Typer is an accessibility tool with the goal of allowing hands-free use of a virtual mouse (vMouse) and keyboard (vKeyb) via a screen-mounted gaze-point (GP) tracking device (or possibly, in the future, a wearable brain-computing interface (BCI). It is intended to be different from existing solutions in that it
 
 * May be utilized by a fully paralyzed but conscious (i.e. "locked-in") individual.
 * Provides a fully-featured on-screen keyboard supporting complex keystrokes and combinations.
@@ -18,10 +21,10 @@ AEye Typer is an accessibility tool with the goal of allowing hands-free use of 
 This will be accomplished by
 
 * Implementing the vKeyb [STATUS: **Functional**]
-* Creating data collection pipelines for associating physical mouse-clicks/keystrokes with the users gaze activity [STATUS: **Functional**]
-* Improving, through the use of machine learning (ML), the inherent inaccuracy of modern gaze-tracking devices [STATUS: Partially Implemented (~90%)]
+* Creating a data collection pipeline for associating physical mouse-clicks with the users GP [STATUS: **Functional**]
+* Improving, through the use of machine learning (ML), the inherent inaccuracy of modern gaze-tracking devices [STATUS: Partially Implemented (currently ~90% accurate)]
 * Developing a mouse-click inference model and pipeline, accepting as input the user's gaze activity [STATUS: Not Implemented]
-* Ensuring setup and calibration are intuitive enough to be performed by, say, some other disabled individual or their caretaker.  [STATUS: Ongoing]
+* Ensuring setup and calibration are intuitive enough to be performed by, say, some other disabled individual and/or their caretaker.  [STATUS: Ongoing]
 
 With this solution in place, a user may then "click" the vMouse at any desired screen coordinate through the use of eye-movement alone. "Clicking" a vKeyb button (or combination of buttons) in this way is then equivelant to a physical keystroke (or keystroke combo). Rapid typing may then be performed by flitting one's gaze to the intended vKeyb keys.
 
