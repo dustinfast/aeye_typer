@@ -16,13 +16,6 @@ HUD_DISP_COORD_DIVISOR_Y: 1
 HUD_BTN_WIDTH: 2
 HUD_KEYB_JSON: 'lib/json/keyboard_us.json'
 
-# EEG Device
-EEG_BOARD_ID: 0
-EEG_BOARD_SERIAL_PORT: /dev/ttyUSB0
-EEG_SAMPLE_HZ: 250  # ~4ms per sample
-EEG_SZ_DATA_BUFF: 45000
-EEG_BCI_HUB_PATH: /opt/app/dependencies/OpenBCI_Hub/OpenBCIHub
-
 # Eyetracker Device
 EYETRACKER_SAMPLE_HZ: 90
 EYETRACKER_BUFF_SZ: 60
@@ -35,54 +28,12 @@ EYETRACKER_PREP_SCRIPT_PATH: /opt/app/src/lib/sh/prep_eyetracker_gaze.sh
 EVENTLOG_RAW_ROOTDIR: /opt/app/data/event_logs/raw      # Raw log data (.csv)
 EVENTLOG_SAMPLED_ROOTDIR: /opt/app/data/event_logs/sampled  # Parsed log data (.sqlite)
 EVENTLOG_HUD_SUBDIR: hud                                # Subdir in raw and sampled dirs
-EVENTLOG_EEG_SUBDIR: eeg                                # Subdir in raw and sampled dirs
 EVENTLOG_GAZE_SUBDIR: gaze                              # Subdir in raw and sampled dirs
 EVENTLOG_KEYB_SUBDIR: keyboard                          # Subdir in raw and sampled dirs
 EVENTLOG_MOUSE_SUBDIR: mouse                            # Subdir in raw and sampled dirs
 EVENTLOG_NOTEFILE_FNAME: 'NOTES.md'
 EVENTLOG_GAZE_TIME_CONVERT_IPLIER: .000001
-EVENTLOG_EEG_COLS: ['timestamp',
-                    'eeg_0',
-                    'eeg_1',
-                    'eeg_2',
-                    'eeg_3',
-                    'eeg_4',
-                    'eeg_5',
-                    'eeg_6',
-                    'eeg_7']
-EVENTLOG_GAZE_COLS: ['timestamp',
-                     'left_pupildiameter_mm',
-                     'right_pupildiameter_mm',
-                     'left_eyeposition_normed_x',
-                     'left_eyeposition_normed_y',
-                     'left_eyeposition_normed_z',
-                     'right_eyeposition_normed_x',
-                     'right_eyeposition_normed_y',
-                     'right_eyeposition_normed_z',
-                     'left_eyecenter_mm_x',
-                     'left_eyecenter_mm_y',
-                     'left_eyecenter_mm_z',
-                     'right_eyecenter_mm_x',
-                     'right_eyecenter_mm_y',
-                     'right_eyecenter_mm_z',
-                     'left_gazeorigin_mm_x',
-                     'left_gazeorigin_mm_y',
-                     'left_gazeorigin_mm_z',
-                     'right_gazeorigin_mm_x',
-                     'right_gazeorigin_mm_y',
-                     'right_gazeorigin_mm_z',
-                     'left_gazepoint_mm_x',
-                     'left_gazepoint_mm_y',
-                     'left_gazepoint_mm_z',
-                     'right_gazepoint_mm_x',
-                     'right_gazepoint_mm_y',
-                     'right_gazepoint_mm_z',
-                     'left_gazepoint_normed_x',
-                     'left_gazepoint_normed_y',
-                     'right_gazepoint_normed_x',
-                     'right_gazepoint_normed_y',
-                     'combined_gazepoint_x',
-                     'combined_gazepoint_y']
+
 EVENTLOG_KEYB_COLS: ['timestamp',       
                      'key_code',      # ASCII
                      'event_code']    # 1 = key_down, 0 = key_up

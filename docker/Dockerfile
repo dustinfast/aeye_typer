@@ -90,29 +90,6 @@ RUN echo "Installing Tobii dependencies (apt-get)..." && \
         libcanberra-gtk3-module \
         libxtst6
 
-RUN echo "Installing OpenBCI dependencies (apt-get)..." && \
-    apt-get install -y --no-install-recommends \
-    setserial \
-    avahi-daemon \
-    libxcomposite-dev \
-    libxi-dev \
-    libxdo-dev \
-    libgconf-2-4 \
-    default-jre \
-    default-jdk 
-
-RUN echo "Installing OpenBCI dependencies(pip)..." && \
-    python3.6 -m pip install \
-        brainflow
-        
-# TODO: No longer needed?
-    # python3-gi \
-    # usbutils \
-    # openssh-server \
-    # xinput \
-    # compiz \
-    # libgtk-3-0 \
-
 RUN echo "Setting up workspace..."
 # Make python3.6 the default python version
 RUN ln -s -f /usr/bin/python3.6 /usr/bin/python
@@ -121,15 +98,6 @@ COPY dependencies/.bashrc /root/.bashrc
 # Create local codebase mount point
 RUN mkdir -p /opt/app/src
 RUN pwd
-
-RUN echo "Settting up OpenBCI_Hub..."
-RUN mkdir -p /tmp/OpenBCI_Hub
-COPY dependencies/OpenBCIHub-v2.1.0-linux-64bit.zip /tmp/OpenBCI_Hub
-WORKDIR /tmp/OpenBCI_Hub
-RUN unzip OpenBCIHub-v2.1.0-linux-64bit.zip
-RUN mkdir -p /opt/app/dependencies
-RUN mv OpenBCIHub-v2.1.0-linux-64bit /opt/app/dependencies/OpenBCI_Hub
-RUN rm -rf /tmp/OpenBCI_Hub
 
 RUN echo "Settting up Tobii PDK..."
 RUN mkdir -p /opt/app/dependencies/tobii_pdk_install

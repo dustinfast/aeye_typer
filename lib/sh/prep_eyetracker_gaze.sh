@@ -22,7 +22,7 @@ gcc -shared  \
 
 rm eyetracker_gaze.o
 
-# Start the eyetracker runtim service iff not already running
+# Start the eyetracker runtime service iff not already running
 STATUS="$(systemctl is-active tobii-runtime-IS4LARGE107)"
 
 if [ "${STATUS}" != "active" ]; then
