@@ -64,14 +64,14 @@ ASYNC_STIME = .005
 
 
 class HUD(tk.Tk):
-    __valid_modes = ['basic', 'collect', 'infer']
+    __valid_modes = ['basic', 'infer']  # TODO: Convert to boolean infer_mode
 
     def __init__(self, mode='basic'):
         """ An abstraction of the heads-up display. The HUD contains panels,
             i.e., the on-screen keyb and user position guide. Each panel
             occupies a col in the hud and is always visible.
 
-            :param mode: (str) Either 'basic', 'collect', or 'infer'.
+            :param mode: (str) Either 'basic' or 'infer'.
         """
         assert(mode in self.__valid_modes)
         super().__init__()
@@ -98,10 +98,7 @@ class HUD(tk.Tk):
                               font=BTN_FONT_BOLD,
                               foreground='green',
                               relief=SUNKEN)
-        ttk.Style().configure(
-            HUD_STYLE, background='red' if mode == 'collect' else None)
 
-        # TODO: Change gaze-mark color to reflect mode, rather than bg
         # TODO: Denote currently focused window's title
         # FIXME: If hud is clicked but outside a btn, focus is captured.
         # TODO: Helper denoting last x keystrokes

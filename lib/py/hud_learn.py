@@ -17,18 +17,20 @@ from sklearn.metrics import mean_absolute_error
 from sklearn.model_selection import train_test_split
 
 from lib.py.app import key_to_id, config, info, warn
+from lib.py.event_logger import AsyncGazeEventLogger, AsyncMouseClkEventLogger
 
 
 # App config elements
 _conf = config()
 LOG_RAW_ROOTDIR = _conf['EVENTLOG_RAW_ROOTDIR']
-LOG_HUD_SUBDIR = _conf['EVENTLOG_HUD_SUBDIR']
+WRITE_BACK = _conf['EYETRACKER_WRITEBACK_SECONDS']
+WRITE_AFTER = _conf['EYETRACKER_WRITEAFTER_SECONDS']
 del _conf
 
-# Training data attributes
-DATA_SESSION_NAME = '2020-06-13'
-RAND_SEED = 1234
+# Training data/session attributes
+DATA_SESSION_NAME = '2020-07-30'
 DATA_GROUP_KEY = 'y_key_id'                  
+RAND_SEED = 1234
 
 # mae_x = 8.3777
 # mae_y = 7.6306
@@ -107,7 +109,7 @@ class HUDLearn(object):
             data collection, training, and inference.
                 
             :param hud_state: (hud.) The HUD's state obj.
-            :param mode: (str) Either 'basic', 'collect', or 'infer'
+            :param mode: (str) Either 'basic' or 'infer'.
         """
         self.hud_state = hud_state
 
@@ -118,50 +120,59 @@ class HUDLearn(object):
         # Determine handler to use, based on the given mode
         self.handle_event = {
             'basic'     : self._null,
-            'collect'   : self.on_event_collect,
             'infer'     : self._null
         }.get(mode, self._null)
 
-    def _log_path(self):
-        """ Sets up and returns the log file path.
+    def _log_path(self, suffix=None):
+        """ Returns the log file path after ensuring it exists.
         """
-        logdir =  Path(LOG_RAW_ROOTDIR, LOG_HUD_SUBDIR)
+        logdir =  Path(LOG_RAW_ROOTDIR)
         if not logdir.exists():
             os.makedirs(logdir)
 
-        return str(Path(logdir, f'{DATA_SESSION_NAME}.csv'))
+        if suffix:
+            return str(Path(logdir, f'{DATA_SESSION_NAME}_{suffix}.csv'))
+        else:
+            return str(Path(logdir, f'{DATA_SESSION_NAME}.csv'))
 
-    def _model_path(self, v):
-        """ Sets up and returns the ml model's file path.
+    def _model_path(self, suffix):
+        """ Rreturns the ml model file path after ensuring it exists.
         """
-        logdir =  Path(LOG_RAW_ROOTDIR, LOG_HUD_SUBDIR)
+        logdir =  Path(LOG_RAW_ROOTDIR)
         if not logdir.exists():
             os.makedirs(logdir)
 
-        return str(Path(logdir, f'{DATA_SESSION_NAME}_{v}.pkl'))
+        return str(Path(logdir, f'{DATA_SESSION_NAME}_{suffix}.pkl'))
 
     def _null(self, **kwargs):
         """ Dummy function, for 'basic' mode compatibility.
         """
         pass
-        
-    def on_event_collect(self, gaze, btn, payload=None, payload_type=None):
-        # TODO: def on_event_collect_click(): On mouse click, log gaze
-        """ Training data collection handler. To be called by the HUD state 
-            manager on a collectable event.
-            
-            Training data is collected as the user clicks on a btn with the
-            mouse. It is assumed that on click, the user's gaze is centered
-            on the on-screen keyboard button. At the time of each click, a
-            number of Eyetracking samples (up to the number denoted by
-            _config.yaml:EYETRACKER_BUFF_SZ) are recorded leading up to each
-            click event, the label of each sample recorded at that time is
-            labeled with the key's keycode.
+
+
+class HUDCollect(HUDLearn):
+    def __init__(self, verbose=False):
+        """ Top-level data collection module for gaze-accuracy assist.
         """
-        # Get the centroid of the button, then write it, along with all gaze
-        # points between the previous button click and this one to csv
-        centr_x, centr_y = btn.centroid
-        gaze.to_csv(self._logpath, label=f'{centr_x}, {centr_y}, {btn.payload}')
+        super().__init__(None, None)
+        self._verbose = verbose
+
+    def run(self):
+        """ Starts data collection. Blocks until terminated.
+        """
+        gaze_logger = AsyncGazeEventLogger(
+            self._log_path('gaze'), self._verbose)
+        
+        mouse_logger = AsyncMouseClkEventLogger(
+            self._log_path('mouse'), [gaze_logger.event], self._verbose)
+
+        # Start the loggers and block until terminated
+        gaze_logger.start()
+        log_proc = mouse_logger.start()
+        log_proc.join()
+
+        # Cleanup
+        gaze_logger.stop()
 
 
 class HUDTrain(HUDLearn):
@@ -174,7 +185,7 @@ class HUDTrain(HUDLearn):
         """
         super().__init__(None, None)
 
-    def train(self):
+    def run(self):
         self._train_gaze_acc()
 
     def _get_training_df(self):

@@ -111,7 +111,7 @@ EyeTracker::EyeTracker() {
     
     // Else if elevated create succeeded
     } else {
-        info_ok("Using elevated eyetracking device.\n");
+        info("Using elevated eyetracking device.\n");
         m_is_elevated = True;
     }
 
@@ -289,7 +289,9 @@ void EyeTracker::calibration_load() {
     
     // Ensure file exists
     if (!f) {
-        warn("Calibration load failed (file not found).\n");
+        warn("Calibration load failed. Please calibrate your device with ");
+        printf("'./aeye_typer.py --calibrate'. This error may be ignored if ");
+        printf("encountered during calibration.\n");
         return;
     }
 
@@ -306,7 +308,7 @@ void EyeTracker::calibration_load() {
         else
             warn("Calibration load failed (unknown reason).\n");
     } else {
-        info_ok("Calibration loaded successfully.\n");
+        info("Calibration loaded successfully.\n");
     }
 }
 

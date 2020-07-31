@@ -51,12 +51,6 @@ def key_to_id(key):
 def info(s, end='\n'):
     """ Prints the given string to stdout, formatted as an info str.
     """
-    print(f"INFO: {s}", end=end)
-
-
-def info_ok(s, end='\n'):
-    """ Prints the given string to stdout, formatted as an info/OK str.
-    """
     print(f"{ANSII_ESC_OK}INFO:{ANSII_ESC_ENDCOLOR} {s}", end=end)
 
 

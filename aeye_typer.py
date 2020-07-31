@@ -8,7 +8,7 @@ import argparse
 from subprocess import Popen
 
 from lib.py.hud import HUD
-from lib.py.hud_learn import HUDTrain
+from lib.py.hud_learn import HUDCollect, HUDTrain
 
 import pyximport; pyximport.install()
 from lib.py.eyetracker_gaze import EyeTrackerGaze
@@ -16,8 +16,7 @@ from lib.py.eyetracker_gaze import EyeTrackerGaze
 CMD_CALIBRATE = 'tobiiproeyetrackermanager'
 
 if __name__ == "__main__":
-    # Setup cmd line args
-    # TODO: Some args are mutually exclusive
+    # Setup CLI args
     parser = argparse.ArgumentParser()
     arg_flags = ('-c', '--calibrate')
     arg_help_str = 'Runs eyetracker device calibration.'
@@ -45,23 +44,28 @@ if __name__ == "__main__":
                         help=arg_help_str)
     args = parser.parse_args()
 
+    # Some CLI args are mutually exclusive -- ensure they were given that way
+    if sum([args.calibrate, args.data_collect, args.infer, args.train_ml]) > 1:
+        raise Exception('Invalid use of mutually exclusive cmd line args.')
+
+    # Run the application in the specified mode
     if args.calibrate:
         # Run the external calibration tool and wait for quit
+        e = EyeTrackerGaze()
         proc = Popen([CMD_CALIBRATE])
         proc.wait()
 
         # Write the calibration to file
-        e = EyeTrackerGaze()
         e.open()
         e.write_calibration()
         e.close()
 
     elif args.data_collect:
-        HUD(mode='collect').run()
+        HUDCollect(verbose=True).run()
     elif args.infer:
         HUD(mode='infer').run()
     elif args.train_ml:
-        HUDTrain().train()
+        HUDTrain().run()
     else:
         HUD(mode='basic').run()
 

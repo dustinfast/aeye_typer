@@ -14,14 +14,8 @@
 #define ANSII_ESC_ENDCOLOR "\033[0m"
 
 
-
 // Prints the given string to stdout, formatted as an info str.
 void info(const char *s) {
-    printf("INFO: %s", s);
-}
-
-// Prints the given string to stdout, formatted as an info/OK str.
-void info_ok(const char *s) {
     printf("%sINFO:%s %s", ANSII_ESC_OK, ANSII_ESC_ENDCOLOR, s);
 }
 

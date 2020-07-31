@@ -203,7 +203,7 @@ class EyeTrackerGaze(object):
         if Path(GAZE_CALIB_PATH).exists():
             warn('Calibration file exists! Overwrite it', end=' ')
             if input('[y/N]? ') != 'y':
-                info('Calibration write aborted by user.')
+                info('Calibration aborted by user.')
                 return
 
         # If not exists OR if overwrite confirmed, write to file
