@@ -82,13 +82,16 @@ RUN echo "Updating apt-get..." && \
 RUN echo "Installing Tobii dependencies (apt-get)..." && \
     apt-get install -y --no-install-recommends \
         gconf2 \
-        libappindicator1 \
-        libasound2 \
-        libnotify4 \
         libnss3 \
+        libxtst6 \
+        libnotify4 \
+        libasound2 \
         libxss-dev \
-        libcanberra-gtk3-module \
-        libxtst6
+        default-jre \
+        default-jdk \
+        avahi-daemon \
+        libappindicator1 \
+        libcanberra-gtk3-module
 
 RUN echo "Setting up workspace..."
 # Make python3.6 the default python version
