@@ -9,7 +9,6 @@ from time import sleep
 from pathlib import Path
 
 import pandas as pd
-import seaborn as sb
 from matplotlib import pyplot as plt
 from sklearn.svm import SVR
 from sklearn.preprocessing import MinMaxScaler
@@ -25,82 +24,13 @@ _conf = config()
 LOG_RAW_ROOTDIR = _conf['EVENTLOG_RAW_ROOTDIR']
 WRITE_BACK = _conf['EYETRACKER_WRITEBACK_SECONDS']
 WRITE_AFTER = _conf['EYETRACKER_WRITEAFTER_SECONDS']
+GAZE_TIME_IPLIER = _conf['GAZE_TIME_CONVERT_IPLIER']
+MOUSE_TIME_IPLIER = _conf['MOUSE_TIME_CONVERT_IPLIER']
 del _conf
 
 # Training data/session attributes
 DATA_SESSION_NAME = '2020-07-30'
-DATA_GROUP_KEY = 'y_key_id'                  
 RAND_SEED = 1234
-
-# mae_x = 8.3777
-# mae_y = 7.6306
-DATA_COL_NAMES = ['X_eyepos_left_x', 'X_eyepos_left_y', 'X_eyepos_left_z',
-                  'X_eyepos_right_x', 'X_eyepos_right_y', 'X_eyepos_right_z',
-                  'X_gaze_x', 'X_gaze_y', 'y_gaze_x', 'y_gaze_y', 'y_key_id']
-DATA_COL_IDXS = [3, 4, 5, 6, 7, 8, 31, 32, 33, 34, 35]
-
-# mae_x = 7.9200
-# mae_y = 7.0659
-# DATA_COL_NAMES = [
-#     'X_left_pupildiameter_mm',
-#     'X_right_pupildiameter_mm',
-
-#     'X_left_eyeposition_normed_x',
-#     'X_left_eyeposition_normed_y',
-#     'X_left_eyeposition_normed_z',
-#     'X_right_eyeposition_normed_x',
-#     'X_right_eyeposition_normed_y',
-#     'X_right_eyeposition_normed_z',
-
-#     'X_left_eyecenter_mm_x',
-#     'X_left_eyecenter_mm_y',
-#     'X_left_eyecenter_mm_z',
-#     'X_right_eyecenter_mm_x',
-#     'X_right_eyecenter_mm_y',
-#     'X_right_eyecenter_mm_z',
-
-#     'X_left_gazeorigin_mm_x',
-#     'X_left_gazeorigin_mm_y',
-#     'X_left_gazeorigin_mm_z',
-#     'X_right_gazeorigin_mm_x',
-#     'X_right_gazeorigin_mm_y',
-#     'X_right_gazeorigin_mm_z',
-
-#     'X_left_gazepoint_mm_x',
-#     'X_left_gazepoint_mm_y',
-#     'X_left_gazepoint_mm_z',
-#     'X_right_gazepoint_mm_x',
-#     'X_right_gazepoint_mm_y',
-#     'X_right_gazepoint_mm_z',
-#     # All above, none below gives
-#     # mae_x = 7.9031
-#     # mae_y = 7.0651
-
-#     # mae_x = 7.9042
-#     # mae_y = 7.0615
-#     # 'X_left_gazepoint_normed_x',
-#     # 'X_left_gazepoint_normed_y',
-#     # 'X_right_gazepoint_normed_x',
-#     # 'X_right_gazepoint_normed_y',
-
-#     # mae_x = 7.9176
-#     # mae_y = 7.0760
-#     # 'X_combined_gazepoint_x',
-#     # 'X_combined_gazepoint_y',
-
-#     'y_gaze_x',
-#     'y_gaze_y',
-#     'y_key_id'
-# ]
-# DATA_COL_IDXS = [1, 2,
-#                  3, 4, 5, 6, 7, 8,
-#                  9, 10, 11, 12, 13, 14,
-#                  15, 16, 17, 18, 19, 20,
-#                  21, 22, 23, 24, 25, 26,
-#                 #  27, 28, 29, 30,
-#                 #  31, 32,
-#                  33, 34, 35
-# ]
 
 
 class HUDLearn(object):
@@ -176,6 +106,56 @@ class HUDCollect(HUDLearn):
 
 
 class HUDTrain(HUDLearn):
+
+    __mouse_col_names = [
+        'timestamp',
+        'btn_id',
+        'y_x',
+        'y_y'
+    ]
+
+    __gaze_col_names = [ 
+        'timestamp',
+        
+        'X_left_pupildiameter_mm',
+        'X_right_pupildiameter_mm',
+
+        'X_left_eyeposition_normed_x',
+        'X_left_eyeposition_normed_y',
+        'X_left_eyeposition_normed_z',
+        'X_right_eyeposition_normed_x',
+        'X_right_eyeposition_normed_y',
+        'X_right_eyeposition_normed_z',
+
+        '_left_eyecenter_mm_x',
+        '_left_eyecenter_mm_y',
+        '_left_eyecenter_mm_z',
+        '_right_eyecenter_mm_x',
+        '_right_eyecenter_mm_y',
+        '_right_eyecenter_mm_z',
+
+        '_left_gazeorigin_mm_x',
+        '_left_gazeorigin_mm_y',
+        '_left_gazeorigin_mm_z',
+        '_right_gazeorigin_mm_x',
+        '_right_gazeorigin_mm_y',
+        '_right_gazeorigin_mm_z',
+
+        '_left_gazepoint_mm_x',
+        '_left_gazepoint_mm_y',
+        '_left_gazepoint_mm_z',
+        '_right_gazepoint_mm_x',
+        '_right_gazepoint_mm_y',
+        '_right_gazepoint_mm_z',
+        'X_left_gazepoint_normed_x',
+        'X_left_gazepoint_normed_y',
+        'X_right_gazepoint_normed_x',
+        'X_right_gazepoint_normed_y',
+
+        '_combined_gazepoint_x',
+        '_combined_gazepoint_y'
+    ]
+
     def __init__(self):
         """ Training handler.
             
@@ -189,69 +169,57 @@ class HUDTrain(HUDLearn):
         self._train_gaze_acc()
 
     def _get_training_df(self):
-        """ Returns the training data in pd.DataFrame form w/no post-processing
-            applied.
+        """ Returns the training data in pd.DataFrame form.
         """
-        df = pd.read_csv(self._logpath, 
-                         header=None,
-                         usecols=DATA_COL_IDXS,
-                         index_col=False,
-                         names=DATA_COL_NAMES)
+        mouse_log = self._log_path('mouse')
+        gaze_log = self._log_path('gaze')
+        # mouse_log = '/opt/app/data/logs/test_mouse.csv'
+        # gaze_log = '/opt/app/data/logs/test_gaze.csv'
+
+        # Load log files
+        df_m = pd.read_csv(mouse_log, 
+                           header=None,
+                           index_col=False,
+                           names=self.__mouse_col_names)
+
+        df_g = pd.read_csv(gaze_log, 
+                           header=None,
+                           index_col=False,
+                           names=self.__gaze_col_names)
+
+        # Filter gaze log for no gp
+        df_g = df_g[df_g['X_left_pupildiameter_mm'] != -1]
+        df_g = df_g[df_g['X_right_pupildiameter_mm'] != -1]
+        
+        # Convert log timestamp scales
+        df_m['timestamp'] = df_m['timestamp'] * MOUSE_TIME_IPLIER
+        df_m['timestamp'] = df_m['timestamp'].astype(int)
+
+        df_g['timestamp'] = df_g['timestamp'] * GAZE_TIME_IPLIER
+        df_g['timestamp'] = df_g['timestamp'].astype(int)
+
+        # Join the mouse log to the gaze log, by timestamp
+        df = df_g.join(
+            df_m.set_index('timestamp'), on='timestamp', rsuffix='_')
 
         return df
     
-    def _train_gaze_acc(self, n_limit=35, split=0.75):
+    def _train_gaze_acc(self, split=0.80):
         """ Gaze accuracy training handler.
         """
         print('Training...')
         
         # TODO: If model files already exist, prompt for overwrite
 
-        # Read in training data and ensure safe n_limit
+        # Read in training data and drop all unassociated rows
         df = self._get_training_df()
-
-        # We assume only the last n_limit samples for each btn press denotes
-        # actual gazepoint at event time, so we drop all but those samples...
-        drop_idxs = []
-        group_idx_n = 0
-        prev_keyid = df.iloc[-1:, -1:].values
-
-        for i in range(len(df.index)-1, -1, -1):
-            curr_keyid = df.iloc[i, -1:].values.item()
-
-            # ... If curr key id is same as prev key id
-            if curr_keyid == prev_keyid:
-                group_idx_n += 1
-                
-                # ... If n_lim samples for this key already seen, drop sample
-                if group_idx_n > n_limit:
-                    drop_idxs.append(i)
-
-            # ... Else curr key id is not same as prev, reset count at 1
-            else:
-                if group_idx_n < n_limit:
-                    warn(f'Key id {prev_keyid} has < n_limit samples.')
-
-                group_idx_n = 1
-                prev_keyid = curr_keyid
-        
-        df.drop(drop_idxs, inplace=True)
-
-        # Sanity/Data integrity check
-        if len(df.index) % n_limit != 0:
-            raise Exception('Unexpected post-processed data shape enountered.')
-
-        # Plot and save corr matrix, for testing purposes
-        # corr = df.iloc[:, :-1].corr()
-        # fig = plt.figure(figsize = (15,15))
-        # sb.heatmap(corr, vmax=0.8, square=True)
-        # plt.savefig(f'test_SVR_cor.png')
+        df.dropna(inplace=True)
 
         # Extract X, as [[feature_1, feature_2, ...], ...]
         _X = df[[c for c in df.columns if c.startswith('X_')]].values
 
         # Extract y, as [[gazepoint_x_coord, gazepoint_y_coord], ... ]
-        _y = df[[c for c in df.columns if c.startswith('y_')]].values[:, :-1]
+        _y = df[[c for c in df.columns if c.startswith('y_')]].values
 
         # Do traintest split
         X_train, X_test, y_train, y_test = train_test_split(
@@ -269,13 +237,13 @@ class HUDTrain(HUDLearn):
         y_test_x_coord, y_test_y_coord = (
             y_test[:, 0].squeeze(), y_test[:, 1].squeeze())
 
-        model_x = SVR(kernel='rbf', C=1000, epsilon=.1).fit(
+        # Train two seperate models, one for the x coord, and one for y
+        model_x = SVR(kernel='rbf', C=250, epsilon=0).fit(
             X_train, y_train_x_coord)
-        model_y = SVR(kernel='rbf', C=1000, epsilon=.1).fit(
+        model_y = SVR(kernel='rbf', C=250, epsilon=0).fit(
             X_train, y_train_y_coord)
 
         # Validate
-        print('Done.')
         print('Validating...')
         y_x_coord_hat = model_x.predict(X_test)
         y_y_coord_hat = model_y.predict(X_test)

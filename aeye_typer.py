@@ -61,7 +61,7 @@ if __name__ == "__main__":
         e.close()
 
     elif args.data_collect:
-        HUDCollect(verbose=True).run()
+        HUDCollect().run()
     elif args.infer:
         HUD(mode='infer').run()
     elif args.train_ml:
