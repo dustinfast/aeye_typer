@@ -32,6 +32,55 @@ del _conf
 DATA_SESSION_NAME = '2020-07-30'
 RAND_SEED = 1234
 
+# Data file col names, w/ prefixes X_ and y_ denoting col is feature/label 
+MOUSELOG_COL_NAMES = [
+    'timestamp',
+    'btn_id',
+    'y_click_coord_x',
+    'y_click_coord_y']
+
+GAZELOG_COL_NAMES = [ 
+    'timestamp',
+    
+    'X_left_pupildiameter_mm',
+    'X_right_pupildiameter_mm',
+
+    'X_left_eyeposition_normed_x',
+    'X_left_eyeposition_normed_y',
+    'X_left_eyeposition_normed_z',
+    'X_right_eyeposition_normed_x',
+    'X_right_eyeposition_normed_y',
+    'X_right_eyeposition_normed_z',
+
+    '_left_eyecenter_mm_x',
+    '_left_eyecenter_mm_y',
+    '_left_eyecenter_mm_z',
+    '_right_eyecenter_mm_x',
+    '_right_eyecenter_mm_y',
+    '_right_eyecenter_mm_z',
+
+    'X_left_gazeorigin_mm_x',
+    'X_left_gazeorigin_mm_y',
+    'X_left_gazeorigin_mm_z',
+    'X_right_gazeorigin_mm_x',
+    'X_right_gazeorigin_mm_y',
+    'X_right_gazeorigin_mm_z',
+
+    '_left_gazepoint_mm_x',
+    '_left_gazepoint_mm_y',
+    '_left_gazepoint_mm_z',
+    '_right_gazepoint_mm_x',
+    '_right_gazepoint_mm_y',
+    '_right_gazepoint_mm_z',
+
+    'X_left_gazepoint_normed_x',
+    'X_left_gazepoint_normed_y',
+    'X_right_gazepoint_normed_x',
+    'X_right_gazepoint_normed_y',
+
+    '_combined_gazepoint_x',
+    '_combined_gazepoint_y']
+
 
 class HUDLearn(object):
     def __init__(self, hud_state, mode):
@@ -80,14 +129,16 @@ class HUDLearn(object):
         pass
 
 
-class HUDCollect(HUDLearn):
+class HUDDataGazeAccAssist(HUDLearn):
     def __init__(self, verbose=False):
-        """ Top-level data collection module for gaze-accuracy assist.
+        """ Top-level module for gaze-accuracy assist training data collection.
+            Collection occurs as the user clicks around the screen while gazing
+            at the on-screen location of each click.
         """
         super().__init__(None, None)
         self._verbose = verbose
 
-    def run(self):
+    def collect(self):
         """ Starts data collection. Blocks until terminated.
         """
         gaze_logger = AsyncGazeEventLogger(
@@ -105,63 +156,10 @@ class HUDCollect(HUDLearn):
         gaze_logger.stop()
 
 
-class HUDTrain(HUDLearn):
-
-    __mouse_col_names = [
-        'timestamp',
-        'btn_id',
-        'y_x',
-        'y_y'
-    ]
-
-    __gaze_col_names = [ 
-        'timestamp',
-        
-        'X_left_pupildiameter_mm',
-        'X_right_pupildiameter_mm',
-
-        'X_left_eyeposition_normed_x',
-        'X_left_eyeposition_normed_y',
-        'X_left_eyeposition_normed_z',
-        'X_right_eyeposition_normed_x',
-        'X_right_eyeposition_normed_y',
-        'X_right_eyeposition_normed_z',
-
-        '_left_eyecenter_mm_x',
-        '_left_eyecenter_mm_y',
-        '_left_eyecenter_mm_z',
-        '_right_eyecenter_mm_x',
-        '_right_eyecenter_mm_y',
-        '_right_eyecenter_mm_z',
-
-        '_left_gazeorigin_mm_x',
-        '_left_gazeorigin_mm_y',
-        '_left_gazeorigin_mm_z',
-        '_right_gazeorigin_mm_x',
-        '_right_gazeorigin_mm_y',
-        '_right_gazeorigin_mm_z',
-
-        '_left_gazepoint_mm_x',
-        '_left_gazepoint_mm_y',
-        '_left_gazepoint_mm_z',
-        '_right_gazepoint_mm_x',
-        '_right_gazepoint_mm_y',
-        '_right_gazepoint_mm_z',
-        'X_left_gazepoint_normed_x',
-        'X_left_gazepoint_normed_y',
-        'X_right_gazepoint_normed_x',
-        'X_right_gazepoint_normed_y',
-
-        '_combined_gazepoint_x',
-        '_combined_gazepoint_y'
-    ]
-
+class HUDTrainGazeAccAssist(HUDLearn):
     def __init__(self):
-        """ Training handler.
-            
-            Training occurs for two seperate models:
-                1. Gaze-accuracy improvement
-                2. Gaze-to-text typing
+        """ Module for training the gaze-accuracy assistance models from
+            the data collected by HudDataCollectGazeAccAssist.
         """
         super().__init__(None, None)
 
@@ -173,47 +171,67 @@ class HUDTrain(HUDLearn):
         """
         mouse_log = self._log_path('mouse')
         gaze_log = self._log_path('gaze')
-        # mouse_log = '/opt/app/data/logs/test_mouse.csv'
-        # gaze_log = '/opt/app/data/logs/test_gaze.csv'
 
         # Load log files
         df_m = pd.read_csv(mouse_log, 
                            header=None,
                            index_col=False,
-                           names=self.__mouse_col_names)
+                           names=MOUSELOG_COL_NAMES)
 
         df_g = pd.read_csv(gaze_log, 
                            header=None,
                            index_col=False,
-                           names=self.__gaze_col_names)
+                           names=GAZELOG_COL_NAMES)
 
-        # Filter gaze log for no gp
+        # Filter gaze rows with invalid gaze-points
         df_g = df_g[df_g['X_left_pupildiameter_mm'] != -1]
         df_g = df_g[df_g['X_right_pupildiameter_mm'] != -1]
         
-        # Convert log timestamp scales
+        # Homogenize mouse/gaze timestamp scales and precision
         df_m['timestamp'] = df_m['timestamp'] * MOUSE_TIME_IPLIER
         df_m['timestamp'] = df_m['timestamp'].astype(int)
 
         df_g['timestamp'] = df_g['timestamp'] * GAZE_TIME_IPLIER
         df_g['timestamp'] = df_g['timestamp'].astype(int)
 
-        # Join the mouse log to the gaze log, by timestamp
+        # Join the mouse log to the gaze log by timestamp, effectively
+        # labeling gaze information with the x/y coord of an actual click.
+        # Note that this operation leaves some rows (from df_g) with no labels;
+        # in those cases, the label columns contain NaN's.
         df = df_g.join(
             df_m.set_index('timestamp'), on='timestamp', rsuffix='_')
 
         return df
-    
-    def _train_gaze_acc(self, split=0.80):
+
+    def _train_gaze_acc(self, split=0.80, dist_filter=140):
         """ Gaze accuracy training handler.
+
+            :param split: (float) train/test split ratio.
+            :param dist_filter: (int) Distance metric by which unreasonable
+            training data rows are filtered. This is a necessary filter to 
+            account for the user failing to  always look at the cursor when
+            clicking.
         """
-        print('Training...')
+        print('Training gaze accuracy assist...')
         
         # TODO: If model files already exist, prompt for overwrite
 
-        # Read in training data and drop all unassociated rows
+        # Read in training data
         df = self._get_training_df()
-        df.dropna(inplace=True)
+        
+        # Drop all rows that don't have labels (i.e. click coords)
+        df = df.dropna().reset_index(drop=True)
+
+        # Drop rows w/unreasonably distant labels
+        df = df[
+            (
+                ((df['_combined_gazepoint_x'] - df['y_click_coord_x']).abs(
+                    ) < dist_filter
+                ) &
+                ((df['_combined_gazepoint_y'] - df['y_click_coord_y']).abs(
+                    ) < dist_filter)
+            )
+        ]
 
         # Extract X, as [[feature_1, feature_2, ...], ...]
         _X = df[[c for c in df.columns if c.startswith('X_')]].values
@@ -238,13 +256,13 @@ class HUDTrain(HUDLearn):
             y_test[:, 0].squeeze(), y_test[:, 1].squeeze())
 
         # Train two seperate models, one for the x coord, and one for y
-        model_x = SVR(kernel='rbf', C=250, epsilon=0).fit(
+        model_x = SVR(kernel='rbf', C=150, epsilon=0.05).fit(
             X_train, y_train_x_coord)
-        model_y = SVR(kernel='rbf', C=250, epsilon=0).fit(
+        model_y = SVR(kernel='rbf', C=150, epsilon=0.05).fit(
             X_train, y_train_y_coord)
 
-        # Validate
-        print('Validating...')
+        # Validate both models
+        print('Done.\nValidating...')
         y_x_coord_hat = model_x.predict(X_test)
         y_y_coord_hat = model_y.predict(X_test)
         model_x_score = mean_absolute_error(y_test_x_coord, y_x_coord_hat)
@@ -253,7 +271,7 @@ class HUDTrain(HUDLearn):
         print('Done:\n\tmae_x = %.4f\n\tmae_y = %.4f' % 
             (model_x_score, model_y_score))
 
-        # Set scaler as a model member, so it's saved with it
+        # Set scaler as a member of the model instance, so it's saved with it
         model_x.scaler = scaler
         model_y.scaler = scaler
         
@@ -271,8 +289,6 @@ class HUDTrain(HUDLearn):
             y_x_coord_hat, y_y_coord_hat, c="red", marker=".",
                 label='x/y pred (score=%.4f|%.4f)' % (
                     model_x_score, model_y_score))
-        plt.xlim([1500, 3840])
-        plt.ylim([2160, 1500])
         plt.xlabel("gaze_x")
         plt.ylabel("gaze_y")
         plt.title("Perf")

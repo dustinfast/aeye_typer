@@ -7,7 +7,6 @@
 
 #include <Python.h>
 
-
 /////////////////////////////////////////////////////////////////////////////
 // Defs
 
@@ -21,16 +20,7 @@ PyObject *get_pyclass(const char *name);
 // same name.
 class EyeTrackerCoordPredict {
     public:
-        long int predict(
-            float eyepos_left_x, 
-            float eyepos_left_y, 
-            float eyepos_left_z,
-            float eyepos_right_x, 
-            float eyepos_right_y,
-            float eyepos_right_z,
-            int gaze_coord_x, 
-            int gaze_coord_y
-        );
+        long int predict(shared_ptr<gaze_data_t> gaze_data);
         EyeTrackerCoordPredict(const char *model_path);
         ~EyeTrackerCoordPredict();
 
@@ -87,16 +77,7 @@ EyeTrackerCoordPredict::~EyeTrackerCoordPredict() {
     Py_Finalize();
 }
 
-long int EyeTrackerCoordPredict::predict(
-    float eyepos_left_x, 
-    float eyepos_left_y, 
-    float eyepos_left_z,
-    float eyepos_right_x, 
-    float eyepos_right_y,
-    float eyepos_right_z,
-    int gaze_coord_x, 
-    int gaze_coord_y
-    ) {
+long int EyeTrackerCoordPredict::predict(shared_ptr<gaze_data_t> gaze_data) {
         // Acquire gill lock iff needed
         if (!PyGILState_Check())
             m_py_gilstate = PyGILState_Ensure();
@@ -105,15 +86,28 @@ long int EyeTrackerCoordPredict::predict(
         PyObject *p_result = PyObject_CallMethod(
             m_py_self, 
             "predict", 
-            "(ddddddii)",
-            eyepos_left_x,
-            eyepos_left_y,
-            eyepos_left_z,
-            eyepos_right_x,
-            eyepos_right_y,
-            eyepos_right_z,
-            gaze_coord_x,
-            gaze_coord_y
+            "(dddddddddddddddddd)",
+            gaze_data->left_pupildiameter_mm,
+            gaze_data->right_pupildiameter_mm,
+
+            gaze_data->left_eyeposition_normed_x,
+            gaze_data->left_eyeposition_normed_y,
+            gaze_data->left_eyeposition_normed_z,
+            gaze_data->right_eyeposition_normed_x,
+            gaze_data->right_eyeposition_normed_y,
+            gaze_data->right_eyeposition_normed_z,
+
+            gaze_data->left_gazeorigin_mm_x,
+            gaze_data->left_gazeorigin_mm_y,
+            gaze_data->left_gazeorigin_mm_z,
+            gaze_data->right_gazeorigin_mm_x,
+            gaze_data->right_gazeorigin_mm_y,
+            gaze_data->right_gazeorigin_mm_z,
+
+            gaze_data->left_gazepoint_normed_x,
+            gaze_data->left_gazepoint_normed_y,
+            gaze_data->right_gazepoint_normed_x,
+            gaze_data->right_gazepoint_normed_y
         );
         assert(p_result != NULL);
 

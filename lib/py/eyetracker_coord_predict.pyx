@@ -28,14 +28,24 @@ class EyeTrackerCoordPredict():
             self._scaler = self._model.scaler
     
     def predict(self, 
-                eyepos_left_x, 
-                eyepos_left_y, 
-                eyepos_left_z,
-                eyepos_right_x, 
-                eyepos_right_y,
-                eyepos_right_z,
-                gaze_coord_x, 
-                gaze_coord_y):
+                left_pupildiameter_mm,
+                right_pupildiameter_mm,
+                left_eyeposition_normed_x,
+                left_eyeposition_normed_y,
+                left_eyeposition_normed_z,
+                right_eyeposition_normed_x,
+                right_eyeposition_normed_y,
+                right_eyeposition_normed_z,
+                left_gazeorigin_mm_x,
+                left_gazeorigin_mm_y,
+                left_gazeorigin_mm_z,
+                right_gazeorigin_mm_x,
+                right_gazeorigin_mm_y,
+                right_gazeorigin_mm_z,
+                left_gazepoint_normed_x,
+                left_gazepoint_normed_y,
+                right_gazepoint_normed_x,
+                right_gazepoint_normed_y):
         """ Returns the coordinate prediction from the given gaze features.
         """
         # TODO: Pass features as a c array?
@@ -44,14 +54,24 @@ class EyeTrackerCoordPredict():
                 pred = self._model.predict(
                     self._scaler.transform(
                         np.array([[
-                            eyepos_left_x, 
-                            eyepos_left_y, 
-                            eyepos_left_z,
-                            eyepos_right_x, 
-                            eyepos_right_y,
-                            eyepos_right_z,
-                            gaze_coord_x, 
-                            gaze_coord_y]])))
+                            left_pupildiameter_mm,
+                            right_pupildiameter_mm,
+                            left_eyeposition_normed_x,
+                            left_eyeposition_normed_y,
+                            left_eyeposition_normed_z,
+                            right_eyeposition_normed_x,
+                            right_eyeposition_normed_y,
+                            right_eyeposition_normed_z,
+                            left_gazeorigin_mm_x,
+                            left_gazeorigin_mm_y,
+                            left_gazeorigin_mm_z,
+                            right_gazeorigin_mm_x,
+                            right_gazeorigin_mm_y,
+                            right_gazeorigin_mm_z,
+                            left_gazepoint_normed_x,
+                            left_gazepoint_normed_y,
+                            right_gazepoint_normed_x,
+                            right_gazepoint_normed_y]])))
             except Exception as e:
                 error(f'Coord prediction failed with\n{repr(e)}')
                 return 0

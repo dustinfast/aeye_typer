@@ -8,7 +8,7 @@ import argparse
 from subprocess import Popen
 
 from lib.py.hud import HUD
-from lib.py.hud_learn import HUDCollect, HUDTrain
+import lib.py.hud_learn as hud_learn
 
 import pyximport; pyximport.install()
 from lib.py.eyetracker_gaze import EyeTrackerGaze
@@ -61,11 +61,11 @@ if __name__ == "__main__":
         e.close()
 
     elif args.data_collect:
-        HUDCollect().run()
+        hud_learn.HUDDataGazeAccAssist().collect()
     elif args.infer:
         HUD(mode='infer').run()
     elif args.train_ml:
-        HUDTrain().run()
+        hud_learn.HUDTrainGazeAccAssist().run()
     else:
         HUD(mode='basic').run()
 

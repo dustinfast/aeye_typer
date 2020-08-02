@@ -20,6 +20,7 @@
 #include <X11/Xutil.h>
 
 #include "eyetracker.h"
+#include "eyetracker_structdef.h"
 #include "py_objs.cpp"
 
 using namespace std;
@@ -32,55 +33,6 @@ using namespace std;
 #define GAZE_MARKER_BORDER 0
 #define GAZE_MARKER_BORDER 0
 #define MOUNT_OFFSET_MM 0.0
-
-typedef struct gaze_data {
-        int64_t unixtime_us;
-
-        float left_pupildiameter_mm;
-        float right_pupildiameter_mm;
-
-        float left_eyeposition_normed_x;
-		float left_eyeposition_normed_y;
-		float left_eyeposition_normed_z;
-		float right_eyeposition_normed_x;
-		float right_eyeposition_normed_y;
-		float right_eyeposition_normed_z;
-
-        float left_eyecenter_mm_x;
-		float left_eyecenter_mm_y;
-		float left_eyecenter_mm_z;
-		float right_eyecenter_mm_x;
-		float right_eyecenter_mm_y;
-		float right_eyecenter_mm_z;
-
-        float left_gazeorigin_mm_x;
-		float left_gazeorigin_mm_y;
-		float left_gazeorigin_mm_z;
-		float right_gazeorigin_mm_x;
-		float right_gazeorigin_mm_y;
-		float right_gazeorigin_mm_z;
-
-        float left_gazepoint_mm_x;
-		float left_gazepoint_mm_y;
-		float left_gazepoint_mm_z;
-		float right_gazepoint_mm_x;
-		float right_gazepoint_mm_y;
-		float right_gazepoint_mm_z;
-
-        float left_gazepoint_normed_x;
-		float left_gazepoint_normed_y;
-		float right_gazepoint_normed_x;
-		float right_gazepoint_normed_y;
-
-        int combined_gazepoint_x;
-        int combined_gazepoint_y;
-	    } gaze_data_t;
-
-typedef struct gaze_point {
-        int n_samples;
-        int x_coord;
-        int y_coord;
-	    } gaze_point_t;
 
 typedef boost::circular_buffer<shared_ptr<gaze_data_t>> circ_buff;
 
@@ -117,7 +69,8 @@ class EyeTrackerGaze : public EyeTracker {
         int disp_y_from_normed_y(float);
         gaze_point_t* get_gazepoint();
 
-        EyeTrackerGaze(float, float, int, int, int, int, int, const char*, const char*);
+        EyeTrackerGaze(
+            float, float, int, int, int, int, int, const char*, const char*);
         ~EyeTrackerGaze();
 
     protected:
@@ -228,10 +181,6 @@ EyeTrackerGaze::EyeTrackerGaze(float disp_width_mm,
 
 // Destructor
 EyeTrackerGaze::~EyeTrackerGaze() {
-    if (m_use_ml) {
-        // TODO: delete(m_x_ml, m_y_ml);
-    }
-
     XUnmapWindow(m_disp, m_overlay);
     XFlush(m_disp);
     XCloseDisplay(m_disp);
@@ -424,46 +373,23 @@ gaze_point_t* EyeTrackerGaze::get_gazepoint() {
 
 // Sets or updates the on-screen gaze marker position.
 void EyeTrackerGaze::set_gaze_marker(shared_ptr<gaze_data_t> cgd) {
+    long int x = 0;
+    long int y = 0;
+
     // Iff using ml to increase acc, use predicted coords
+    // TODO: Refactor to use a single predict function call
     if (m_use_ml) {
-        long int x = m_x_ml->predict(
-            cgd->left_eyeposition_normed_x,
-            cgd->left_eyeposition_normed_y,
-            cgd->left_eyeposition_normed_z,
-            cgd->right_eyeposition_normed_x,
-            cgd->right_eyeposition_normed_y,
-            cgd->right_eyeposition_normed_z,
-            cgd->combined_gazepoint_x,
-            cgd->combined_gazepoint_y
-        );
-        long int y = m_y_ml->predict(
-            cgd->left_eyeposition_normed_x,
-            cgd->left_eyeposition_normed_y,
-            cgd->left_eyeposition_normed_z,
-            cgd->right_eyeposition_normed_x,
-            cgd->right_eyeposition_normed_y,
-            cgd->right_eyeposition_normed_z,
-            cgd->combined_gazepoint_x,
-            cgd->combined_gazepoint_y
-        );
+        x = m_x_ml->predict(cgd);
+        y = m_y_ml->predict(cgd);
+    } 
 
-        XMoveWindow(
-            m_disp,
-            m_overlay, 
-            x,
-            y
-        ); 
-
-    // Else use coords as given
-    } else {
-        XMoveWindow(
-            m_disp,
-            m_overlay, 
-            cgd->combined_gazepoint_x,
-            cgd->combined_gazepoint_y
-        );
+    // Else use coords as given by the device
+    else {
+        x = cgd->combined_gazepoint_x;
+        y = cgd->combined_gazepoint_y;
     }
 
+    XMoveWindow(m_disp, m_overlay, x, y); 
     XFlush(m_disp);
 }
 
