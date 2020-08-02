@@ -371,28 +371,30 @@ gaze_point_t* EyeTrackerGaze::get_gazepoint_ml(gaze_point_t *gp) {
     return gp;
 }
 
-// Sets or updates the on-screen gaze marker position.
+// Sets or updates the on-screen gaze marker (or cursor) position.
 void EyeTrackerGaze::set_gaze_marker(shared_ptr<gaze_data_t> cgd) {
-    int x = 0;
-    int y = 0;
 
-    // Iff using ml acc assist, set from ml assisted-cords
+    // Iff using ml acc assist, set from ml assisted-cords and update cursor pos
     if (m_use_ml) {
         gaze_point_t *gp = new(gaze_point_t);
         get_gazepoint_ml(gp);
-        // gaze_point_t *gp = get_gazepoint_ml();
-        x = gp->x_coord;
-        y = gp->y_coord;
+        XWarpPointer(m_disp,
+                     None,
+                     m_overlay,
+                     0, 0, 0, 0,
+                     gp->x_coord,
+                     gp->y_coord);
         delete gp;
     } 
 
-    // Else use coords as given by the device
+    // Else use coords as given by the device and update marker pos
     else {
-        x = cgd->combined_gazepoint_x;
-        y = cgd->combined_gazepoint_y;
+        XMoveWindow(m_disp,
+                    m_overlay,
+                    cgd->combined_gazepoint_x,
+                    cgd->combined_gazepoint_y); 
     }
 
-    XMoveWindow(m_disp, m_overlay, x, y); 
     XFlush(m_disp);
 }
 
