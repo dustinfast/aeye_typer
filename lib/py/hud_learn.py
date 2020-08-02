@@ -160,6 +160,9 @@ class HUDTrainGazeAccAssist(HUDLearn):
     def __init__(self):
         """ Module for training the gaze-accuracy assistance models from
             the data collected by HudDataCollectGazeAccAssist.
+            When data collection is running, gaze info is logged and mouse-
+            click coords are recorded. During this process, the user is
+            assumed to be gazing at their mouse cursor when clicking.
         """
         super().__init__(None, None)
 
