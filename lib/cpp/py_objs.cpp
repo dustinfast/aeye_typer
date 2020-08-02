@@ -20,7 +20,7 @@ PyObject *get_pyclass(const char *name);
 // same name.
 class EyeTrackerCoordPredict {
     public:
-        long int predict(shared_ptr<gaze_data_t> gaze_data);
+        long int predict(gaze_data *gaze_data);
         EyeTrackerCoordPredict(const char *model_path);
         ~EyeTrackerCoordPredict();
 
@@ -77,7 +77,7 @@ EyeTrackerCoordPredict::~EyeTrackerCoordPredict() {
     Py_Finalize();
 }
 
-long int EyeTrackerCoordPredict::predict(shared_ptr<gaze_data_t> gaze_data) {
+long int EyeTrackerCoordPredict::predict(gaze_data *gaze_data) {
         // Acquire gill lock iff needed
         if (!PyGILState_Check())
             m_py_gilstate = PyGILState_Ensure();
@@ -86,7 +86,7 @@ long int EyeTrackerCoordPredict::predict(shared_ptr<gaze_data_t> gaze_data) {
         PyObject *p_result = PyObject_CallMethod(
             m_py_self, 
             "predict", 
-            "(dddddddddddddddddd)",
+            "(dddddddddddddddddddddddd)",
             gaze_data->left_pupildiameter_mm,
             gaze_data->right_pupildiameter_mm,
 
@@ -96,6 +96,13 @@ long int EyeTrackerCoordPredict::predict(shared_ptr<gaze_data_t> gaze_data) {
             gaze_data->right_eyeposition_normed_x,
             gaze_data->right_eyeposition_normed_y,
             gaze_data->right_eyeposition_normed_z,
+
+            gaze_data->left_eyecenter_mm_x,
+            gaze_data->left_eyecenter_mm_y,
+            gaze_data->left_eyecenter_mm_z,
+            gaze_data->right_eyecenter_mm_x,
+            gaze_data->right_eyecenter_mm_y,
+            gaze_data->right_eyecenter_mm_z,
 
             gaze_data->left_gazeorigin_mm_x,
             gaze_data->left_gazeorigin_mm_y,

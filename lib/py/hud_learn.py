@@ -32,7 +32,7 @@ del _conf
 DATA_SESSION_NAME = '2020-07-30'
 RAND_SEED = 1234
 
-# Data file col names, w/ prefixes X_ and y_ denoting col is feature/label 
+# Data col names, w/ prefixes X_ and y_ denoting col is feature/label 
 MOUSELOG_COL_NAMES = [
     'timestamp',
     'btn_id',
@@ -52,12 +52,12 @@ GAZELOG_COL_NAMES = [
     'X_right_eyeposition_normed_y',
     'X_right_eyeposition_normed_z',
 
-    '_left_eyecenter_mm_x',
-    '_left_eyecenter_mm_y',
-    '_left_eyecenter_mm_z',
-    '_right_eyecenter_mm_x',
-    '_right_eyecenter_mm_y',
-    '_right_eyecenter_mm_z',
+    'X_left_eyecenter_mm_x',
+    'X_left_eyecenter_mm_y',
+    'X_left_eyecenter_mm_z',
+    'X_right_eyecenter_mm_x',
+    'X_right_eyecenter_mm_y',
+    'X_right_eyecenter_mm_z',
 
     'X_left_gazeorigin_mm_x',
     'X_left_gazeorigin_mm_y',
@@ -83,24 +83,17 @@ GAZELOG_COL_NAMES = [
 
 
 class HUDLearn(object):
-    def __init__(self, hud_state, mode):
+    def __init__(self, hud_state=None):
         """ An abstraction of the HUD's machine learning element for handling
             data collection, training, and inference.
                 
-            :param hud_state: (hud.) The HUD's state obj.
-            :param mode: (str) Either 'basic' or 'infer'.
+            :param hud_state: (lib.py.hud._HUDState) The HUD's state obj.
         """
         self.hud_state = hud_state
 
         self._logpath = self._log_path()
         self.model_x_path = self._model_path('x')
         self.model_y_path = self._model_path('y')
-
-        # Determine handler to use, based on the given mode
-        self.handle_event = {
-            'basic'     : self._null,
-            'infer'     : self._null
-        }.get(mode, self._null)
 
     def _log_path(self, suffix=None):
         """ Returns the log file path after ensuring it exists.
@@ -123,11 +116,6 @@ class HUDLearn(object):
 
         return str(Path(logdir, f'{DATA_SESSION_NAME}_{suffix}.pkl'))
 
-    def _null(self, **kwargs):
-        """ Dummy function, for 'basic' mode compatibility.
-        """
-        pass
-
 
 class HUDDataGazeAccAssist(HUDLearn):
     def __init__(self, verbose=False):
@@ -135,7 +123,7 @@ class HUDDataGazeAccAssist(HUDLearn):
             Collection occurs as the user clicks around the screen while gazing
             at the on-screen location of each click.
         """
-        super().__init__(None, None)
+        super().__init__()
         self._verbose = verbose
 
     def collect(self):
@@ -164,7 +152,7 @@ class HUDTrainGazeAccAssist(HUDLearn):
             click coords are recorded. During this process, the user is
             assumed to be gazing at their mouse cursor when clicking.
         """
-        super().__init__(None, None)
+        super().__init__()
 
     def run(self):
         self._train_gaze_acc()
@@ -215,26 +203,22 @@ class HUDTrainGazeAccAssist(HUDLearn):
             account for the user failing to  always look at the cursor when
             clicking.
         """
-        print('Training gaze accuracy assist...')
+        print('Training...')
         
         # TODO: If model files already exist, prompt for overwrite
 
         # Read in training data
         df = self._get_training_df()
         
-        # Drop all rows that don't have labels (i.e. click coords)
+        # Drop all rows that don't have labels
         df = df.dropna().reset_index(drop=True)
 
         # Drop rows w/unreasonably distant labels
-        df = df[
-            (
-                ((df['_combined_gazepoint_x'] - df['y_click_coord_x']).abs(
-                    ) < dist_filter
-                ) &
-                ((df['_combined_gazepoint_y'] - df['y_click_coord_y']).abs(
-                    ) < dist_filter)
-            )
-        ]
+        df = df[(
+            ((df['_combined_gazepoint_x'] - df['y_click_coord_x']).abs(
+                ) < dist_filter) &
+            ((df['_combined_gazepoint_y'] - df['y_click_coord_y']).abs(
+                ) < dist_filter))]
 
         # Extract X, as [[feature_1, feature_2, ...], ...]
         _X = df[[c for c in df.columns if c.startswith('X_')]].values
@@ -246,7 +230,7 @@ class HUDTrainGazeAccAssist(HUDLearn):
         X_train, X_test, y_train, y_test = train_test_split(
             _X, _y, train_size=split, random_state=RAND_SEED)
 
-        # Scale training set, then scale test set from its scaler
+        # Scale training set, then scale the test set from trainng set scaler
         scaler = MinMaxScaler()
         scaler.fit(X_train)
         X_train = scaler.transform(X_train)
@@ -258,10 +242,10 @@ class HUDTrainGazeAccAssist(HUDLearn):
         y_test_x_coord, y_test_y_coord = (
             y_test[:, 0].squeeze(), y_test[:, 1].squeeze())
 
-        # Train two seperate models, one for the x coord, and one for y
-        model_x = SVR(kernel='rbf', C=150, epsilon=0.05).fit(
+        # Train two seperate models; one for the x coord, and one for the y
+        model_x = SVR(kernel='rbf', C=750, epsilon=.01).fit(
             X_train, y_train_x_coord)
-        model_y = SVR(kernel='rbf', C=150, epsilon=0.05).fit(
+        model_y = SVR(kernel='rbf', C=750, epsilon=.01).fit(
             X_train, y_train_y_coord)
 
         # Validate both models

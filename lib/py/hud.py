@@ -187,7 +187,7 @@ class _HUDState(object):
         self._net_wm_name = self._disp.intern_atom('_NET_WM_NAME')
 
         # Init keyboard/mouse/ml controllers
-        self._learn = HUDLearn(self, mode)
+        self._learn = HUDLearn(self)
         self._mouse = Mouse.Controller()
         self._keyboard = Keyboard.Controller()
 
@@ -336,12 +336,6 @@ class _HUDState(object):
 
         if not payload_type_handler:
             raise NotImplementedError(f'Payload type: {payload_type}')
-
-        # Perform AI specific actions
-        self._learn.handle_event(gaze=self._gazetracker,
-                                 btn=btn, 
-                                 payload=payload,
-                                 payload_type=payload_type)
 
         # Handle the btns payload
         payload_type_handler(btn=btn, 

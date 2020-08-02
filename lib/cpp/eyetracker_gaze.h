@@ -29,7 +29,7 @@ using namespace std;
 // Defs
 
 #define GAZE_MARKER_WIDTH 3
-#define GAZE_MARKER_HEIGHT 20
+#define GAZE_MARKER_HEIGHT 10
 #define GAZE_MARKER_BORDER 0
 #define GAZE_MARKER_BORDER 0
 #define MOUNT_OFFSET_MM 0.0
@@ -67,7 +67,7 @@ class EyeTrackerGaze : public EyeTracker {
         int gaze_data_sz();
         int disp_x_from_normed_x(float);
         int disp_y_from_normed_y(float);
-        gaze_point_t* get_gazepoint();
+        gaze_point_t* get_gazepoint_ml(gaze_point_t *gp);
 
         EyeTrackerGaze(
             float, float, int, int, int, int, int, const char*, const char*);
@@ -338,8 +338,8 @@ int EyeTrackerGaze::disp_y_from_normed_y(float y_normed) {
     return y_normed * m_disp_height;
 }
 
-// Returns the current smoothed display gazepoint.
-gaze_point_t* EyeTrackerGaze::get_gazepoint() {
+// Returns the current gazepoint, smoothed over some number of ml preds
+gaze_point_t* EyeTrackerGaze::get_gazepoint_ml(gaze_point_t *gp) {
     int avg_x = 0;
     int avg_y = 0;
     int buff_sz = 0;
@@ -352,8 +352,8 @@ gaze_point_t* EyeTrackerGaze::get_gazepoint() {
     
     for (int j = buff_sz - n_samples; j < buff_sz; j++)  {
         auto cgd = *m_gaze_buff->at(j); 
-        avg_x += cgd.combined_gazepoint_x;
-        avg_y += cgd.combined_gazepoint_y;
+        avg_x += m_x_ml->predict(&cgd);
+        avg_y += m_y_ml->predict(&cgd);
     }
 
     m_async_mutex->unlock();
@@ -363,7 +363,7 @@ gaze_point_t* EyeTrackerGaze::get_gazepoint() {
         avg_y = avg_y / n_samples; 
     }
 
-    gaze_point_t *gp = new(gaze_point_t);
+    // gaze_point_t *gp = new(gaze_point_t);
     gp->n_samples = n_samples;
     gp->x_coord = avg_x;
     gp->y_coord = avg_y;
@@ -373,14 +373,17 @@ gaze_point_t* EyeTrackerGaze::get_gazepoint() {
 
 // Sets or updates the on-screen gaze marker position.
 void EyeTrackerGaze::set_gaze_marker(shared_ptr<gaze_data_t> cgd) {
-    long int x = 0;
-    long int y = 0;
+    int x = 0;
+    int y = 0;
 
-    // Iff using ml to increase acc, use predicted coords
-    // TODO: Refactor to use a single predict function call
+    // Iff using ml acc assist, set from ml assisted-cords
     if (m_use_ml) {
-        x = m_x_ml->predict(cgd);
-        y = m_y_ml->predict(cgd);
+        gaze_point_t *gp = new(gaze_point_t);
+        get_gazepoint_ml(gp);
+        // gaze_point_t *gp = get_gazepoint_ml();
+        x = gp->x_coord;
+        y = gp->y_coord;
+        delete gp;
     } 
 
     // Else use coords as given by the device
@@ -460,7 +463,9 @@ extern "C" {
     }
 
     gaze_point_t* eye_gaze_point(EyeTrackerGaze* gaze) {
-        return gaze->get_gazepoint();
+        // WARN: User is responsible for calling eye_gaze_point_free
+        gaze_point_t *gp = new(gaze_point_t);
+        return gaze->get_gazepoint_ml(gp);
     }
 
     void eye_gaze_point_free(gaze_point_t *gp) {
@@ -601,7 +606,7 @@ static void cb_gaze_data(tobii_gaze_data_t const *data, void *obj) {
         gaze->m_mark_count = 0;
     }
     else {
-        // warn("Gaze point invalid. Is user present?\n"); // for debug
+        // Gaze point invalid. Is user present?
         gaze->m_mark_count = 0;
     }
 }
