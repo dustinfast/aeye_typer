@@ -46,7 +46,7 @@ EyeTrackerCoordPredict::EyeTrackerCoordPredict(const char *model_path) {
 
     // Import py module and get class attribute
     // TODO: The module is pyx, which is fine when running aeye_typer from py,
-    // But import of the module will file when instantiated from c++.. Likely
+    // But import of the module will fail when instantiated from c++.. Likely
     // need to do a cython setup file to fix.
     PyObject *p_module = PyImport_ImportModule("eyetracker_coord_predict");
     assert(p_module != NULL);
