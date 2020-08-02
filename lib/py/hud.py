@@ -100,7 +100,6 @@ class HUD(tk.Tk):
                               relief=SUNKEN)
 
         # TODO: Denote currently focused window's title
-        # FIXME: If hud is clicked but outside a btn, focus is captured.
         # TODO: Helper denoting last x keystrokes
 
         # Setup child frame for hosting the panel frames
@@ -122,7 +121,8 @@ class HUD(tk.Tk):
 
     def run(self):
         """ Brings up the HUD display. Should be used instead of tk.mainloop 
-            because sticky attribute must be handled first. Blocks.
+            because sticky attribute must be handled first. Blocks until user
+            closes the HUD via quit btn.
         """
         # Start the managers
         self.state.start()
@@ -389,25 +389,23 @@ class _HUDState(object):
 
         return self._async_proc
 
-    def do_mouse_press(self, x, y, button=None):
+    def do_mouse_press(self, button=Mouse.Button.left):
         """ Performs a mouse btn press at the given on-screen cooridnates. The
             mouse cursor is moved to that location in the process.
 
             :param button: (pynput.mouse.Button): The mouse-button to press. If
             None, the left mouse button is assumed.
         """
-        self._mouse.position = (x, y)
-        self._mouse.press(Mouse.Button.left)
+        self._mouse.press(button)
 
-    def do_mouse_release(self, x, y, button=None):
+    def do_mouse_release(self, button=Mouse.Button.left):
         """ Performs a mouse btn release at the given on-screen coords. The
             mouse cursor is moved to that location in the process.
 
             :param button: (pynput.mouse.Button): The mouse-button to press. If
             None, the left mouse button is assumed.
         """
-        self._mouse.position = (x, y)
-        self._mouse.release(Mouse.Button.left)
+        self._mouse.release(button)
 
     def set_hud_sticky(self):
         """ Applies the "show on all workspaces" attribute to the HUD window.
@@ -522,7 +520,7 @@ class _HUDState(object):
                 # Update btn state according to new toggle state
                 self.hud.set_btn_viz_toggle(sender, toggle_on=toggle_down)
                 if modifier == self._keyboard._Key.shift:
-                    self.hud.active_panel.set_btn_text(use_alt_text=toggle_down)
+                    self.hud.keyb_panel.set_btn_text(use_alt_text=toggle_down)
 
             # TODO: Ensure graceful handle of alt + tab, etc.
 

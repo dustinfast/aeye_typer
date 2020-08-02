@@ -4,8 +4,6 @@
 __author__ = 'Dustin Fast <dustin.fast@outlook.com>'
 
 import json
-from collections import OrderedDict
-
 import tkinter as tk
 from tkinter import ttk
 

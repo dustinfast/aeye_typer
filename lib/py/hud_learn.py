@@ -194,13 +194,13 @@ class HUDTrainGazeAccAssist(HUDLearn):
 
         return df
 
-    def _train_gaze_acc(self, split=0.80, dist_filter=140):
+    def _train_gaze_acc(self, split=0.80, dist_filter=130):
         """ Gaze accuracy training handler.
 
             :param split: (float) train/test split ratio.
             :param dist_filter: (int) Distance metric by which unreasonable
             training data rows are filtered. This is a necessary filter to 
-            account for the user failing to  always look at the cursor when
+            account for the user failing to always look at the cursor when
             clicking.
         """
         print('Training...')
