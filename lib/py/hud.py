@@ -101,6 +101,9 @@ class HUD(tk.Tk):
 
         # TODO: Denote currently focused window's title
         # TODO: Helper denoting last x keystrokes
+        # TODO: Helper denoting user pos
+        # TODO: Ensure graceful handle of alt + tab, etc.
+
 
         # Setup child frame for hosting the panel frames
         self._host_frame = ttk.Frame(
@@ -192,6 +195,7 @@ class _HUDState(object):
         self._keyboard = Keyboard.Controller()
 
         # Init gazetracking module
+        self._cursor_captured = False
         self._gazetracker = EyeTrackerGaze(
             self._learn.model_x_path if mode == 'infer' else None,
             self._learn.model_y_path if mode == 'infer' else None)
@@ -319,7 +323,10 @@ class _HUDState(object):
         """
         # Infer the correct handler to call
         payload_type_handler = {
-            # TODO: if payload_type = 'mouse_toggle':
+            # TODO: 'mouse_toggle': 
+
+            # Toggle cursor capture on/off
+            'cursor_cap_toggle': self.payload_cursor_cap_toggle,
 
             # Close the HUD
             'hud_quit': self.hud._quit,
@@ -522,7 +529,16 @@ class _HUDState(object):
                 if modifier == self._keyboard._Key.shift:
                     self.hud.keyb_panel.set_btn_text(use_alt_text=toggle_down)
 
-            # TODO: Ensure graceful handle of alt + tab, etc.
+    def payload_cursor_cap_toggle(self, **kwargs):
+        """ Toggles cursor capture on/off.
+
+            :param kwargs: Arg 'btn' is expected.
+        """
+        sender = kwargs['btn']          # (HUDPanel.HUDButton) Payload sender
+        
+        self._cursor_captured = not self._cursor_captured
+        self.hud.set_btn_viz_toggle(sender, toggle_on=self._cursor_captured)
+        self._gazetracker.set_cursor_cap(self._cursor_captured)
 
     def payload_run_external(self, **kwargs):
         """ Runs the external cmd given by the payload.
