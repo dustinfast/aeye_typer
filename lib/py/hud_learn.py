@@ -29,7 +29,7 @@ MOUSE_TIME_IPLIER = _conf['MOUSE_TIME_CONVERT_IPLIER']
 del _conf
 
 # Training data/session attributes
-DATA_SESSION_NAME = '2020-07-30'
+DATA_SESSION_NAME = 'sm_scr'
 RAND_SEED = 1234
 
 # Data col names, w/ prefixes X_ and y_ denoting col is feature/label 
@@ -194,7 +194,7 @@ class HUDTrainGazeAccAssist(HUDLearn):
 
         return df
 
-    def _train_gaze_acc(self, split=0.80, dist_filter=130):
+    def _train_gaze_acc(self, split=0.80, dist_filter=125):
         """ Gaze accuracy training handler.
 
             :param split: (float) train/test split ratio.
@@ -230,7 +230,7 @@ class HUDTrainGazeAccAssist(HUDLearn):
         X_train, X_test, y_train, y_test = train_test_split(
             _X, _y, train_size=split, random_state=RAND_SEED)
 
-        # Scale training set, then scale the test set from trainng set scaler
+        # Scale training set, then scale the test set from training set scaler
         scaler = MinMaxScaler()
         scaler.fit(X_train)
         X_train = scaler.transform(X_train)

@@ -98,6 +98,10 @@ class EyeTrackerGaze(object):
         lib.eye_user_pos_guide_z.argtypes = [ctypes.c_void_p]
         lib.eye_user_pos_guide_z.restype = ctypes.c_float
 
+        # Set cursor capture
+        lib.eye_cursor_cap.argtypes = [ctypes.c_void_p, ctypes.c_int]
+        lib.eye_cursor_cap.restype = ctypes.c_void_p
+
         # Device calibration writer
         lib.eye_write_calibration.argtypes = [ctypes.c_void_p]
         lib.eye_write_calibration.restype = ctypes.c_void_p
@@ -194,6 +198,12 @@ class EyeTrackerGaze(object):
                 self._lib.eye_user_pos_guide_y(self._obj),
                 self._lib.eye_user_pos_guide_z(self._obj))
 
+    def set_cursor_cap(self, enabled=False):
+        """ Enables disables cursor capture for gaze-marking purposes.
+        """
+        self._ensure_device_opened()
+        self._lib.eye_cursor_cap(self._obj, enabled)
+
     def write_calibration(self):
         """ Writes the eyetracker device's calibration data to file.
         """
@@ -208,6 +218,7 @@ class EyeTrackerGaze(object):
 
         # If not exists OR if overwrite confirmed, write to file
         self._lib.eye_write_calibration(self._obj)
+        info('Calibration complete.')
 
     def gaze_coords(self):
         """ Returns the current gaze point in display coords.

@@ -59,12 +59,13 @@ class EyeTrackerGaze : public EyeTracker {
         int gaze_data_tocsv(const char*, int, boost::shared_ptr<char>);
         bool is_gaze_valid();
         void enque_gaze_data(shared_ptr<gaze_data_t>);
-        void set_gaze_marker(shared_ptr<gaze_data_t>);
         void print_gaze_data();
         int gaze_data_sz();
         int disp_x_from_normed_x(float);
         int disp_y_from_normed_y(float);
-        gaze_point_t* get_gazepoint_ml(gaze_point_t *gp);
+        gaze_point_t* get_gazepoint_smoothed(gaze_point_t *gp);
+        void set_gaze_marker(shared_ptr<gaze_data_t>);
+        void set_cursor_capture(bool);
 
         EyeTrackerGaze(
             float, float, int, int, int, int, int, const char*, const char*);
@@ -76,7 +77,7 @@ class EyeTrackerGaze : public EyeTracker {
         int m_disp_height;
         int m_smooth_over;
         bool m_use_ml;
-        // TODO: bool capture_cursor;
+        bool m_capture_cursor;
         shared_ptr<circ_buff> m_gaze_buff;
 
     private:
@@ -118,6 +119,7 @@ EyeTrackerGaze::EyeTrackerGaze(float disp_width_mm,
         m_pos_guide_x = 0;
         m_pos_guide_y = 0;
         m_pos_guide_z = 0;
+        m_capture_cursor = False;
         m_async_writer = NULL;
         m_async_streamer = NULL;
 
@@ -341,8 +343,9 @@ int EyeTrackerGaze::disp_y_from_normed_y(float y_normed) {
     return y_normed * m_disp_height;
 }
 
-// Returns the current gazepoint, smoothed over some number of ml preds
-gaze_point_t* EyeTrackerGaze::get_gazepoint_ml(gaze_point_t *gp) {
+// Returns the current gazepoint, smoothed over some number of samples,
+// possibly predicted from ml.
+gaze_point_t* EyeTrackerGaze::get_gazepoint_smoothed(gaze_point_t *gp) {
     int avg_x = 0;
     int avg_y = 0;
     int buff_sz = 0;
@@ -355,8 +358,17 @@ gaze_point_t* EyeTrackerGaze::get_gazepoint_ml(gaze_point_t *gp) {
     
     for (int j = buff_sz - n_samples; j < buff_sz; j++)  {
         auto cgd = *m_gaze_buff->at(j); 
-        avg_x += m_x_ml->predict(&cgd);
-        avg_y += m_y_ml->predict(&cgd);
+
+        // Iff using ml acc assist, smooth over ml assisted-cords
+        if (m_use_ml) {
+            avg_x += m_x_ml->predict(&cgd);
+            avg_y += m_y_ml->predict(&cgd);
+        }
+        // Else smooth from device-given coords
+        else {
+            avg_x += cgd.combined_gazepoint_x;
+            avg_y += cgd.combined_gazepoint_y;
+        }
     }
 
     m_async_mutex->unlock();
@@ -366,7 +378,7 @@ gaze_point_t* EyeTrackerGaze::get_gazepoint_ml(gaze_point_t *gp) {
         avg_y = avg_y / n_samples; 
     }
 
-    // gaze_point_t *gp = new(gaze_point_t);
+    // Update the user provided struct
     gp->n_samples = n_samples;
     gp->x_coord = avg_x;
     gp->y_coord = avg_y;
@@ -376,29 +388,36 @@ gaze_point_t* EyeTrackerGaze::get_gazepoint_ml(gaze_point_t *gp) {
 
 // Sets or updates the on-screen gaze marker (or cursor) position.
 void EyeTrackerGaze::set_gaze_marker(shared_ptr<gaze_data_t> cgd) {
+    gaze_point_t *gp = new(gaze_point_t);
+    get_gazepoint_smoothed(gp);
 
-    // Iff using ml acc assist, set from ml assisted-cords and update cursor pos
-    if (m_use_ml) {
-        gaze_point_t *gp = new(gaze_point_t);
-        get_gazepoint_ml(gp);
+    // Update gaze marker, either with w/ cursor cap or xwin overlay
+    if (m_capture_cursor) {
         XWarpPointer(m_disp,
                      None,
                      m_overlay,
                      0, 0, 0, 0,
                      gp->x_coord,
                      gp->y_coord);
-        delete gp;
-    } 
-
-    // Else use coords as given by the device and update marker pos
-    else {
+    } else {
         XMoveWindow(m_disp,
                     m_overlay,
-                    cgd->combined_gazepoint_x,
-                    cgd->combined_gazepoint_y); 
+                    gp->x_coord,
+                    gp->y_coord); 
     }
+    
+    delete gp;
 
     XFlush(m_disp);
+}
+
+// Enables/Disables marking of gaze by capturing cursor (vs. xwin marker)
+void EyeTrackerGaze::set_cursor_capture(bool enabled) {
+    // Enable/Disabled
+    m_capture_cursor = enabled;
+
+    // Hide any active markers
+    XMoveWindow(m_disp, m_overlay, -10, -10);
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -463,14 +482,18 @@ extern "C" {
         return gaze->m_pos_guide_z;
     }
 
+    void eye_cursor_cap(EyeTrackerGaze* gaze, bool enabled) {
+        gaze->set_cursor_capture(enabled);
+    }
+
     void eye_write_calibration(EyeTrackerGaze* gaze) {
         gaze->calibration_write();
     }
 
     gaze_point_t* eye_gaze_point(EyeTrackerGaze* gaze) {
-        // WARN: User is responsible for calling eye_gaze_point_free
+        // WARN: User is responsible for calling eye_gaze_point_free(gp)
         gaze_point_t *gp = new(gaze_point_t);
-        return gaze->get_gazepoint_ml(gp);
+        return gaze->get_gazepoint_smoothed(gp);
     }
 
     void eye_gaze_point_free(gaze_point_t *gp) {
