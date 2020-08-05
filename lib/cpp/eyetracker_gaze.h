@@ -39,18 +39,15 @@ typedef boost::circular_buffer<shared_ptr<gaze_data_t>> circ_buff;
 void do_gazestream_subscribe(tobii_device_t*, void*);
 static void cb_gaze_data(tobii_gaze_data_t const*, void*);
 XColor createXColorFromRGBA(void*, short, short, short, short);
-void cb_user_pos_guide(tobii_user_position_guide_t const*, void*);
 
 /////////////////////////////////////////////////////////////////////////////
 // Class
 
+// TODO: Docstrings throughout
 class EyeTrackerGaze : public EyeTracker {
     public:
         int m_mark_freq;
         int m_mark_count;
-        int m_pos_guide_update_freq;
-        int m_pos_guide_count;
-        int m_smooth_over;
         float m_pos_guide_x;
         float m_pos_guide_y;
         float m_pos_guide_z;
@@ -74,10 +71,12 @@ class EyeTrackerGaze : public EyeTracker {
         ~EyeTrackerGaze();
 
     protected:
+        int m_buff_sz;
         int m_disp_width;
         int m_disp_height;
-        int m_buff_sz;
+        int m_smooth_over;
         bool m_use_ml;
+        // TODO: bool capture_cursor;
         shared_ptr<circ_buff> m_gaze_buff;
 
     private:
@@ -88,7 +87,6 @@ class EyeTrackerGaze : public EyeTracker {
 };
 
 // Default constructor
-// TODO: Param docstring
 EyeTrackerGaze::EyeTrackerGaze(float disp_width_mm, 
                                float disp_height_mm,
                                int disp_width_px,
@@ -102,7 +100,6 @@ EyeTrackerGaze::EyeTrackerGaze(float disp_width_mm,
         m_disp_width = disp_width_px;
         m_disp_height = disp_height_px;
         m_mark_freq = mark_freq;
-        m_pos_guide_update_freq = mark_freq * 2;
         m_buff_sz = buff_sz;
         m_smooth_over = smooth_over;
 
@@ -118,7 +115,6 @@ EyeTrackerGaze::EyeTrackerGaze(float disp_width_mm,
 
         // Set default tracker states
         m_mark_count = 0;
-        m_pos_guide_count = 0;
         m_pos_guide_x = 0;
         m_pos_guide_y = 0;
         m_pos_guide_z = 0;
@@ -299,11 +295,18 @@ int EyeTrackerGaze::gaze_data_tocsv(
     return sample_count;
 }
 
-// Enques gaze data into the circular buffer.
+// Enques gaze data into the circular buffer as well as updates user pos members
 void EyeTrackerGaze::enque_gaze_data(shared_ptr<gaze_data_t> cgd) {
     m_async_mutex->lock();
     m_gaze_buff->push_back(cgd);
     m_async_mutex->unlock();
+
+    m_pos_guide_x = (
+        cgd->left_eyeposition_normed_x + cgd->right_eyeposition_normed_x) / 2;
+    m_pos_guide_y = (
+        cgd->left_eyeposition_normed_y + cgd->right_eyeposition_normed_y) / 2;
+    m_pos_guide_z = (
+        cgd->left_eyeposition_normed_z + cgd->right_eyeposition_normed_z) / 2;
 }
 
 // Prints the coord contents of the circular buffer. For debug convenience.
@@ -486,10 +489,6 @@ void do_gazestream_subscribe(tobii_device_t *device, void *gaze) {
     assert(tobii_gaze_data_subscribe(device, cb_gaze_data, gaze
     ) == NO_ERROR);
 
-    assert(tobii_user_position_guide_subscribe(device, cb_user_pos_guide, gaze
-    ) == NO_ERROR);
-        
-
     try {
         while (True) {
             assert(tobii_wait_for_callbacks(1, &device) == NO_ERROR);
@@ -498,7 +497,6 @@ void do_gazestream_subscribe(tobii_device_t *device, void *gaze) {
         }
     } catch (boost::thread_interrupted&) {}
 
-    assert(tobii_user_position_guide_unsubscribe(device) == NO_ERROR);
     assert(tobii_gaze_data_unsubscribe(device) == NO_ERROR);
 }
 
@@ -613,38 +611,6 @@ static void cb_gaze_data(tobii_gaze_data_t const *data, void *obj) {
     }
 }
 
-void cb_user_pos_guide(tobii_user_position_guide_t const* data, void* obj) {
-    auto *gaze = static_cast<EyeTrackerGaze*>(obj);
-
-    if(data->left_position_validity == TOBII_VALIDITY_VALID == 
-        data->right_position_validity) {
-            // Update gaze's user position guide every update_freq callbacks
-            gaze->m_pos_guide_count++;
-            if (gaze->m_pos_guide_count % gaze->m_pos_guide_update_freq != 0)
-                return;
-
-            gaze->m_pos_guide_x = (data->left_position_normalized_xyz[0] + 
-                data->right_position_normalized_xyz[0]) / 2;
-            gaze->m_pos_guide_y = (data->left_position_normalized_xyz[1] + 
-                data->right_position_normalized_xyz[1]) / 2;
-            gaze->m_pos_guide_z = (data->left_position_normalized_xyz[2] + 
-                data->right_position_normalized_xyz[2]) / 2;
-            gaze->m_pos_guide_count = 0;
-
-            // printf(
-            //     "%f - %f - %f\n", 
-            //     gaze->m_pos_guide_x, 
-            //     gaze->m_pos_guide_y, 
-            //     gaze->m_pos_guide_z
-            // );  // Debug
-
-    } else {
-        gaze->m_pos_guide_x = 0;
-        gaze->m_pos_guide_y = 0;
-        gaze->m_pos_guide_z = 0;
-        gaze->m_pos_guide_count = 0;
-    }
-}
 
 // Helper for creating an XColor for the gaze display
 // Adapted from gist.github.com/ericek111/774a1661be69387de846f5f5a5977a46
