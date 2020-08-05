@@ -64,7 +64,7 @@ ASYNC_STIME = .005
 
 
 class HUD(tk.Tk):
-    __valid_modes = ['basic', 'infer']  # TODO: Convert to boolean infer_mode
+    __valid_modes = ['basic', 'infer']  # TODO: Add btns for mode toggle + -d
 
     def __init__(self, mode='basic'):
         """ An abstraction of the heads-up display. The HUD contains panels,
@@ -102,8 +102,7 @@ class HUD(tk.Tk):
         # TODO: Denote currently focused window's title
         # TODO: Helper denoting last x keystrokes
         # TODO: Helper denoting user pos
-        # TODO: Ensure graceful handle of alt + tab, etc.
-
+        # FIXME: Alt + tab requires HOLD
 
         # Setup child frame for hosting the panel frames
         self._host_frame = ttk.Frame(
