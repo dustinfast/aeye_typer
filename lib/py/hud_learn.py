@@ -208,7 +208,22 @@ class HUDTrainGazeAccAssist(HUDLearn):
         # TODO: If model files already exist, prompt for overwrite
 
         # TODO: ANN model?
-        # TODO: Random Over/Under sampling?
+        # TODO: Random Over/Under sampling w:
+        # from imblearn.over_sampling import RandomOverSampler
+        # if upsample:
+        #         ros = RandomOverSampler(random_state=rand_seed)
+        #         X_train, y_train = ros.fit_resample(X_train, y_train)
+                
+        #         # Echo upsampled training set class counts iff verbose
+        #         if verbose:
+        #             if ratio > 0:
+        #                 print('Training set class counts, post-upsample (%s rows):' % 
+        #                     len(y_train))
+        #             else: 
+        #                 print('Class counts, post-upsample (%s rows):' %
+        #                     len(y_train))
+        #             data.binary_class_counts(y_train, verbose=True)
+        #             print('')
 
         # Read in training data
         df = self._get_training_df()
