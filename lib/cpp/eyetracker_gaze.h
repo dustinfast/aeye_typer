@@ -116,9 +116,9 @@ EyeTrackerGaze::EyeTrackerGaze(float disp_width_mm,
 
         // Set default tracker states
         m_mark_count = 0;
-        m_pos_guide_x = 0;
-        m_pos_guide_y = 0;
-        m_pos_guide_z = 0;
+        m_pos_guide_x = 0.0;
+        m_pos_guide_y = 0.0;
+        m_pos_guide_z = 0.0;
         m_capture_cursor = False;
         m_async_writer = NULL;
         m_async_streamer = NULL;
@@ -299,16 +299,21 @@ int EyeTrackerGaze::gaze_data_tocsv(
 
 // Enques gaze data into the circular buffer as well as updates user pos members
 void EyeTrackerGaze::enque_gaze_data(shared_ptr<gaze_data_t> cgd) {
+    // Engue the given gaze data
     m_async_mutex->lock();
     m_gaze_buff->push_back(cgd);
     m_async_mutex->unlock();
 
+    // Update user position guide from given gaze data
     m_pos_guide_x = (
         cgd->left_eyeposition_normed_x + cgd->right_eyeposition_normed_x) / 2;
     m_pos_guide_y = (
         cgd->left_eyeposition_normed_y + cgd->right_eyeposition_normed_y) / 2;
     m_pos_guide_z = (
         cgd->left_eyeposition_normed_z + cgd->right_eyeposition_normed_z) / 2;
+
+    // Make x guide scale intutively LR vs RL order
+    m_pos_guide_x = abs(1 - m_pos_guide_x);
 }
 
 // Prints the coord contents of the circular buffer. For debug convenience.
@@ -471,6 +476,7 @@ extern "C" {
     }
 
     float eye_user_pos_guide_x(EyeTrackerGaze* gaze) {
+        // printf("%f", gaze->m_pos_guide_x);
         return gaze->m_pos_guide_x;
     }
 

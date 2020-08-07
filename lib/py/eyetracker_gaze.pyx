@@ -190,7 +190,7 @@ class EyeTrackerGaze(object):
         self._ensure_device_opened()
         return self._lib.eye_gaze_data_sz(self._obj)
 
-    def user_pos_guide(self):
+    def user_position(self):
         """ Returns a tuple representing the user position guide, as (x, y, z).
         """
         self._ensure_device_opened()

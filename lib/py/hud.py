@@ -4,6 +4,7 @@
 __author__ = 'Dustin Fast <dustin.fast@outlook.com>'
 
 from time import sleep
+from threading import Thread
 import multiprocessing as mp
 from subprocess import Popen, PIPE
 
@@ -22,7 +23,7 @@ import pyximport; pyximport.install()  # Required for EyeTrackerGaze
 
 from lib.py.app import config, warn
 from lib.py.eyetracker_gaze import EyeTrackerGaze
-from lib.py.hud_panel import HUDKeyboardPanel, HUDPosGuidePanel
+from lib.py.hud_panel import HUDKeyboardPanel, HUDStatusPanel
 from lib.py.hud_learn import HUDLearn
 
 
@@ -53,18 +54,17 @@ VK_CAPSLOCK = 65509
 VK_NUMLOCK = 65407
 VK_SCROLLLOCK = 65300
 VK_MODLOCK = 65515
-VK_NEXTCLICKLOCK = 60005
-VK_CLICKREQ = 65516
 
 # Multiproccessing attribites
 SIGNAL_STOP = -1
 SIGNAL_REQUEST_ACTIVE_WINDOW = 0
 SIGNAL_REQUEST_PREV_ACTIVE_WINDOW = 1
-ASYNC_STIME = .005
+ASYNC_WIN_DELAY = .005
+ASYNC_POS_DELAY = .1
 
 
 class HUD(tk.Tk):
-    __valid_modes = ['basic', 'infer']  # TODO: Add btns for mode toggle + -d
+    __valid_modes = ['basic', 'infer']
 
     def __init__(self, mode='basic'):
         """ An abstraction of the heads-up display. The HUD contains panels,
@@ -77,7 +77,7 @@ class HUD(tk.Tk):
         super().__init__()
 
         self.keyb_panel = None      # Keyboard panel obj  
-        self.posg_panel = None      # User position guide panel obj
+        self.status_panel = None    # User position guide panel obj
 
         # Calculate HUD display coords, based on screen size
         x = (DISP_WIDTH/HUD_DISP_DIV_X) - (HUD_DISP_WIDTH/HUD_DISP_DIV_X)
@@ -101,10 +101,9 @@ class HUD(tk.Tk):
 
         # TODO: Denote currently focused window's title
         # TODO: Helper denoting last x keystrokes
-        # TODO: Helper denoting user pos
         # FIXME: Alt + tab requires HOLD
         # TODO: -d on/off btn (w no cap) OR -d w/gaze btn click via centroid
-        # TODO: New screen... lookup ideal size
+        # TODO: New monitor... lookup ideal size
 
         # Setup child frame for hosting the panel frames
         self._host_frame = ttk.Frame(
@@ -152,7 +151,7 @@ class HUD(tk.Tk):
                                            grid_col=0)
 
         # Init user-position guid ein the 1th col
-        self.posg_panel = HUDPosGuidePanel(parent_frame=self._host_frame,
+        self.status_panel = HUDStatusPanel(parent_frame=self._host_frame,
                                            hud=self,
                                            grid_col=1)
 
@@ -205,10 +204,13 @@ class _HUDState(object):
         self._keyboard_active_modifier_btns = []
         self._keyboard_hold_modifiers = False
 
-        # Multi-processing attributes
-        self._async_proc = None
-        self._async_signal_q = None
-        self._async_output_q = None
+        # Async (via multi-processing) win state watcher attributes
+        self._async_proc_win = None
+        self._async_signal_q_win = None
+        self._async_output_q_win = None
+
+        # Async (via threading) user pos watcher attributes
+        self._async_proc_pos = None
 
     @property
     def active_window(self):
@@ -216,12 +218,12 @@ class _HUDState(object):
         """
         # Request currently active window ID from async queue
         try:
-            self._async_signal_q.put_nowait(SIGNAL_REQUEST_ACTIVE_WINDOW)
+            self._async_signal_q_win.put_nowait(SIGNAL_REQUEST_ACTIVE_WINDOW)
         except AttributeError:
             warn('Requested win state but Win State Watcher not yet started.')
 
         # Receive ID from asyc queue and return its derived window obj
-        window_id = self._async_output_q.get()
+        window_id = self._async_output_q_win.get()
         return self._disp.create_resource_object('window', window_id)
 
     @property
@@ -230,16 +232,17 @@ class _HUDState(object):
         """
         # Request prev active window ID from async queue
         try:
-            self._async_signal_q.put_nowait(SIGNAL_REQUEST_PREV_ACTIVE_WINDOW)
+            self._async_signal_q_win.put_nowait(SIGNAL_REQUEST_PREV_ACTIVE_WINDOW)
         except AttributeError:
             warn('Requested win state but Win State Watcher not yet started.')
 
         # Receive ID from asyc queue and return its derived window obj
-        window_id = self._async_output_q.get()
+        window_id = self._async_output_q_win.get()
         return self._disp.create_resource_object('window', window_id)
 
     def _async_winstate_watcher(self, signal_queue, output_queue):
-        """ The asynchronous window state watcher.
+        """ The asynchronous window state watcher. Intended to be run as a
+            multiprocessing.Process.
         """
         # Init local XLib root/disp, for thread safety
         disp = Xlib.display.Display()
@@ -273,7 +276,7 @@ class _HUDState(object):
             try:
                 signal = signal_queue.get_nowait()
             except mp.queues.Empty:
-                sleep(ASYNC_STIME)
+                sleep(ASYNC_WIN_DELAY)
             else:
                 # Process stop signal, iff received
                 if signal == SIGNAL_STOP:
@@ -287,6 +290,14 @@ class _HUDState(object):
 
                 elif signal == SIGNAL_REQUEST_PREV_ACTIVE_WINDOW:
                     output_queue.put_nowait(prev_active_window_id)
+
+    def _async_userpos_watcher(self, gazetracker, hud_status_panel):
+        """ Update the user position guide every ASYNC_TIME seconds. Intended
+            to be run as a thread.
+        """
+        while True:
+            hud_status_panel.set_user_posguide(gazetracker.user_position())
+            sleep(ASYNC_POS_DELAY)
 
     def _focus_prev_active_win(self):
         """ Sets the previously active window to be the active window.
@@ -325,6 +336,7 @@ class _HUDState(object):
         # Infer the correct handler to call
         payload_type_handler = {
             # TODO: 'mouse_toggle': 
+            # TODO: 'data_collect_toggle': 
 
             # Toggle cursor capture on/off
             'cursor_cap_toggle': self.payload_cursor_cap_toggle,
@@ -354,20 +366,19 @@ class _HUDState(object):
         """ Starts the async window-focus watcher and the ml/eyetracker module.
         """
         # If async watcher already running
-        if self._async_proc is not None and self._async_proc.is_alive():
+        if self._async_proc_win is not None and self._async_proc_win.is_alive():
             warn('HUD State Manager already running.')
 
         # Else, not running -- start it
         else:
             # Start the state watcher
             ctx = mp.get_context('fork')
-            self._async_signal_q = ctx.Queue(maxsize=1)
-            self._async_output_q = ctx.Queue(maxsize=1)
-            self._async_proc = ctx.Process(
+            self._async_signal_q_win = ctx.Queue(maxsize=1)
+            self._async_output_q_win = ctx.Queue(maxsize=1)
+            self._async_proc_win = ctx.Process(
                 target=self._async_winstate_watcher, 
-                args=(
-                    self._async_signal_q, self._async_output_q))
-            self._async_proc.start()
+                args=(self._async_signal_q_win, self._async_output_q_win))
+            self._async_proc_win.start()
 
             # Start the eyetracker
             self._gazetracker.open()
@@ -376,7 +387,13 @@ class _HUDState(object):
             # Give time to spin up
             sleep(1)
 
-        return self._async_proc
+            # Start the user pos guide updater
+            self._async_proc_pos = Thread(
+                target=self._async_userpos_watcher, 
+                args=(self._gazetracker, self.hud.status_panel))
+            self._async_proc_pos.start()
+
+        return self._async_proc_win
 
     def stop(self) -> mp.Process:
         """ Stops the async focus watcher and eyetracker, and performs cleanup.
@@ -384,9 +401,9 @@ class _HUDState(object):
         # Unset any keybd modifier toggles the user may have set
         self._reset_keyb_modifers(toggle_btnviz=False)
 
-        # Send kill signal to the asynch watcher proc
+        # Send kill signal to the asynch procs
         try:
-            self._async_signal_q.put_nowait(SIGNAL_STOP)
+            self._async_signal_q_win.put_nowait(SIGNAL_STOP)
         except AttributeError:
             warn('Received STOP but HUD State Manager not yet started.')
         except mp.queues.Full:
@@ -395,7 +412,7 @@ class _HUDState(object):
             self._gazetracker.stop()
             self._gazetracker.close()
 
-        return self._async_proc
+        return self._async_proc_win
 
     def do_mouse_press(self, button=Mouse.Button.left):
         """ Performs a mouse btn press at the given on-screen cooridnates. The

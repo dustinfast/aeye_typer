@@ -120,22 +120,8 @@
             "payload_type": null
         },
         {
-            "text": "Click-Hold",
-            "width": 5,
-            "is_toggle": true,
-            "payload": 60005,
-            "payload_type": "mouse_toggle"
-        },
-        {
-            "text": "Cursor-Cap",
-            "width": 5,
-            "is_toggle": true,
-            "payload": 60004,
-            "payload_type": "cursor_cap_toggle"
-        },
-        {
             "text": "_spacer_",
-            "width": 1,
+            "width": 15,
             "is_toggle": false,
             "payload": null,
             "payload_type": null

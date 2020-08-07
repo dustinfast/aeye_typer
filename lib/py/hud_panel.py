@@ -82,9 +82,9 @@ class HUDKeyboardPanel(HUDPanel):
                         style=BTN_STYLE_TOGGLE if btn.is_toggle else BTN_STYLE,
                         width=btn_disp_width,
                         text=btn.text)
-                    btn.widget.grid(row=0, column=j, ipady=4)
                     btn.widget.configure(
                         command=lambda btn=btn: self.btn_payload_handler(btn))
+                    btn.widget.grid(row=0, column=j, ipady=4)
 
                 self._panel_btns.append(btn)
 
@@ -122,8 +122,8 @@ class HUDKeyboardPanel(HUDPanel):
                     text=self._panel_btns[i].text)
 
 
-class HUDPosGuidePanel(HUDPanel):
-    def __init__(self, parent_frame, hud, grid_col, hz=10):
+class HUDStatusPanel(HUDPanel):
+    def __init__(self, parent_frame, hud, grid_col):
         """ An abstraction of a HUD panel -- A HUD Panel contains buttons
             and/or panels of its own.
 
@@ -132,56 +132,92 @@ class HUDPosGuidePanel(HUDPanel):
         """
         super().__init__(parent_frame, hud, grid_col)
 
-        self._hz = hz           # Pos guide update frequency
-        self._pos_widgets = []  # 2D array of user pos guide widgets
+        self._pos_widgets = []  # User pos guide (x, y, z) btn widget array
 
-        # Create the current row's frame
+        # Create the element host frame and grid
         host_frame = ttk.Frame(self)
-        host_frame.grid(row=0, sticky=tk.NW)
+        host_frame.grid(row=0, sticky=tk.NE)
 
-        # TODO: Create seperators
-        # ttk.Separator(
-        #     host_frame,
-        #     orient='vertical'
-        # ).grid(row=0, column=0)
-
-        # Create the HUD quit button
-        btn = HUDPanelButton(text='Quit', payload=0, payload_type='hud_quit')
+        # Create the HUD quit button and the spacer below it
+        btn = HUDPanelButton(text='Quit',
+                             payload_type='hud_quit')
         btn.widget = ttk.Button(
             host_frame,
             style=BTN_STYLE,
-            width=4*HUD_BTN_WIDTH,
+            width=8*HUD_BTN_WIDTH,
             text=btn.text)
-        btn.widget.grid(row=0, column=2, ipady=4)
+        btn.widget.configure(
+            command=lambda btn=btn: self.btn_payload_handler(btn))
+        btn.widget.grid(row=0, column=0, ipady=4)
+
+        ttk.Button(host_frame,
+                   style=BTN_STYLE_SPACER,
+                   width=8*HUD_BTN_WIDTH,
+        ).grid(row=1, column=0)
+
+        # Create user position guides, one for each coord (x, y, z)
+        self._pos_widgets.append(
+            ttk.Button(host_frame,
+                       style=BTN_STYLE_SPACER,
+                       width=8*HUD_BTN_WIDTH))
+        self._pos_widgets[0].title = 'L/R: '
+        self._pos_widgets[0].grid(row=2, column=0)
+
+        self._pos_widgets.append(
+            ttk.Button(host_frame,
+                       style=BTN_STYLE_SPACER,
+                       width=8*HUD_BTN_WIDTH))
+        self._pos_widgets[1].title = 'U/D: '
+        self._pos_widgets[1].grid(row=3, column=0)
+
+        self._pos_widgets.append(
+            ttk.Button(host_frame,
+                    style=BTN_STYLE_SPACER,
+                    width=8*HUD_BTN_WIDTH))
+        self._pos_widgets[2].title = 'F/B: '
+        self._pos_widgets[2].grid(row=4, column=0)
+
+        ttk.Button(host_frame,
+                   style=BTN_STYLE_SPACER,
+                   width=8*HUD_BTN_WIDTH,
+        ).grid(row=5, column=0)
+
+        # Create the mode buttons
+        btn = HUDPanelButton(
+            text='Capture Cursor',
+            payload_type='cursor_cap_toggle')
+        btn.widget = ttk.Button(
+            host_frame,
+            style=BTN_STYLE_TOGGLE,
+            width=7*HUD_BTN_WIDTH,
+            text=btn.text)
+        btn.widget.grid(row=6, column=0, ipady=4)
         btn.widget.configure(
             command=lambda btn=btn: self.btn_payload_handler(btn))
 
-        # Create the user position guide display...
-        self._pos_widgets.append([])
-        
-        # ...top left (spacer)
-        self._pos_widgets[0].append(
-            ttk.Button(
-                host_frame,
-                style=BTN_STYLE_SPACER,
-                width=4*HUD_BTN_WIDTH,
-            ).grid(row=1, column=0, rowspan=1, columnspan=1))
+        btn = HUDPanelButton(
+            text='Data Collect',
+            payload_type='data_collect_toggle')
+        btn.widget = ttk.Button(
+            host_frame,
+            style=BTN_STYLE_TOGGLE,
+            width=7*HUD_BTN_WIDTH,
+            text=btn.text)
+        btn.widget.grid(row=7, column=0, ipady=4)
+        btn.widget.configure(
+            command=lambda btn=btn: self.btn_payload_handler(btn))
 
-        # ...top center
-        self._pos_widgets[0].append(
-            ttk.Button(
-                host_frame,
-                style=BTN_STYLE_SPACER,
-                width=4*HUD_BTN_WIDTH,
-            ).grid(row=1, column=1, rowspan=1, columnspan=1))
+        self.set_user_posguide()
 
-        # ...top right (spacer)
-        self._pos_widgets[0].append(
-            ttk.Button(
-                host_frame,
-                style=BTN_STYLE_SPACER,
-                width=4*HUD_BTN_WIDTH,
-            ).grid(row=1, column=2, rowspan=1, columnspan=1))
+    def set_user_posguide(self, xyz=[-1, -1, -1]):
+        """ Updates the user position guide display with the given coords.
+        """
+        for i in range(3):
+            try:
+                self._pos_widgets[i].configure(
+                    text='%s%.2f' % (self._pos_widgets[i].title, xyz[i]))
+            except RuntimeError:
+                exit()  # Prevent "Not in main loop" after root destroyed
 
 
 class HUDPanelButton(object):
