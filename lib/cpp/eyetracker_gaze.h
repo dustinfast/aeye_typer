@@ -171,7 +171,7 @@ EyeTrackerGaze::EyeTrackerGaze(float disp_width_mm,
             m_x_ml = new EyeTrackerCoordPredict(ml_x_path);
             m_y_ml = new EyeTrackerCoordPredict(ml_y_path);
             m_use_ml = True;
-            info("Using ML gaze accuracy-assist w/cursor capture.\n");
+            info("Using ML gaze accuracy-assist.\n");
         } else {
             m_use_ml = False;
         }

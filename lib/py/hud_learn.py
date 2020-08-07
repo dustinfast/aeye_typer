@@ -29,7 +29,7 @@ MOUSE_TIME_IPLIER = _conf['MOUSE_TIME_CONVERT_IPLIER']
 del _conf
 
 # Training data/session attributes
-DATA_SESSION_NAME = 'sm_scr'
+DATA_SESSION_NAME = 'lg_scr_newmnt'
 RAND_SEED = 1234
 
 # Data col names, w/ prefixes X_ and y_ denoting col is feature/label 
@@ -194,7 +194,7 @@ class HUDTrainGazeAccAssist(HUDLearn):
 
         return df
 
-    def _train_gaze_acc(self, split=0.80, dist_filter=125):
+    def _train_gaze_acc(self, split=0.80, dist_filter=155):
         """ Gaze accuracy training handler.
 
             :param split: (float) train/test split ratio.
@@ -214,11 +214,16 @@ class HUDTrainGazeAccAssist(HUDLearn):
         df = df.dropna().reset_index(drop=True)
 
         # Drop rows w/unreasonably distant labels
+        pre_len = len(df.index)
         df = df[(
             ((df['_combined_gazepoint_x'] - df['y_click_coord_x']).abs(
                 ) < dist_filter) &
             ((df['_combined_gazepoint_y'] - df['y_click_coord_y']).abs(
                 ) < dist_filter))]
+
+        diff = pre_len - len(df.index)
+        pct_diff = int(diff / pre_len * 100)
+        print(f'Dropped {diff} out of {pre_len} rows ({pct_diff}%)')
 
         # Extract X, as [[feature_1, feature_2, ...], ...]
         _X = df[[c for c in df.columns if c.startswith('X_')]].values
@@ -230,7 +235,7 @@ class HUDTrainGazeAccAssist(HUDLearn):
         X_train, X_test, y_train, y_test = train_test_split(
             _X, _y, train_size=split, random_state=RAND_SEED)
 
-        # Scale training set, then scale the test set from training set scaler
+        # Scale training set, then scale the test set from train set's scaler
         scaler = MinMaxScaler()
         scaler.fit(X_train)
         X_train = scaler.transform(X_train)
