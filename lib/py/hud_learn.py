@@ -207,6 +207,9 @@ class HUDTrainGazeAccAssist(HUDLearn):
         
         # TODO: If model files already exist, prompt for overwrite
 
+        # TODO: ANN model?
+        # TODO: Random Over/Under sampling?
+
         # Read in training data
         df = self._get_training_df()
         

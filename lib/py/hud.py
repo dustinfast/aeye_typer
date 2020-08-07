@@ -103,6 +103,8 @@ class HUD(tk.Tk):
         # TODO: Helper denoting last x keystrokes
         # TODO: Helper denoting user pos
         # FIXME: Alt + tab requires HOLD
+        # TODO: -d on/off btn (w no cap) OR -d w/gaze btn click via centroid
+        # TODO: New screen... lookup ideal size
 
         # Setup child frame for hosting the panel frames
         self._host_frame = ttk.Frame(
