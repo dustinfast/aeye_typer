@@ -25,12 +25,11 @@ EYETRACKER_EXTERN_LIB_PATH: lib/so/eyetracker_gaze.so
 EYETRACKER_PREP_SCRIPT_PATH: lib/sh/prep_eyetracker_gaze.sh
 EYETRACKER_WRITEBACK_SECONDS: 7
 EYETRACKER_WRITEAFTER_SECONDS: 7
-EYETRACKER_MOUNT_HEIGHT_MM: 138.112 # From desk surface to bottom edge of device
+EYETRACKER_MOUNT_HEIGHT_MM: 138.112     # Desk surface to bottom edge of device
 
 # Event Logging
 EVENTLOG_RAW_ROOTDIR: /opt/app/data/logs      # Raw log data directory
 
 # Data processing
-# GAZE_TIME_CONVERT_IPLIER: .000001
 GAZE_TIME_CONVERT_IPLIER: .00001
 MOUSE_TIME_CONVERT_IPLIER: 10
