@@ -67,6 +67,7 @@ RUN echo "Installing application dependencies(pip)..." && \
         numpy \
         jupyter \
         pandas \
+        pandas_profiling \
         sklearn \
         pyyaml \
         matplotlib \
