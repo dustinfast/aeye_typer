@@ -45,33 +45,33 @@ GAZELOG_COL_NAMES = [
     'X_left_pupildiameter_mm',
     'X_right_pupildiameter_mm',
 
-    'X_left_eyeposition_normed_x',
-    'X_left_eyeposition_normed_y',
-    'X_left_eyeposition_normed_z',
-    'X_right_eyeposition_normed_x',
-    'X_right_eyeposition_normed_y',
-    'X_right_eyeposition_normed_z',
+    'X_left_eyepos_normed_x',
+    'X_left_eyepos_normed_y',
+    'X_left_eyepos_normed_z',
+    'X_right_eyepos_normed_x',
+    'X_right_eyepos_normed_y',
+    'X_right_eyepos_normed_z',
 
-    '_left_eyecenter_mm_x',
-    '_left_eyecenter_mm_y',
-    '_left_eyecenter_mm_z',
-    '_right_eyecenter_mm_x',
-    '_right_eyecenter_mm_y',
-    '_right_eyecenter_mm_z',
+    'X_left_eyecenter_mm_x',
+    'X_left_eyecenter_mm_y',
+    'X_left_eyecenter_mm_z',
+    'X_right_eyecenter_mm_x',
+    'X_right_eyecenter_mm_y',
+    'X_right_eyecenter_mm_z',
 
-    '_left_gazeorigin_mm_x',
-    '_left_gazeorigin_mm_y',
-    '_left_gazeorigin_mm_z',
-    '_right_gazeorigin_mm_x',
-    '_right_gazeorigin_mm_y',
-    '_right_gazeorigin_mm_z',
+    'X_left_gazeorigin_mm_x',
+    'X_left_gazeorigin_mm_y',
+    'X_left_gazeorigin_mm_z',
+    'X_right_gazeorigin_mm_x',
+    'X_right_gazeorigin_mm_y',
+    'X_right_gazeorigin_mm_z',
 
-    '_left_gazepoint_mm_x',
-    '_left_gazepoint_mm_y',
-    '_left_gazepoint_mm_z',
-    '_right_gazepoint_mm_x',
-    '_right_gazepoint_mm_y',
-    '_right_gazepoint_mm_z',
+    'X_left_gazepoint_mm_x',
+    'X_left_gazepoint_mm_y',
+    'X_left_gazepoint_mm_z',
+    'X_right_gazepoint_mm_x',
+    'X_right_gazepoint_mm_y',
+    'X_right_gazepoint_mm_z',
 
     'X_left_gazepoint_normed_x',
     'X_left_gazepoint_normed_y',
@@ -135,7 +135,7 @@ class HUDDataGazeAccAssist(HUDLearn):
         mouse_logger = AsyncMouseClkEventLogger(
             self._log_path('mouse'), [gaze_logger.event], self._verbose)
 
-        # Start the loggers and block until terminated
+        # Start the data loggers and block until terminated by user
         gaze_logger.start()
         log_proc = mouse_logger.start()
         log_proc.join()
@@ -177,7 +177,7 @@ class HUDTrainGazeAccAssist(HUDLearn):
         # Filter gaze rows with invalid gaze-points
         df_g = df_g[df_g['X_left_pupildiameter_mm'] != -1]
         df_g = df_g[df_g['X_right_pupildiameter_mm'] != -1]
-        
+
         # Homogenize mouse/gaze timestamp scales and precision
         df_m['timestamp'] = df_m['timestamp'] * MOUSE_TIME_IPLIER
         df_m['timestamp'] = df_m['timestamp'].astype(int)
@@ -194,7 +194,11 @@ class HUDTrainGazeAccAssist(HUDLearn):
 
         return df
 
-    def _train_gaze_acc(self, split=0.80, dist_filter=155):
+    def _train_gaze_acc(self, 
+                        split=0.80,
+                        dist_filter=145,
+                        click_bounds=[],  # [1500, 2200, 0, 1250]
+                        pos_dev=0.0): 
         """ Gaze accuracy training handler.
 
             :param split: (float) train/test split ratio.
@@ -202,28 +206,22 @@ class HUDTrainGazeAccAssist(HUDLearn):
             training data rows are filtered. This is a necessary filter to 
             account for the user failing to always look at the cursor when
             clicking.
+            :param click_bounds: An optional list of coordinate bounds, as 
+            [x_min, x_max, y_min, y_max]. If given, all clicks representated
+            by the dataset outside of these bounds are discarded before
+            training.
+            :param pos_dev: An optional eyepos metric, by which rows having an
+            eyepos deviating by +/- that amount are dropped prior to training.
         """
         print('Training...')
         
         # TODO: If model files already exist, prompt for overwrite
 
+        # TODO: Test click_bounds
+        # TODO: Test pos bounds?
         # TODO: ANN model?
-        # TODO: Random Over/Under sampling w:
-        # from imblearn.over_sampling import RandomOverSampler
-        # if upsample:
-        #         ros = RandomOverSampler(random_state=rand_seed)
-        #         X_train, y_train = ros.fit_resample(X_train, y_train)
-                
-        #         # Echo upsampled training set class counts iff verbose
-        #         if verbose:
-        #             if ratio > 0:
-        #                 print('Training set class counts, post-upsample (%s rows):' % 
-        #                     len(y_train))
-        #             else: 
-        #                 print('Class counts, post-upsample (%s rows):' %
-        #                     len(y_train))
-        #             data.binary_class_counts(y_train, verbose=True)
-        #             print('')
+        # TODO: AutoML?
+        # TODO: Test smaller/larger ipliers
 
         # Read in training data
         df = self._get_training_df()
@@ -231,17 +229,64 @@ class HUDTrainGazeAccAssist(HUDLearn):
         # Drop all rows that don't have labels
         df = df.dropna().reset_index(drop=True)
 
-        # Drop rows w/unreasonably distant labels
-        pre_len = len(df.index)
-        df = df[(
-            ((df['_combined_gazepoint_x'] - df['y_click_coord_x']).abs(
-                ) < dist_filter) &
-            ((df['_combined_gazepoint_y'] - df['y_click_coord_y']).abs(
-                ) < dist_filter))]
+        # Drop rows with clicks outside any given coord bounds
+        if click_bounds:
+            pre_len = len(df.index)
+            df = df[(
+                (
+                    (df['y_click_coord_x'] > click_bounds[0]) &
+                    (df['y_click_coord_x'] < click_bounds[1])
+                ) & (
+                    (df['y_click_coord_y'] > click_bounds[2]) &
+                    (df['y_click_coord_y'] < click_bounds[3])
+                )
+            )]
 
-        diff = pre_len - len(df.index)
-        pct_diff = int(diff / pre_len * 100)
-        print(f'Dropped {diff} out of {pre_len} rows ({pct_diff}%)')
+            diff = pre_len - len(df.index)
+            pct_diff = int(diff / pre_len * 100)
+            print(f'Excluded {diff} clicks out of {pre_len} rows ({pct_diff}%)')
+
+        # Drop rows with eyepos outside any given bounds
+        if abs(pos_dev) > 0:
+            def avg_cols(df, l, r):
+                return (df[l] + df[r]) / 2
+
+            px = avg_cols(
+                df, 'X_left_eyepos_normed_x', 'X_right_eyepos_normed_x')
+            py = avg_cols(
+                df, 'X_left_eyepos_normed_y', 'X_right_eyepos_normed_y')
+            pz = avg_cols(
+                df, 'X_left_eyepos_normed_z', 'X_right_eyepos_normed_z')
+                
+            pre_len = len(df.index)
+            df = df[(
+                ((px - 0.5).abs() < pos_dev) &
+                ((py - 0.5).abs() < pos_dev) &
+                ((pz - 0.5).abs() < pos_dev)
+            )]
+
+            diff = pre_len - len(df.index)
+            pct_diff = int(diff / pre_len * 100)
+            print(f'Excluded {diff} pos rows out of {pre_len} ({pct_diff}%)')
+
+        # Drop rows w/unreasonably distant labels, iff dist filter given
+        if abs(dist_filter) > 0:
+            pre_len = len(df.index)
+            df = df[(
+                ((df['_combined_gazepoint_x'] - df['y_click_coord_x']).abs(
+                    ) < dist_filter) &
+                ((df['_combined_gazepoint_y'] - df['y_click_coord_y']).abs(
+                    ) < dist_filter)
+            )]
+
+            diff = pre_len - len(df.index)
+            pct_diff = int(diff / pre_len * 100)
+            print(f'Excluded {diff} dist pts out of {pre_len} ({pct_diff}%)')
+
+        # Build report, for dev conveience
+        # import pandas_profiling as pp
+        # pf = pp.ProfileReport(df, minimal=True)
+        # pf.to_file('temp_.html')
 
         # Extract X, as [[feature_1, feature_2, ...], ...]
         _X = df[[c for c in df.columns if c.startswith('X_')]].values
@@ -251,7 +296,7 @@ class HUDTrainGazeAccAssist(HUDLearn):
 
         # Do traintest split
         X_train, X_test, y_train, y_test = train_test_split(
-            _X, _y, train_size=split, random_state=RAND_SEED)
+            _X, _y, train_size=split, random_state=RAND_SEED, shuffle=False)
 
         # Scale training set, then scale the test set from train set's scaler
         scaler = MinMaxScaler()
@@ -265,6 +310,11 @@ class HUDTrainGazeAccAssist(HUDLearn):
         y_test_x_coord, y_test_y_coord = (
             y_test[:, 0].squeeze(), y_test[:, 1].squeeze())
 
+        # TODO: Test Random Over/Under sampling
+        # from imblearn.over_sampling import RandomOverSampler
+        # ros = RandomOverSampler(random_state=RAND_SEED)
+        # X_train_ros, y_train_x_coord = ros.fit_resample(X_train, y_train_x_coord)
+        
         # Train two seperate models; one for the x coord, and one for the y
         model_x = SVR(kernel='rbf', C=750, epsilon=.01).fit(
             X_train, y_train_x_coord)

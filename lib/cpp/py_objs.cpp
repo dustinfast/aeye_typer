@@ -86,7 +86,7 @@ long int EyeTrackerCoordPredict::predict(gaze_data *gaze_data) {
         PyObject *p_result = PyObject_CallMethod(
             m_py_self, 
             "predict", 
-            "(dddddddddddddddddddddddd)",
+            "(dddddddddddddddddddddddddddddd)",
             gaze_data->left_pupildiameter_mm,
             gaze_data->right_pupildiameter_mm,
 
@@ -110,6 +110,13 @@ long int EyeTrackerCoordPredict::predict(gaze_data *gaze_data) {
             gaze_data->right_gazeorigin_mm_x,
             gaze_data->right_gazeorigin_mm_y,
             gaze_data->right_gazeorigin_mm_z,
+
+            gaze_data->left_gazepoint_mm_x,
+            gaze_data->left_gazepoint_mm_y,
+            gaze_data->left_gazepoint_mm_z,
+            gaze_data->right_gazepoint_mm_x,
+            gaze_data->right_gazepoint_mm_y,
+            gaze_data->right_gazepoint_mm_z,
 
             gaze_data->left_gazepoint_normed_x,
             gaze_data->left_gazepoint_normed_y,
