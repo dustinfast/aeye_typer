@@ -32,7 +32,7 @@ using namespace std;
 #define GAZE_MARKER_HEIGHT 10
 #define GAZE_MARKER_BORDER 0
 #define GAZE_MARKER_BORDER 0
-#define MOUNT_OFFSET_MM 0.0
+#define MOUNT_OFFSET_MM 1.5  // TODO: Move to conf
 
 typedef boost::circular_buffer<shared_ptr<gaze_data_t>> circ_buff;
 
