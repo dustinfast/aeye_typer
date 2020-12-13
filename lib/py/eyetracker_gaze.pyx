@@ -20,6 +20,7 @@ GAZE_BUFF_SZ = _conf['EYETRACKER_BUFF_SZ']
 GAZE_MARK_INTERVAL = _conf['EYETRACKER_MARK_INTERVAL']
 GAZE_PREP_PATH = _conf['EYETRACKER_PREP_SCRIPT_PATH']
 GAZE_SMOOTH_OVER = _conf['EYETRACKER_SMOOTH_OVER']
+EYETRACKER_MOUNT_OFFSET_MM = _conf['EYETRACKER_MOUNT_OFFSET_MM']
 del _conf
 
 GAZE_CALIB_PATH = '/opt/app/data/eyetracker.calib'
@@ -60,7 +61,7 @@ class EyeTrackerGaze(object):
         
         # Constructor
         lib.eye_gaze_new.argtypes = [
-            ctypes.c_float, ctypes.c_float, ctypes.c_int, 
+            ctypes.c_float, ctypes.c_float, ctypes.c_float, ctypes.c_int, 
                 ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int,
                     ctypes.c_char_p, ctypes.c_char_p]
         lib.eye_gaze_new.restype = ctypes.c_void_p
@@ -138,8 +139,8 @@ class EyeTrackerGaze(object):
             ml_y_path = None
 
 
-        self._obj = self._lib.eye_gaze_new(
-            DISP_WIDTH_MM, DISP_HEIGHT_MM, DISP_WIDTH_PX, DISP_HEIGHT_PX,
+        self._obj = self._lib.eye_gaze_new(EYETRACKER_MOUNT_OFFSET_MM,
+                DISP_WIDTH_MM, DISP_HEIGHT_MM, DISP_WIDTH_PX, DISP_HEIGHT_PX,
                 GAZE_MARK_INTERVAL, GAZE_BUFF_SZ, GAZE_SMOOTH_OVER,
                     ml_x_path, ml_y_path)
 

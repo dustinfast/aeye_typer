@@ -32,7 +32,6 @@ using namespace std;
 #define GAZE_MARKER_HEIGHT 10
 #define GAZE_MARKER_BORDER 0
 #define GAZE_MARKER_BORDER 0
-#define MOUNT_OFFSET_MM 1.5  // TODO: Move to conf
 
 typedef boost::circular_buffer<shared_ptr<gaze_data_t>> circ_buff;
 
@@ -68,7 +67,7 @@ class EyeTrackerGaze : public EyeTracker {
         void set_cursor_capture(bool);
 
         EyeTrackerGaze(
-            float, float, int, int, int, int, int, const char*, const char*);
+            float, float, float, int, int, int, int, int, const char*, const char*);
         ~EyeTrackerGaze();
 
     protected:
@@ -88,7 +87,8 @@ class EyeTrackerGaze : public EyeTracker {
 };
 
 // Default constructor
-EyeTrackerGaze::EyeTrackerGaze(float disp_width_mm, 
+EyeTrackerGaze::EyeTrackerGaze(float eyetracker_mnt_offset,
+                               float disp_width_mm, 
                                float disp_height_mm,
                                int disp_width_px,
                                int disp_height_px,
@@ -105,7 +105,7 @@ EyeTrackerGaze::EyeTrackerGaze(float disp_width_mm,
         m_smooth_over = smooth_over;
 
         // Calibrate gaze tracker's disp area
-        set_display(disp_width_mm, disp_height_mm, MOUNT_OFFSET_MM);
+        set_display(disp_width_mm, disp_height_mm, eyetracker_mnt_offset);
 
         // Since we care about device timestamps, start time synchronization
         sync_device_time();
@@ -429,6 +429,7 @@ void EyeTrackerGaze::set_cursor_capture(bool enabled) {
 // Extern wrapper exposing a subset of EyeTrackerGaze()'s methods
 extern "C" {
     EyeTrackerGaze* eye_gaze_new(
+        float eyetracker_mnt_offset,
         float disp_width_mm,
         float disp_height_mm,
         int disp_width_px, 
@@ -439,6 +440,7 @@ extern "C" {
         const char *ml_x_path,
         const char *ml_y_path) {
             return new EyeTrackerGaze(
+                eyetracker_mnt_offset,
                 disp_width_mm,
                 disp_height_mm,
                 disp_width_px,
