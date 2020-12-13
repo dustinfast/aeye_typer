@@ -196,7 +196,7 @@ class HUDTrainGazeAccAssist(HUDLearn):
 
     def _train_gaze_acc(self, 
                         split=0.80,
-                        dist_filter=145,
+                        dist_filter=145,  # 145
                         click_bounds=[],  # [1500, 2200, 0, 1250]
                         pos_dev=0.0): 
         """ Gaze accuracy training handler.
@@ -296,7 +296,7 @@ class HUDTrainGazeAccAssist(HUDLearn):
 
         # Do traintest split
         X_train, X_test, y_train, y_test = train_test_split(
-            _X, _y, train_size=split, random_state=RAND_SEED, shuffle=False)
+            _X, _y, train_size=split, random_state=RAND_SEED)
 
         # Scale training set, then scale the test set from train set's scaler
         scaler = MinMaxScaler()
@@ -310,7 +310,7 @@ class HUDTrainGazeAccAssist(HUDLearn):
         y_test_x_coord, y_test_y_coord = (
             y_test[:, 0].squeeze(), y_test[:, 1].squeeze())
 
-        # TODO: Test Random Over/Under sampling
+        # TODO: Random Over/Under sampling gave a better mae, but inference too expensive... Maybe ANN?
         # from imblearn.over_sampling import RandomOverSampler
         # ros = RandomOverSampler(random_state=RAND_SEED)
         # X_train_ros, y_train_x_coord = ros.fit_resample(X_train, y_train_x_coord)
@@ -318,6 +318,7 @@ class HUDTrainGazeAccAssist(HUDLearn):
         # Train two seperate models; one for the x coord, and one for the y
         model_x = SVR(kernel='rbf', C=750, epsilon=.01).fit(
             X_train, y_train_x_coord)
+
         model_y = SVR(kernel='rbf', C=750, epsilon=.01).fit(
             X_train, y_train_y_coord)
 

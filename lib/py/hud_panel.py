@@ -124,8 +124,8 @@ class HUDKeyboardPanel(HUDPanel):
 
 class HUDStatusPanel(HUDPanel):
     def __init__(self, parent_frame, hud, grid_col):
-        """ An abstraction of a HUD panel -- A HUD Panel contains buttons
-            and/or panels of its own.
+        """ An abstraction of a HUD satus panel -- A HUD status Panel contains
+            buttons and/or panels of its own, but is specific to the app status.
 
             :param parent_frame: (tk.ttk.Frame) Hosting frame.
             :param hud: (hud.HUD) the 
