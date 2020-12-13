@@ -42,6 +42,7 @@ if __name__ == "__main__":
                         action='store_true',
                         default=False,
                         help=arg_help_str)
+    # TODO: Screen res/sz option
     args = parser.parse_args()
 
     # Some CLI args are mutually exclusive -- ensure they were given that way
