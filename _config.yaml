@@ -1,22 +1,24 @@
-# The application's global config file...
+# The application's global config file. 
 
-# Display Device - lg
+# Display Device
 DISP_WIDTH_MM: 597
 DISP_HEIGHT_MM: 335
 DISP_WIDTH_PX: 3840
 DISP_HEIGHT_PX: 2160
 
+
 # On-screen Keyboard/HUD
 HUD_DISP_TITLE: 'AEye TypeR'
 HUD_DISP_WIDTH_PX: 1745
 HUD_DISP_HEIGHT_PX: 253
-HUD_POSGUIDE_WIDTH_PX: 95
-HUD_DISP_COORD_DIVISOR_X: 2     # Centered
-HUD_DISP_COORD_DIVISOR_Y: 1     # Bottom edge
+HUD_STATUSPANEL_WIDTH_PX: 95
+HUD_DISP_COORD_DIVISOR_X: 2     # Centered = 2
+HUD_DISP_COORD_DIVISOR_Y: 1     # Bottom edge = 1
 HUD_BTN_WIDTH: 3
 HUD_KEYB_JSON: 'lib/json/keyboard_us.json'
 
 # Eyetracker Device
+EYETRACKER_MOUNT_OFFSET_MM: 0.0  # Horiz offset (+/- from center)
 EYETRACKER_SAMPLE_HZ: 90
 EYETRACKER_BUFF_SZ: 4500
 EYETRACKER_MARK_INTERVAL: 5
