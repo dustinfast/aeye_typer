@@ -14,10 +14,12 @@
 using namespace std;
 
 
-#define DISP_WIDTH_MM 698.5
-#define DISP_HEIGHT_MM 393.7
+// TODO: These are in the conf - pull them from there instead
+#define DISP_WIDTH_MM 597.0
+#define DISP_HEIGHT_MM 335
 #define DISP_WIDTH_PX 3840
 #define DISP_HEIGHT_PX 2160
+#define MOUNT_OFFSET_MM 1.5
 #define GAZE_MARK_INTERVAL 18
 #define GAZE_BUFF_SZ 45000
 #define GAZE_SMOOTHOVER 4
@@ -25,6 +27,7 @@ using namespace std;
 
 int main() {
     EyeTrackerGaze gaze = EyeTrackerGaze(
+        MOUNT_OFFSET_MM,
         DISP_WIDTH_MM,
         DISP_HEIGHT_MM,
         DISP_WIDTH_PX,
