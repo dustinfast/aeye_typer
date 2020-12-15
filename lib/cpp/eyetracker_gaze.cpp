@@ -19,8 +19,8 @@ using namespace std;
 #define DISP_HEIGHT_MM 335
 #define DISP_WIDTH_PX 3840
 #define DISP_HEIGHT_PX 2160
-#define MOUNT_OFFSET_MM 1.5
-#define GAZE_MARK_INTERVAL 18
+#define MOUNT_OFFSET_MM 0.0
+#define GAZE_MARK_INTERVAL 5
 #define GAZE_BUFF_SZ 45000
 #define GAZE_SMOOTHOVER 4
 #define GAZE_TIME 3

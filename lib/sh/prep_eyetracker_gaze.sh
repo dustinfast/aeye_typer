@@ -8,8 +8,9 @@
 LD_LIBRARY_PATH=/usr/lib/tobii/:$LD_LIBRARY_PATH
 
 gcc  -c -fPIC /opt/app/src/lib/cpp/eyetracker_gaze.cpp  \
-    -I/usr/include/python3.6m -lpython3.6m \
-    -o eyetracker_gaze.o       
+    -I/usr/include/python3.6m \
+    -lpython3.6m    \
+    -o eyetracker_gaze.o 
 
 gcc -shared  \
     -o /opt/app/src/lib/so/eyetracker_gaze.so eyetracker_gaze.o  \

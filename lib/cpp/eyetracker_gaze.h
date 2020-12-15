@@ -19,6 +19,8 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 
+#include "app.h"
+
 #include "eyetracker.h"
 #include "eyetracker_structdef.h"
 #include "py_objs.cpp"

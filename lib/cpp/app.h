@@ -5,13 +5,21 @@
 //
 /////////////////////////////////////////////////////////////////////////////
 
+#ifndef APP_H
+#define APP_H
+
 #include <stdio.h>
+#include <iostream>
+
+using namespace std;
+
 
 #define ANSII_ESC_BOLD "\033[1m"
 #define ANSII_ESC_OK "\033[92m"
 #define ANSII_ESC_WARNING "\033[38;5;214m"
 #define ANSII_ESC_ERROR "\033[91m"
 #define ANSII_ESC_ENDCOLOR "\033[0m"
+
 
 
 // Prints the given string to stdout, formatted as an info str.
@@ -33,3 +41,6 @@ void error(const char *s) {
 void bold(const char *s) {
     printf("%s%s%s", ANSII_ESC_BOLD, s, ANSII_ESC_ENDCOLOR);
 }
+
+
+#endif // Include guard
