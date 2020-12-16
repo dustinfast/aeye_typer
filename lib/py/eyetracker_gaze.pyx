@@ -11,7 +11,7 @@ from subprocess import Popen, PIPE
 from lib.py.app import app_config, info, warn, error
 
 
-GAZE_CALIB_PATH = '/opt/app/data/eyetracker.calib'
+EYETRACKER_CALIB_PATH = app_config('EYETRACKER_CALIB_PATH')
 LIB_PATH = app_config('EYETRACKER_EXTERN_LIB_PATH')
 DISP_WIDTH_MM = app_config('DISP_WIDTH_MM')
 DISP_HEIGHT_MM = app_config('DISP_HEIGHT_MM')
@@ -209,7 +209,7 @@ class EyeTrackerGaze(object):
         self._ensure_device_opened()
 
         # If exists, prompt for overwrite
-        if Path(GAZE_CALIB_PATH).exists():
+        if Path(EYETRACKER_CALIB_PATH).exists():
             warn('Calibration file exists! Overwrite it', end=' ')
             if input('[y/N]? ') != 'y':
                 info('Calibration aborted by user.')
