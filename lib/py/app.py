@@ -11,7 +11,7 @@ from functools import lru_cache
 CONFIG_FILE_PATH = '/opt/app/src/config.yaml'
 
 
-# Load the application's config file or die
+# Load the application's config file (as a dict) or die
 try:
     with open(CONFIG_FILE_PATH, 'r') as f:
             APP_CFG = yaml.load(f, Loader=yaml.FullLoader)

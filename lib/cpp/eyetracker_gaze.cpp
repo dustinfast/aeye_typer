@@ -48,6 +48,5 @@ int main() {
 
     gaze.stop();
 
-    printf("Done.\n");
     return 0;
 }
