@@ -12,6 +12,7 @@ from lib.py.eyetracker_gaze import EyeTrackerGaze
 
 DURATION_S = 3
 
+
 if __name__ == "__main__":
     e = EyeTrackerGaze()
     
@@ -23,4 +24,3 @@ if __name__ == "__main__":
     
     e.stop()
     e.close()
-

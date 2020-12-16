@@ -21,7 +21,6 @@ using namespace std;
 #define ANSII_ESC_ENDCOLOR "\033[0m"
 
 
-
 // Prints the given string to stdout, formatted as an info str.
 void info(const char *s) {
     printf("%sINFO:%s %s", ANSII_ESC_OK, ANSII_ESC_ENDCOLOR, s);

@@ -21,24 +21,22 @@ from gi.repository import Wnck
 
 import pyximport; pyximport.install()  # Required for EyeTrackerGaze
 
-from lib.py.app import config, warn
+from lib.py.app import app_config, warn
 from lib.py.eyetracker_gaze import EyeTrackerGaze
 from lib.py.hud_panel import HUDKeyboardPanel, HUDStatusPanel
 from lib.py.hud_learn import HUDLearn
 
 
 # App config elements
-_conf = config()
-DISP_WIDTH = _conf['DISP_WIDTH_PX']
-DISP_HEIGHT = _conf['DISP_HEIGHT_PX']
-HUD_DISP_WIDTH = _conf['HUD_DISP_WIDTH_PX']
-HUD_DISP_HEIGHT = _conf['HUD_DISP_HEIGHT_PX']
-HUD_STATUSPANEL_WIDTH_PX = _conf['HUD_STATUSPANEL_WIDTH_PX']
-HUD_DISP_DIV_X = _conf['HUD_DISP_COORD_DIVISOR_X']
-HUD_DISP_DIV_Y = _conf['HUD_DISP_COORD_DIVISOR_Y'] 
-HUD_DISP_TITLE = _conf['HUD_DISP_TITLE']
-HUD_KEYB_JSON =  _conf['HUD_KEYB_JSON']
-del _conf
+DISP_WIDTH = app_config('DISP_WIDTH_PX')
+DISP_HEIGHT = app_config('DISP_HEIGHT_PX')
+HUD_DISP_WIDTH = app_config('HUD_DISP_WIDTH_PX')
+HUD_DISP_HEIGHT = app_config('HUD_DISP_HEIGHT_PX')
+HUD_STATUSPANEL_WIDTH_PX = app_config('HUD_STATUSPANEL_WIDTH_PX')
+HUD_DISP_DIV_X = app_config('HUD_DISP_COORD_DIVISOR_X')
+HUD_DISP_DIV_Y = app_config('HUD_DISP_COORD_DIVISOR_Y')
+HUD_DISP_TITLE = app_config('HUD_DISP_TITLE')
+HUD_KEYB_JSON =  app_config('HUD_KEYB_JSON')
 
 # HUD styles
 HUD_STYLE = 'HUD.TFrame'

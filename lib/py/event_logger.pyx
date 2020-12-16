@@ -16,22 +16,20 @@ from pynput.mouse import Button
 from pynput.keyboard import Key
 from pynput import mouse, keyboard
 
-from lib.py.app import key_to_id, config, info, warn, error, bold
+from lib.py.app import key_to_id, app_config, info, warn, error, bold
 from lib.py.eyetracker_gaze import EyeTrackerGaze
 
 
-# App config constants
-_conf = config()
-LOG_RAW_ROOTDIR = _conf['EVENTLOG_RAW_ROOTDIR']
-GAZE_WRITEBACK = _conf['EYETRACKER_WRITEBACK_SECONDS']
-GAZE_WRITEAFTER = _conf['EYETRACKER_WRITEAFTER_SECONDS']
-GAZE_SAMPLE_RATE = _conf['EYETRACKER_SAMPLE_HZ']
-GAZE_BUFF_SZ = _conf['EYETRACKER_BUFF_SZ']
-del _conf
+LOG_RAW_ROOTDIR = app_config('EVENTLOG_RAW_ROOTDIR')
+GAZE_WRITEBACK = app_config('EYETRACKER_WRITEBACK_SECONDS')
+GAZE_WRITEAFTER = app_config('EYETRACKER_WRITEAFTER_SECONDS')
+GAZE_SAMPLE_RATE = app_config('EYETRACKER_SAMPLE_HZ')
+GAZE_BUFF_SZ = app_config('EYETRACKER_BUFF_SZ')
 
 # MP queue signals
 SIGNAL_EVENT = True
 SIGNAL_STOP = False
+
 
 class AsyncGazeEventLogger(object):
     def __init__(self, logpath, verbose=False):

@@ -6,7 +6,7 @@ __author__ = 'Dustin Fast <dustin.fast@outlook.com>'
 import yaml
 import random
 import numpy as np
-
+from functools import lru_cache
 
 CONFIG_FILE_PATH = '/opt/app/src/_config.yaml'
 
@@ -17,13 +17,24 @@ ANSII_ESC_ERROR = '\033[91m'
 ANSII_ESC_ENDCOLOR = '\033[0m'
 
 
-def config():
-    """ Returns the application's config as a dict.
-    """
-    # Load app config
+# Load the application's config file or die
+try:
     with open(CONFIG_FILE_PATH, 'r') as f:
-        return yaml.load(f, Loader=yaml.FullLoader)
+            APP_CFG = yaml.load(f, Loader=yaml.FullLoader)
+except FileNotFoundError:
+    print(f'FATAL: Failed to open config file \'{CONFIG_FILE_PATH}\'\n')
+    exit()
 
+
+@lru_cache(maxsize=100)
+def app_config(s):
+    """ Returns the requested application config element.
+    """
+    try:
+        return APP_CFG[s]
+    except KeyError:
+        print(f'FATAL: Invalid config element requested: \'{s}\'\n')
+        exit()
 
 def seed_rand(seed=None):
     """ Seeds python.random and np.random.

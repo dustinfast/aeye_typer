@@ -15,24 +15,22 @@ from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import mean_absolute_error
 from sklearn.model_selection import train_test_split
 
-from lib.py.app import key_to_id, config, info, warn
+from lib.py.app import key_to_id, app_config, info, warn
 from lib.py.event_logger import AsyncGazeEventLogger, AsyncMouseClkEventLogger
 
 
 # App config elements
-_conf = config()
-LOG_RAW_ROOTDIR = _conf['EVENTLOG_RAW_ROOTDIR']
-WRITE_BACK = _conf['EYETRACKER_WRITEBACK_SECONDS']
-WRITE_AFTER = _conf['EYETRACKER_WRITEAFTER_SECONDS']
-GAZE_TIME_IPLIER = _conf['GAZE_TIME_CONVERT_IPLIER']
-MOUSE_TIME_IPLIER = _conf['MOUSE_TIME_CONVERT_IPLIER']
-del _conf
+LOG_RAW_ROOTDIR = app_config('EVENTLOG_RAW_ROOTDIR')
+WRITE_BACK = app_config('EYETRACKER_WRITEBACK_SECONDS')
+WRITE_AFTER = app_config('EYETRACKER_WRITEAFTER_SECONDS')
+GAZE_TIME_IPLIER = app_config('GAZE_TIME_CONVERT_IPLIER')
+MOUSE_TIME_IPLIER = app_config('MOUSE_TIME_CONVERT_IPLIER')
 
 # Training data/session attributes
 DATA_SESSION_NAME = 'lg_scr_newmnt'
 RAND_SEED = 1234
 
-# Data col names, w/ prefixes X_ and y_ denoting col is feature/label 
+# Data col names, w/ prefixes X_ and y_ denoting item as either feature or label 
 MOUSELOG_COL_NAMES = [
     'timestamp',
     'btn_id',

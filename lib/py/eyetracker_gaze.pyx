@@ -8,22 +8,20 @@ import ctypes
 from pathlib import Path
 from subprocess import Popen, PIPE
 
-from lib.py.app import config, info, warn, error
+from lib.py.app import app_config, info, warn, error
 
-_conf = config()
-LIB_PATH = _conf['EYETRACKER_EXTERN_LIB_PATH']
-DISP_WIDTH_MM = _conf['DISP_WIDTH_MM']
-DISP_HEIGHT_MM = _conf['DISP_HEIGHT_MM']
-DISP_WIDTH_PX = _conf['DISP_WIDTH_PX']
-DISP_HEIGHT_PX = _conf['DISP_HEIGHT_PX']
-GAZE_BUFF_SZ = _conf['EYETRACKER_BUFF_SZ']
-GAZE_MARK_INTERVAL = _conf['EYETRACKER_MARK_INTERVAL']
-GAZE_PREP_PATH = _conf['EYETRACKER_PREP_SCRIPT_PATH']
-GAZE_SMOOTH_OVER = _conf['EYETRACKER_SMOOTH_OVER']
-EYETRACKER_MOUNT_OFFSET_MM = _conf['EYETRACKER_MOUNT_OFFSET_MM']
-del _conf
 
 GAZE_CALIB_PATH = '/opt/app/data/eyetracker.calib'
+LIB_PATH = app_config('EYETRACKER_EXTERN_LIB_PATH')
+DISP_WIDTH_MM = app_config('DISP_WIDTH_MM')
+DISP_HEIGHT_MM = app_config('DISP_HEIGHT_MM')
+DISP_WIDTH_PX = app_config('DISP_WIDTH_PX')
+DISP_HEIGHT_PX = app_config('DISP_HEIGHT_PX')
+GAZE_BUFF_SZ = app_config('EYETRACKER_BUFF_SZ')
+GAZE_MARK_INTERVAL = app_config('EYETRACKER_MARK_INTERVAL')
+GAZE_PREP_PATH = app_config('EYETRACKER_PREP_SCRIPT_PATH')
+GAZE_SMOOTH_OVER = app_config('EYETRACKER_SMOOTH_OVER')
+EYETRACKER_MOUNT_OFFSET_MM = app_config('EYETRACKER_MOUNT_OFFSET_MM')
 
 
 class gaze_point(ctypes.Structure):

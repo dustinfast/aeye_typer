@@ -7,12 +7,10 @@ import json
 import tkinter as tk
 from tkinter import ttk
 
-from lib.py.app import config
+from lib.py.app import app_config
 
 
-_conf = config()
-HUD_BTN_WIDTH = _conf['HUD_BTN_WIDTH']
-del _conf
+HUD_BTN_WIDTH = app_config('HUD_BTN_WIDTH')
 
 # HUD styles
 HUD_STYLE = 'HUD.TFrame'
@@ -29,7 +27,7 @@ class HUDPanel(ttk.Frame):
             and/or panels of its own.
 
             :param parent_frame: (tk.ttk.Frame) Hosting frame.
-            :param hud: (hud.HUD) the 
+            :param hud: (hud.HUD) Parent HUD.
         """
         ttk.Frame.__init__(self, takefocus=0, style=HUD_STYLE)
 
