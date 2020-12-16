@@ -10,6 +10,9 @@
 
 #include <stdio.h>
 #include <iostream>
+#include <map>
+
+#include <yaml-cpp/yaml.h>
 
 using namespace std;
 
@@ -20,6 +23,18 @@ using namespace std;
 #define ANSII_ESC_ERROR "\033[91m"
 #define ANSII_ESC_ENDCOLOR "\033[0m"
 
+#define CONFIG_FILE_PATH "/opt/app/src/config.yaml"
+
+// Returns the application's config elements as a map.
+map<string, string> app_config() {
+    YAML::Node config = YAML::LoadFile(CONFIG_FILE_PATH);
+    map<string, string> config_map;
+
+    for(YAML::const_iterator it=config.begin();it!=config.end();++it) 
+        config_map[it->first.as<string>()] = it->second.as<string>();
+
+    return config_map;
+}
 
 // Prints the given string to stdout, formatted as an info str.
 void info(const char *s) {
@@ -42,4 +57,4 @@ void bold(const char *s) {
 }
 
 
-#endif // Include guard
+#endif // Top-level include guard

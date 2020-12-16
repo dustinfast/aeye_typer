@@ -15,11 +15,11 @@
 #include <boost/thread/mutex.hpp>
 #include <boost/circular_buffer.hpp>
 
+#include "app.h"  // FIXME: App.h must be before X.h, for yaml-cpp name conflict
+
 #include <X11/X.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
-
-#include "app.h"
 
 #include "eyetracker.h"
 #include "eyetracker_structdef.h"

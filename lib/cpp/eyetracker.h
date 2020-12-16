@@ -11,7 +11,6 @@
 #include <cstring>
 #include <chrono>
 
-
 #include <tobii/tobii.h>
 #include <tobii/tobii_config.h>
 #include <tobii/tobii_streams.h>

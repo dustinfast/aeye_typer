@@ -56,6 +56,7 @@ RUN python3.6 -m pip install --upgrade pip
 RUN echo "Installing application dependencies (apt-get)..." && \
     apt-get install -y --no-install-recommends \
         gir1.2-wnck-3.0 \
+        libyaml-cpp-dev \
         libboost-all-dev \
         python3-tk
 
