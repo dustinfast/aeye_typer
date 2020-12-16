@@ -8,7 +8,7 @@ import random
 import numpy as np
 from functools import lru_cache
 
-CONFIG_FILE_PATH = '/opt/app/src/_config.yaml'
+CONFIG_FILE_PATH = '/opt/app/src/config.yaml'
 
 ANSII_ESC_BOLD = '\033[1m'
 ANSII_ESC_OK = '\033[92m'
