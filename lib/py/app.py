@@ -10,12 +10,6 @@ from functools import lru_cache
 
 CONFIG_FILE_PATH = '/opt/app/src/config.yaml'
 
-ANSII_ESC_BOLD = '\033[1m'
-ANSII_ESC_OK = '\033[92m'
-ANSII_ESC_WARNING = '\033[38;5;214m'
-ANSII_ESC_ERROR = '\033[91m'
-ANSII_ESC_ENDCOLOR = '\033[0m'
-
 
 # Load the application's config file or die
 try:
@@ -62,22 +56,22 @@ def key_to_id(key):
 def info(s, end='\n'):
     """ Prints the given string to stdout, formatted as an info str.
     """
-    print(f"{ANSII_ESC_OK}INFO:{ANSII_ESC_ENDCOLOR} {s}", end=end)
+    print(f"{app_config('ANSII_ESC_OK')}INFO:{app_config('ANSII_ESC_ENDCOLOR')} {s}", end=end)
 
 
 def warn(s, end='\n'):
     """ Prints the given string to stdout, formatted as a warning.
     """
-    print(f"{ANSII_ESC_WARNING}WARN:{ANSII_ESC_ENDCOLOR} {s}", end=end)
+    print(f"{app_config('ANSII_ESC_WARNING')}WARN:{app_config('ANSII_ESC_ENDCOLOR')} {s}", end=end)
 
 
 def error(s, end='\n'):
     """ Prints the given string to stdout, formatted as an error.
     """
-    print(f"{ANSII_ESC_ERROR}ERROR:{ANSII_ESC_ENDCOLOR} {s}", end=end)
+    print(f"{app_config('ANSII_ESC_ERROR')}ERROR:{app_config('ANSII_ESC_ENDCOLOR')} {s}", end=end)
 
 
 def bold(s, end='\n'):
     """ Prints the given string to stdout in bold.
     """
-    print(f"{ANSII_ESC_BOLD}{s}{ANSII_ESC_ENDCOLOR}", end=end)
+    print(f"{app_config('ANSII_ESC_BOLD')}{s}{app_config('ANSII_ESC_ENDCOLOR')}", end=end)

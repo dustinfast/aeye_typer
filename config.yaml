@@ -35,3 +35,11 @@ EVENTLOG_RAW_ROOTDIR: /opt/app/data/logs      # Raw log data directory
 # Data processing
 GAZE_TIME_CONVERT_IPLIER: .00001
 MOUSE_TIME_CONVERT_IPLIER: 10
+
+# ANSII color codes (note that '\e' is yaml equiv of '\033')
+ANSII_ESC_BOLD: "\e[1m"
+ANSII_ESC_OK: "\e[92m"
+ANSII_ESC_WARNING: "\e[38;5;214m"
+ANSII_ESC_ERROR: "\e[91m"
+ANSII_ESC_ENDCOLOR: "\e[0m"
+
