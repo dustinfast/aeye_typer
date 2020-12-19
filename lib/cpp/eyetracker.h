@@ -28,10 +28,14 @@ using namespace std::chrono;
 // Defs
 
 #define URL_MAX_LEN 256
-#define LIC_PATH "/opt/app/src/licenses/fast_aeye_typer_temp_se_license_key"
-#define CALIB_PATH "/opt/app/data/eyetracker.calib"
-#define CALIB_MAX_BYTES_SZ 400000
+#define CALIB_FILE_MAX_BYTES 400000
 #define NO_ERROR TOBII_ERROR_NO_ERROR
+
+string CALIB_PATH = APP_CFG["EYETRACKER_CALIB_PATH"].Scalar().c_str();
+string LIC_PATH = APP_CFG["EYETRACKER_LICENSE_PATH"].Scalar().c_str();
+
+/////////////////////////////////////////////////////////////////////////////
+// Prototypes
 
 void sync_device_time_async(tobii_device_t *device);
 size_t read_license_file(uint16_t* license);
@@ -281,7 +285,7 @@ void EyeTracker::calibration_write() {
 void EyeTracker::calibration_load() {
     tobii_error_t error;
     size_t size;
-    void *data[CALIB_MAX_BYTES_SZ];
+    void *data[CALIB_FILE_MAX_BYTES];
 
     // Load calibration data from file
     fstream f(CALIB_PATH, ios::in | ios::binary);
@@ -295,7 +299,7 @@ void EyeTracker::calibration_load() {
     }
 
     // Read up to max bytes
-    f.read((char*)data, CALIB_MAX_BYTES_SZ);
+    f.read((char*)data, CALIB_FILE_MAX_BYTES);
     size = f.gcount();
     f.close();
 
@@ -317,7 +321,7 @@ void EyeTracker::calibration_load() {
 // Callback for writing eyetracker device calibration to file
 void calibration_writer(void const* data, size_t size, void* _) {
     // Ensure reasonable size
-    if (size >= CALIB_MAX_BYTES_SZ) {
+    if (size >= CALIB_FILE_MAX_BYTES) {
         error("Calibration write failed - Data sz outside expected bounds.\n");
         return;
     }
@@ -340,7 +344,7 @@ void sync_device_time_async(tobii_device_t *device) {
 
 // Reads an eyetracker license file (Copied from the tobii stream SDK docs)
 size_t read_license_file(uint16_t* license) {
-    FILE *license_file = fopen(LIC_PATH, "rb");
+    FILE *license_file = fopen(LIC_PATH.c_str(), "rb");
 
     if(!license_file) {
         error("License load failed (file not found)");

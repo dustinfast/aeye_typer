@@ -6,16 +6,6 @@ DISP_HEIGHT_MM: 335
 DISP_WIDTH_PX: 3840
 DISP_HEIGHT_PX: 2160
 
-# On-screen Keyboard/HUD
-HUD_DISP_TITLE: 'AEye TypeR'
-HUD_DISP_WIDTH_PX: 1745
-HUD_DISP_HEIGHT_PX: 253
-HUD_STATUSPANEL_WIDTH_PX: 95
-HUD_DISP_COORD_DIVISOR_X: 2     # Centered = 2
-HUD_DISP_COORD_DIVISOR_Y: 1     # Bottom edge = 1
-HUD_BTN_WIDTH: 3
-HUD_KEYB_JSON: 'lib/json/keyboard_us.json'
-
 # Eyetracker Device
 EYETRACKER_MOUNT_OFFSET_MM: 0.0  # Horiz offset (+/- from center)
 EYETRACKER_SAMPLE_HZ: 90
@@ -25,8 +15,19 @@ EYETRACKER_SMOOTH_OVER: 13
 EYETRACKER_EXTERN_LIB_PATH: lib/so/eyetracker_gaze.so
 EYETRACKER_PREP_SCRIPT_PATH: lib/sh/prep_eyetracker_gaze.sh
 EYETRACKER_CALIB_PATH: /opt/app/data/eyetracker.calib
+EYETRACKER_LICENSE_PATH: /opt/app/src/licenses/fast_aeye_typer_temp_se_license_key
 EYETRACKER_WRITEBACK_SECONDS: 7
 EYETRACKER_WRITEAFTER_SECONDS: 7
+
+# On-screen Keyboard/HUD
+HUD_DISP_TITLE: 'AEye TypeR'
+HUD_DISP_WIDTH_PX: 1745
+HUD_DISP_HEIGHT_PX: 253
+HUD_STATUSPANEL_WIDTH_PX: 95
+HUD_DISP_COORD_DIVISOR_X: 2     # Centered = 2
+HUD_DISP_COORD_DIVISOR_Y: 1     # Bottom edge = 1
+HUD_BTN_WIDTH: 3
+HUD_KEYB_JSON: 'lib/json/keyboard_us.json'
 
 # Event Logging
 EVENTLOG_RAW_ROOTDIR: /opt/app/data/logs      # Raw log data directory
