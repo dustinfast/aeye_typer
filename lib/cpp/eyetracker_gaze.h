@@ -105,7 +105,7 @@ EyeTrackerGaze::EyeTrackerGaze(float eyetracker_mnt_offset,
         m_mark_freq = mark_freq;
         m_buff_sz = buff_sz;
         m_smooth_over = smooth_over;
-
+        
         // Calibrate gaze tracker's disp area
         set_display(disp_width_mm, disp_height_mm, eyetracker_mnt_offset);
 
