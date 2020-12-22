@@ -1,16 +1,16 @@
 # The application's Dockerfile. 
 # To build an image from it, run ./build.sh
 
-FROM nvidia/cudagl:10.0-devel-ubuntu18.04
+FROM nvidia/cudagl:10.1-devel-ubuntu16.04
 
 LABEL description="aeye_typer"
 LABEL maintainer="Dustin Fast <dustin.fast@outlook.com>"
 
-ENV CUDA_HOME=/usr/local/cuda
+ENV CUDA_HOME=/usr/local/cuda-10.0
 ENV CUDA_ROOT=$CUDA_HOME
 ENV CUDA_TOOLKIT_ROOT_DIR=$CUDA_HOME
 ENV PATH=$PATH:$CUDA_ROOT/bin:$HOME/bin
-ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CUDA_ROOT/lib64:/usr/local/cuda/extras/CUPTI/lib64/
+ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CUDA_ROOT/lib64:/usr/local/cuda/extras/CUPTI/lib64
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN echo "Updating apt-get..." && \
@@ -34,6 +34,13 @@ RUN echo "Installing 3rd party linux utils (apt-get)..." && \
         dos2unix \
         apt-file && apt-file update
 
+RUN echo "Installing application dependencies (apt-get)..." && \
+    apt-get install -y --no-install-recommends \
+        gir1.2-wnck-3.0 \
+        libyaml-cpp-dev \
+        libboost-all-dev \
+        python3-tk
+
 RUN echo "Installing Python 3.6 (apt-get)..." && \
     apt-get install -y software-properties-common && \
     add-apt-repository -y ppa:deadsnakes/ppa && \
@@ -45,20 +52,13 @@ RUN apt-get install -y \
         python3-setuptools
 RUN python3.6 -m pip install --upgrade pip
 
-# TODO: RUN echo "Installing NVIDA components (apt-get)..." && \
-    # apt-get install -y --no-install-recommends \
-    # libcudnn7=7.6.4.38-1+cuda10.1  \
-    # libcudnn7-dev=7.6.4.38-1+cuda10.1 \
-    # libnvinfer6=6.0.1-1+cuda10.1 \
-    # libnvinfer-dev=6.0.1-1+cuda10.1 \
-    # libnvinfer-plugin6=6.0.1-1+cuda10.1\
-
-RUN echo "Installing application dependencies (apt-get)..." && \
+RUN echo "Installing NVIDA components (apt-get)..." && \
     apt-get install -y --no-install-recommends \
-        gir1.2-wnck-3.0 \
-        libyaml-cpp-dev \
-        libboost-all-dev \
-        python3-tk
+    libcudnn7=7.6.4.38-1+cuda10.1  \
+    libcudnn7-dev=7.6.4.38-1+cuda10.1 \
+    libnvinfer6=6.0.1-1+cuda10.1 \
+    libnvinfer-dev=6.0.1-1+cuda10.1 \
+    libnvinfer-plugin6=6.0.1-1+cuda10.1
 
 RUN echo "Installing application dependencies(pip)..." && \
     python3.6 -m pip install \
@@ -76,6 +76,7 @@ RUN echo "Installing application dependencies(pip)..." && \
         sqlalchemy \
         cython \
         skl2onnx \
+        deepspeech-gpu \
         pynput
 
 RUN echo "Updating apt-get..." && \
