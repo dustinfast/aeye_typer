@@ -39,8 +39,6 @@ RUN echo "Installing application dependencies (apt-get)..." && \
         gir1.2-wnck-3.0 \
         libyaml-cpp-dev \
         libboost-all-dev \
-        portaudio19-dev \
-        python-pyaudio \
         python3-tk
 
 RUN echo "Installing Python 3.6 (apt-get)..." && \
@@ -53,15 +51,6 @@ RUN apt-get install -y \
         python3.6 \
         python3-setuptools
 RUN python3.6 -m pip install --upgrade pip
-
-# Disabled for dev... Tested OK 12/21/2020 -DF
-# RUN echo "Installing NVIDA components (apt-get)..." && \
-#     apt-get install -y --no-install-recommends \
-#     libcudnn7=7.6.4.38-1+cuda10.1  \
-#     libcudnn7-dev=7.6.4.38-1+cuda10.1 \
-#     libnvinfer6=6.0.1-1+cuda10.1 \
-#     libnvinfer-dev=6.0.1-1+cuda10.1 \
-#     libnvinfer-plugin6=6.0.1-1+cuda10.1
 
 RUN echo "Installing application dependencies(pip)..." && \
     python3.6 -m pip install \
@@ -83,16 +72,27 @@ RUN echo "Installing application dependencies(pip)..." && \
 
 RUN echo "Installing deepspeech and its dependencies (apt-get)..." && \
     apt-get install -y --no-install-recommends \
-        portaudio19-dev \
-        python-pyaudio
+        portaudio19-dev
 
 RUN echo "Installing deepspeech and its dependencies(pip)..." && \
     python3.6 -m pip install \
-        PyAudio \
-        halo \
-        webrtcvad \
-        deepspeech
-        # deepspeech-gpu \
+    deepspeech~=0.8.0 \
+    pyaudio~=0.2.11 \
+    webrtcvad~=2.0.10 \
+    halo~=0.0.18 
+    # deepspeech-gpu # Disabled for dev... Tested OK 12/21/2020 -DF
+
+# TODO: # Download pre-trained English model files
+# curl -LO https://github.com/mozilla/DeepSpeech/releases/download/v0.9.3/deepspeech-0.9.3-models.pbmm
+
+# Disabled for dev... Tested OK 12/21/2020 -DF
+# RUN echo "Installing NVIDA components (apt-get)..." && \
+#     apt-get install -y --no-install-recommends \
+#     libcudnn7=7.6.4.38-1+cuda10.1  \
+#     libcudnn7-dev=7.6.4.38-1+cuda10.1 \
+#     libnvinfer6=6.0.1-1+cuda10.1 \
+#     libnvinfer-dev=6.0.1-1+cuda10.1 \
+#     libnvinfer-plugin6=6.0.1-1+cuda10.1
 
 RUN echo "Updating apt-get..." && \
     apt-get update 
