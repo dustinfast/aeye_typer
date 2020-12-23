@@ -76,14 +76,16 @@ RUN echo "Installing deepspeech and its dependencies (apt-get)..." && \
 
 RUN echo "Installing deepspeech and its dependencies(pip)..." && \
     python3.6 -m pip install \
-    deepspeech~=0.8.0 \
-    pyaudio~=0.2.11 \
-    webrtcvad~=2.0.10 \
-    halo~=0.0.18 
-    # deepspeech-gpu # Disabled for dev... Tested OK 12/21/2020 -DF
+        deepspeech~=0.8.0 \
+        pyaudio~=0.2.11 \
+        webrtcvad~=2.0.10 \
+        halo~=0.0.18 
+        # deepspeech-gpu # Disabled for dev... Tested OK 12/21/2020 -DF
 
-# TODO: # Download pre-trained English model files
-# curl -LO https://github.com/mozilla/DeepSpeech/releases/download/v0.9.3/deepspeech-0.9.3-models.pbmm
+RUN echo "Downloading deepspeech model..."
+RUN mkdir -p /opt/app/dependencies/deepspeech
+WORKDIR /opt/app/dependencies/deepspeech
+RUN curl -LO https://github.com/mozilla/DeepSpeech/releases/download/v0.9.3/deepspeech-0.9.3-models.pbmm
 
 # Disabled for dev... Tested OK 12/21/2020 -DF
 # RUN echo "Installing NVIDA components (apt-get)..." && \
@@ -118,7 +120,6 @@ RUN ln -s -f /usr/bin/python3.6 /usr/bin/python
 COPY dependencies/.bashrc /root/.bashrc
 # Create local codebase mount point
 RUN mkdir -p /opt/app/src
-RUN pwd
 
 RUN echo "Settting up Tobii PDK..."
 RUN mkdir -p /opt/app/dependencies/tobii_pdk_install
