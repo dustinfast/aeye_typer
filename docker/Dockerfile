@@ -1,7 +1,7 @@
 # The application's Dockerfile. 
 # To build an image from it, run ./build.sh
 
-FROM nvidia/cudagl:10.1-devel-ubuntu16.04
+FROM nvidia/cudagl:10.1-devel-ubuntu18.04
 
 LABEL description="aeye_typer"
 LABEL maintainer="Dustin Fast <dustin.fast@outlook.com>"
